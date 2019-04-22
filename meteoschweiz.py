@@ -2,7 +2,7 @@ import requests
 import csv
 
 
-UUID_BUS_GS = "148dc4c0-1cab-11e9-bb99-d74d44769110"
+UUID_BUS_GS = "bcc12cb0-6290-11e9-acca-29f0ac50e804"
 UUID_MOA_GS = "4f769670-52e4-11e9-840c-29fd59f140bc"
 
 UUID_BUS_WS = "cf251900-6290-11e9-b8c7-c1df28b9badb"
