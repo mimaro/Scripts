@@ -124,7 +124,7 @@ def main():
     write_vals(UUID["COP_o_venti"], cop_o_venti)
     write_vals(UUID["COP_m_venti"], cop_m_venti)
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
-        logging.info("Ich würde jetzt Modbus scheiben")
+        logging.info("Ich würde jetzt Modbus schreiben")
     if b_sperrung_excess:
         logging.info("Ich würde jetzt Modbus schreiben")
 
