@@ -5,10 +5,14 @@ import datetime
 import logging
 import pytz
 
-
+#######################################################################################################
+# Format URLs
 VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+########################################################################################################
 
+#######################################################################################################
+# Configuration
 UUID = {
     "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
     "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
@@ -27,7 +31,6 @@ FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
 FREIGABE_NORMAL_TEMP = 13
 
-
 FREIGABE_WARM_P = 800
 FREIGABE_KALT_P = 2500
 
@@ -35,6 +38,7 @@ UHRZEIT_WARM = datetime.time(12, 0)
 UHRZEIT_KALT = datetime.time(8, 0)
 
 SPERRUNG_SONDERBETRIEB = 200
+###########################################################################################################
 
 
 def get_vals(uuid, duration="-0min"):
