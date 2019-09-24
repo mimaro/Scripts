@@ -20,11 +20,7 @@ UUID = {
     "Freigabe_sonderbetrieb": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
     "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
-    "COP_o_venti": "dd2e3400-d973-11e9-b9c6-038d9113070b",
-    "COP_m_venti": "3a89b8a0-52e7-11e9-b184-73ec439c39c9",
-    "WP_th": "9399ca80-910c-11e9-ac0f-31ff5bbdf885",
-    "WP_el": "92096720-35ae-11e9-a74c-534de753ada9",
-    "Venti": "8cbbcb70-3c0d-11e9-87f9-9db68697df1d"
+    "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
 }
 
 FREIGABE_WARM_TEMP = 15
@@ -40,20 +36,16 @@ UHRZEIT_KALT = datetime.time(8, 0)
 SPERRUNG_SONDERBETRIEB = 200
 ###########################################################################################################
 
-
 def get_vals(uuid, duration="-0min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     #return(json.loads(req.content))
     return req.json()
-
-
 
 def write_vals(uuid, val):
     poststring = VZ_POST_URL.format(uuid, val)
     logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     logging.info("Ok? {}".format(postreq.ok))
-
 
 def get_freigabezeit_12h_temp(t_roll_avg):
     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
@@ -117,18 +109,10 @@ def main():
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
     logging.info("********************************")
-    logging.info("COP")
-    wp_therm = get_vals(UUID["WP_th"])["data"]["tuples"][0][1]
-    wp_el = get_vals(UUID["WP_el"])["data"]["tuples"][0][1]
-    venti = get_vals(UUID["Venti"])["data"]["tuples"][0][1]
-    cop_o_venti = wp_therm / wp_el
-    cop_m_venti = wp_therm / (wp_el + venti)
-    write_vals(UUID["COP_o_venti"], cop_o_venti)
-    write_vals(UUID["COP_m_venti"], cop_m_venti)
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
-        logging.info("Ich würde jetzt Modbus schreiben")
+        logging.info("Ich würde die Anlage jetzt freigeben")
     if b_sperrung_excess:
-        logging.info("Ich würde jetzt Modbus schreiben")
+        logging.info("Ich würde die Anlage jetzt Sperren")
 
 
 if __name__ == "__main__":
