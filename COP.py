@@ -24,7 +24,8 @@ UUID = {
 
 def get_vals(uuid, duration="-0min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
-    return(json.loads(req.content))
+    #return(json.loads(req.content))
+    return req.json()
 
 def write_vals(uuid, val):
     poststring = VZ_POST_URL.format(uuid, val)
