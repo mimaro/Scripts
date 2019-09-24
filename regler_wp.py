@@ -89,12 +89,14 @@ def main():
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-15min")["data"]["average"]
     p_net = power_balance - p_charge
-    print("Aktuelle Bilanz=",p_net)
-
+    print("Aktuelle Bilanz =",p_net)
     
+    
+    logging.info("Freigabe Zeit")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
         b_freigabe_12h_temp = 1
+    logging.info("Freigabe Heizgrenze")
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
     logging.info("Freigabe Zeit: {}".format(b_freigabe_12h_temp))
