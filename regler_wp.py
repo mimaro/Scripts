@@ -89,7 +89,9 @@ def main():
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-15min")["data"]["average"]
     p_net = power_balance - p_charge
+    logging.info(p_net "Hallo")
 
+    
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
         b_freigabe_12h_temp = 1
