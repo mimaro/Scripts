@@ -89,7 +89,7 @@ def main():
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-15min")["data"]["average"]
     p_net = power_balance - p_charge
-    print(p_net)
+    print("Aktuelle Bilanz="p_net)
 
     
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
