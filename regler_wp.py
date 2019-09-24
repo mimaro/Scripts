@@ -30,8 +30,8 @@ FREIGABE_NORMAL_TEMP = 19
 FREIGABE_WARM_P = 800
 FREIGABE_KALT_P = 2500
 
-UHRZEIT_WARM = datetime.time(18, 0)
-UHRZEIT_KALT = datetime.time(18, 0)
+UHRZEIT_WARM = datetime.time(12, 0)
+UHRZEIT_KALT = datetime.time(8, 0)
 
 SPERRUNG_SONDERBETRIEB = 200
 ###########################################################################################################
@@ -92,16 +92,17 @@ def main():
     print("Aktuelle Bilanz =",p_net)
     
     
-    logging.info("Freigabe Zeit")  
+    logging.info("Start Freigabe Zeit & Normalbetrieb")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
         b_freigabe_12h_temp = 1
-    logging.info("Freigabe Heizgrenze")
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
     logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
+    logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
     write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
-    logging.info("******************************")
+    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
+    logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
     logging.info("P_Excess")
     p_freigabe_now = get_freigabezeit_excess(t_now)
