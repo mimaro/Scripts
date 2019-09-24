@@ -13,7 +13,7 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 #######################################################################################################
 # Configuration
 UUID = {
-    "COP_o_venti": "dd2e3400-d973-11e9-b9c6-038d9113070b",
+    "COP_o_venti": "312ec8e0-52e7-11e9-ac6d-4f4dd87fd97b",
     "COP_m_venti": "3a89b8a0-52e7-11e9-b184-73ec439c39c9",
     "WP_th": "9399ca80-910c-11e9-ac0f-31ff5bbdf885",
     "WP_el": "92096720-35ae-11e9-a74c-534de753ada9",
