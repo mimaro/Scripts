@@ -104,14 +104,14 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
-    logging.info("P_Excess")
+    logging.info("Start Freigabe Leistung")
     p_freigabe_now = get_freigabezeit_excess(t_now)
     if p_net < p_freigabe_now:
         b_freigabe_excess = 1
     if p_net > SPERRUNG_SONDERBETRIEB:
         b_sperrung_excess = 1
-    logging.info("Freigabe Excess: {}".format(b_freigabe_excess))
-    logging.info("Sperrung Excess: {}".format(b_sperrung_excess))
+    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
+    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
     logging.info("********************************")
