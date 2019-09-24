@@ -99,9 +99,10 @@ def main():
     logging.info("Freigabe Heizgrenze")
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
-    logging.info("Freigabe Zeit: {}".format(b_freigabe_12h_temp))
+    logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
     write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
     logging.info("******************************")
+    
     logging.info("P_Excess")
     p_freigabe_now = get_freigabezeit_excess(t_now)
     if p_net < p_freigabe_now:
