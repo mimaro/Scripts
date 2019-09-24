@@ -30,8 +30,8 @@ FREIGABE_NORMAL_TEMP = 19
 FREIGABE_WARM_P = 800
 FREIGABE_KALT_P = 2500
 
-UHRZEIT_WARM = datetime.time(12, 0)
-UHRZEIT_KALT = datetime.time(8, 0)
+UHRZEIT_WARM = datetime.time(18, 0)
+UHRZEIT_KALT = datetime.time(18, 0)
 
 SPERRUNG_SONDERBETRIEB = 200
 ###########################################################################################################
