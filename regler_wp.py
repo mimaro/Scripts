@@ -25,15 +25,15 @@ UUID = {
 
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-FREIGABE_NORMAL_TEMP = 19
+FREIGABE_NORMAL_TEMP = 10
 
 FREIGABE_WARM_P = 800
 FREIGABE_KALT_P = 2500
 
-UHRZEIT_WARM = datetime.time(12, 0)
-UHRZEIT_KALT = datetime.time(8, 0)
+UHRZEIT_WARM = datetime.time(10, 0)
+UHRZEIT_KALT = datetime.time(6, 0)
 
-SPERRUNG_SONDERBETRIEB = 200
+SPERRUNG_SONDERBETRIEB = 100
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
