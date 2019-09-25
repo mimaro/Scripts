@@ -37,9 +37,9 @@ def write_vals(uuid, val):
 def main():
     logging.info("********************************")
     logging.info("COP")
-    wp_therm = get_vals(UUID["WP_th"],duration="-5min")["data"]["tuples"][0][1]
-    wp_el = get_vals(UUID["WP_el"],duration="-5min")["data"]["tuples"][0][1]
-    venti = get_vals(UUID["Venti"],duration="-5min")["data"]["tuples"][0][1]
+    wp_therm = get_vals(UUID["WP_th"])["data"]["tuples"][0][1]
+    wp_el = get_vals(UUID["WP_el"])["data"]["tuples"][0][1]
+    venti = get_vals(UUID["Venti"])["data"]["tuples"][0][1]
     cop_o_venti = wp_therm / wp_el
     cop_m_venti = wp_therm / (wp_el + venti)
     write_vals(UUID["COP_o_venti"], cop_o_venti)
