@@ -33,7 +33,7 @@ FREIGABE_KALT_P = 2500
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
 
-SPERRUNG_SONDERBETRIEB = 0
+SPERRUNG_SONDERBETRIEB = 50
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
