@@ -4,6 +4,7 @@ import pprint
 import datetime
 import logging
 import pytz
+from pymodbus.client.sync import ModbusTcpClient
 
 #######################################################################################################
 # Format URLs
@@ -33,7 +34,34 @@ FREIGABE_KALT_P = 2500
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
 
+
+SB_EIN_HK1_T = 25
+SB_EIN_HK1_ST = 0.42
+SB_EIN_HK2_T = 30
+SB_EIN_HK2_ST = 0.4
+
+
+
+SB_AUS_HK1_T = 20
+SB_AUS_HK1_ST = 0.35
+SB_AUS_HK2_T = 20
+SB_AUS_HK2_ST = 0.35
+
+
+
+
+REGISTER = {
+    "Komfort_HK1": 1501,
+    "Steigung_HK1": 1503,
+    "Komfort_HK2": 1504,
+    "Steigung_HK2": 1506
+}
+
 SPERRUNG_SONDERBETRIEB = 50
+
+IP_ISG = "192.168.178.36"
+
+CLIENT = ModbusTcpClient(IP_ISG)
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -116,9 +144,16 @@ def main():
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
     logging.info("********************************")
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
-        logging.info("Ich würde die Anlage jetzt freigeben")
+   # if True:
+        CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_EIN_HK1_T*10))
+        CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_EIN_HK1_ST*100))
+        CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_EIN_HK2_T*10))
+        CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_EIN_HK2_ST*100))
     if b_sperrung_excess:
-        logging.info("Ich würde die Anlage jetzt Sperren")
+        CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
+        CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
+        CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
+        CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_AUS_HK2_ST*100))
 
 
 if __name__ == "__main__":
