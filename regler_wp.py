@@ -34,21 +34,21 @@ FREIGABE_KALT_P = 2500
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
 
-
 SB_EIN_HK1_T = 30
 SB_EIN_HK1_ST = 0.35
 SB_EIN_HK2_T = 30
 SB_EIN_HK2_ST = 0.35
 
+<<<<<<< HEAD
 
 
 SB_AUS_HK1_T = 20
+=======
+SB_AUS_HK1_T = 22
+>>>>>>> 94bc28bc5885d73593a6998f754b0e80f3845610
 SB_AUS_HK1_ST = 0.35
 SB_AUS_HK2_T = 21
 SB_AUS_HK2_ST = 0.35
-
-
-
 
 REGISTER = {
     "Komfort_HK1": 1501,
