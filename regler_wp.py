@@ -28,8 +28,8 @@ FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
 FREIGABE_NORMAL_TEMP = 14
 
-FREIGABE_WARM_P = -700
-FREIGABE_KALT_P = -2400
+FREIGABE_WARM_P = 700
+FREIGABE_KALT_P = 2400
 
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
@@ -44,17 +44,25 @@ SB_AUS_HK1_ST = 0.35
 SB_AUS_HK2_T = 21
 SB_AUS_HK2_ST = 0.35
 
+AB_aus = datetime.time(6, 0)
+AB_ein = datetime.time(22, 0)
+AB_HK1_T = 21
+AB_HK2_T = 19
+
 REGISTER = {
     "Komfort_HK1": 1501,
+    "Eco_HK1": 1502,
     "Steigung_HK1": 1503,
     "Komfort_HK2": 1504,
+    "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
     "SG1": 4001,
-    "SG2": 4002
+    "SG2": 4002,
+    
 }
 
-SPERRUNG_SONDERBETRIEB = 5000
+SPERRUNG_SONDERBETRIEB = 50
 
 IP_ISG = "192.168.178.36"
 
@@ -83,13 +91,11 @@ def get_freigabezeit_12h_temp(t_roll_avg):
     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
     return(f_time_12h_temp)
 
-
 def get_freigabezeit_excess(t_now):
     p_unlock_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
     logging.info("Freigabe Leistung: {}".format(p_unlock_now))
     return p_unlock_now
-
 
 def main():
     tz = pytz.UTC
@@ -115,7 +121,6 @@ def main():
                         duration="-15min")["data"]["average"]
     p_net = power_balance - p_charge
     print("Aktuelle Bilanz =",p_net)
-    
     
     logging.info("Start Freigabe Zeit & Normalbetrieb")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
@@ -151,14 +156,16 @@ def main():
         #CLIENT.write_register(REGISTER["SG2"], int(1))
         
     if b_sperrung_excess:
-        CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
-        CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
-        CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
-        CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_AUS_HK2_ST*100))
-        #CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
+        #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
+        #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
+        #CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_AUS_HK2_ST*100))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
-
+  
+   # if   now.time() > AB_aus:
+        #CLIENT.write_register(REGISTER["Eco_HK1"], int(
 
 if __name__ == "__main__":
     main()
