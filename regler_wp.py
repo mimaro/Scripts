@@ -48,7 +48,8 @@ REGISTER = {
     "Komfort_HK1": 1501,
     "Steigung_HK1": 1503,
     "Komfort_HK2": 1504,
-    "Steigung_HK2": 1506
+    "Steigung_HK2": 1506, 
+    "Betriebsart": 1500
 }
 
 SPERRUNG_SONDERBETRIEB = 50
@@ -143,11 +144,13 @@ def main():
         CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_EIN_HK1_ST*100))
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_EIN_HK2_T*10))
         CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_EIN_HK2_ST*100))
+        CLIENT.write_regsiter(REGISTER["Betriebsart"], int(3))
     if b_sperrung_excess:
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
         CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_AUS_HK2_ST*100))
+        CLIENT.write_regsiter(REGISTER["Betriebsart"], int(2))
 
 
 if __name__ == "__main__":
