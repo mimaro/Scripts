@@ -142,11 +142,11 @@ def main():
     logging.info("********************************")
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
    # if True:
-        CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_EIN_HK1_T*10))
-        CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_EIN_HK1_ST*100))
-        CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_EIN_HK2_T*10))
-        CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_EIN_HK2_ST*100))
-        #CLIENT.write_register(REGISTER["Betriebsart"], int(3))
+        #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_EIN_HK1_T*10))
+        #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_EIN_HK1_ST*100))
+        #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_EIN_HK2_T*10))
+        #CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_EIN_HK2_ST*100))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         #CLIENT.write_register(REGISTER["SG1"], int(1))
         #CLIENT.write_register(REGISTER["SG2"], int(1))
         
