@@ -146,6 +146,12 @@ def main():
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
+    
+    if now.time() > AB_aus:
+        b_absenk_aus = 1
+    if now.time() < AB_ein:
+        b_absenk_ein = 1
+    
     logging.info("********************************")
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
    # if True:
@@ -166,7 +172,7 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
   
-    if  (now.time() > AB_aus & now.time() < AB_ein):
+    if  (b_absenk_aus & b_absenk_ein):
         CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
         CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
             
