@@ -105,6 +105,8 @@ def main():
     b_freigabe_excess = 0
     b_sperrung_excess = 0
     b_freigabe_normal = 0
+    b_absenk_aus = 0
+    b_absenk_ein = 0
     logging.basicConfig(level=logging.INFO)
     logging.info("*****************************")
     logging.info("*Starting WP controller")
