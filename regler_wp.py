@@ -46,8 +46,10 @@ SB_AUS_HK2_ST = 0.35
 
 AB_aus = datetime.time(6, 0)
 AB_ein = datetime.time(22, 0)
-AB_HK1_T = 21
-AB_HK2_T = 19
+AB_AUS_HK1_T = 22
+AB_AUS_HK2_T = 21
+AB_EIN_HK1_T = 20
+AB_EIN_HK2_T = 19
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -164,8 +166,13 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
   
-   # if   now.time() > AB_aus:
-        #CLIENT.write_register(REGISTER["Eco_HK1"], int(
+    if  (now.time() > AB_aus & now.time() < AB_ein):
+        CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
+        CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
+            
+    else:
+       CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_EIN_HK1_T*10))
+       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))
 
 if __name__ == "__main__":
     main()
