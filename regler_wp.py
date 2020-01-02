@@ -39,16 +39,16 @@ SB_EIN_HK1_ST = 0.40
 SB_EIN_HK2_T = 24
 SB_EIN_HK2_ST = 0.40
 
-SB_AUS_HK1_T = 23
+SB_AUS_HK1_T = 22
 SB_AUS_HK1_ST = 0.40
 SB_AUS_HK2_T = 22
 SB_AUS_HK2_ST = 0.40
 
 AB_aus = datetime.time(5, 0)
 AB_ein = datetime.time(21, 0)
-AB_AUS_HK1_T = 23
+AB_AUS_HK1_T = 22
 AB_AUS_HK2_T = 22
-AB_EIN_HK1_T = 21
+AB_EIN_HK1_T = 20
 AB_EIN_HK2_T = 20
 
 REGISTER = {
