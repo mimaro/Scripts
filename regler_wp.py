@@ -64,7 +64,7 @@ REGISTER = {
     
 }
 
-SPERRUNG_SONDERBETRIEB = 50
+SPERRUNG_SONDERBETRIEB = 100
 
 IP_ISG = "192.168.178.36"
 
@@ -119,12 +119,23 @@ def main():
         UUID["T_outdoor"], duration="-720min")["data"]["average"]
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
+    
+    #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
         UUID["Power_balance"], duration="-15min")["data"]["average"]
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-15min")["data"]["average"]
     p_net = power_balance - p_charge
     print("Aktuelle Bilanz =",p_net)
+    
+    #Ausschaltsignal Sonderbetrieb 
+    power_balance2 = get_vals(
+        UUID["Power_balance"], duration="-30min")["data"]["average"]
+    p_charge2 = get_vals(UUID["Charge_station"],
+                        duration="-30min")["data"]["average"]
+    p_net2 = power_balance2 - p_charge2
+    print("Aktuelle Bilanz =",p_net2)
+        
     
     logging.info("Start Freigabe Zeit & Normalbetrieb")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
@@ -142,7 +153,7 @@ def main():
     p_freigabe_now = get_freigabezeit_excess(t_now)
     if p_net < p_freigabe_now:
         b_freigabe_excess = 1
-    if p_net > SPERRUNG_SONDERBETRIEB:
+    if p_net2 > SPERRUNG_SONDERBETRIEB:
         b_sperrung_excess = 1
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
