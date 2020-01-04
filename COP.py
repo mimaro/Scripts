@@ -43,7 +43,7 @@ def main():
     cop_o_venti = wp_therm / wp_el
     cop_m_venti = wp_therm / (wp_el + venti)
     
-if  cop_o_venti > 10 
+if  cop_o_venti > 10 :
     #or cop_o_venti < 0 or cop_m_venti > 10 or cop_m_venti < 0:
     write_vals(UUID["COP_o_venti"], 0)
     write_vals(UUID["COP_m_venti"], 0)
