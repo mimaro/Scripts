@@ -215,7 +215,7 @@ def main():
     
        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))
         
-     logging.info("********************************")
-
+    logging.info("********************************")
+    
 if __name__ == "__main__":
     main()
