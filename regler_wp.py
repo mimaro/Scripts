@@ -64,6 +64,7 @@ AB_EIN_HK2_T = 20
 PV_max = 2000
 PV_min = 0
 HK1_min = 22 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK1_max = 30
 HK1_Diff_max = 8 
 
 REGISTER = {
@@ -210,11 +211,17 @@ def main():
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-15min")["data"]["average"]
+        
     PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
-    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))
+        
+    if (HK1_aktuell > HK1_max)    
+    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))
+    
+    else:
+    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
         
     logging.info("********************************")
     
