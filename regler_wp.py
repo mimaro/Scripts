@@ -211,9 +211,9 @@ def main():
        PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-15min")["data"]["average"]
        PV_Faktor = PV_Aktuell*(PV_min/PV_max)
-       print(PV_Faktor)
+       logging.info("PV_Faktor: {}".format(PV_Faktor))
        HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
-       print(HK1_aktuell)    
+       logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))
         
     logging.info("********************************")
