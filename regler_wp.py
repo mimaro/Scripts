@@ -22,34 +22,49 @@ UUID = {
     "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
+    "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd",
 }
 
-FREIGABE_WARM_TEMP = 15
-FREIGABE_KALT_TEMP = -10
+
+# Freigabewert für Sonderbetrieb nach Heizgrenze
 FREIGABE_NORMAL_TEMP = 14
 
+#Freigabewerte für Sonderbetrieb nach Leistung
 FREIGABE_WARM_P = 600
 FREIGABE_KALT_P = 1400
+FREIGABE_WARM_TEMP = 15
+FREIGABE_KALT_TEMP = -10
+SPERRUNG_SONDERBETRIEB = 100
 
+#Freigabewerte für Sonderbetrieb nach Zeit
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
 
+#Sollwerte für Sonderbetrieb ein (aktuell keine Funktion)
 SB_EIN_HK1_T = 30
 SB_EIN_HK1_ST = 0.40
 SB_EIN_HK2_T = 24
 SB_EIN_HK2_ST = 0.40
 
+#Sollwerte für Sonderbetrieb aus (aktuell keine Funktion)
 SB_AUS_HK1_T = 22
 SB_AUS_HK1_ST = 0.40
 SB_AUS_HK2_T = 22
 SB_AUS_HK2_ST = 0.40
 
+#Sollwerte für Nachtabsenkung über raspi
 AB_aus = datetime.time(5, 0)
 AB_ein = datetime.time(21, 0)
 AB_AUS_HK1_T = 22
 AB_AUS_HK2_T = 22
 AB_EIN_HK1_T = 20
 AB_EIN_HK2_T = 20
+
+#Sollwerte für Regulierung HK1 nach PV-Produktion
+PV_max = 2000
+PV_min = 0
+HK1_min = 22 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK1_Diff_max = 8 
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -61,10 +76,7 @@ REGISTER = {
     "Betriebsart": 1500,
     "SG1": 4001,
     "SG2": 4002,
-    
 }
-
-SPERRUNG_SONDERBETRIEB = 100
 
 IP_ISG = "192.168.178.36"
 
@@ -136,7 +148,6 @@ def main():
     p_net2 = power_balance2 - p_charge2
     print("Aktuelle Bilanz =",p_net2)
         
-    
     logging.info("Start Freigabe Zeit & Normalbetrieb")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
@@ -149,6 +160,7 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
+    #Generiere Freigabe-sperrsignal Leistung
     logging.info("Start Freigabe Leistung")
     p_freigabe_now = get_freigabezeit_excess(t_now)
     if p_net < p_freigabe_now:
@@ -158,14 +170,9 @@ def main():
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
-    write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
-    
-    if now.time() > AB_aus:
-        b_absenk_aus = 1
-    if now.time() < AB_ein:
-        b_absenk_ein = 1
-    
-    logging.info("********************************")
+    write_vals(UUID["Sperrung_excess"], b_sperrung_excess)   
+   
+   #Modbus Werte in für Sonderbetrieb ein schreiben 
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
    # if True:
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_EIN_HK1_T*10))
@@ -175,7 +182,8 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         #CLIENT.write_register(REGISTER["SG1"], int(1))
         #CLIENT.write_register(REGISTER["SG2"], int(1))
-        
+      
+    #Modbus Werte für Sonderbetrieb aus schreiben
     if b_sperrung_excess:
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
@@ -185,13 +193,29 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
   
-    if  (b_absenk_aus & b_absenk_ein):
+ #Nachtabsenkung über Raspi
+    if now.time() > AB_aus:
+        b_absenk_aus = 1
+    if now.time() < AB_ein:
+        b_absenk_ein = 1
+        
+        if  (b_absenk_aus & b_absenk_ein):
         CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
         CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
             
     else:
        CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_EIN_HK1_T*10))
-       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))
+       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))   
+
+  #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
+       PV_Aktuell = get_vals(UUID["PV_Produktion"],
+                        duration="-15min")["data"]["average"]
+       PV_Faktor = PV_Aktuell*(PV_min/PV_max)
+       HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
+    
+       CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))
+        
+ logging.info("********************************")
 
 if __name__ == "__main__":
     main()
