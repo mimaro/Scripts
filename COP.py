@@ -42,13 +42,6 @@ def main():
     venti = get_vals(UUID["Venti"])["data"]["tuples"][0][1]
     cop_o_venti = wp_therm / wp_el
     cop_m_venti = wp_therm / (wp_el + venti)
-    
-if  (cop_o_venti > 10) :
-    #or cop_o_venti < 0 or cop_m_venti > 10 or cop_m_venti < 0:
-    write_vals(UUID["COP_o_venti"], 0)
-    write_vals(UUID["COP_m_venti"], 0)
-    
-else:
     write_vals(UUID["COP_o_venti"], cop_o_venti)
     write_vals(UUID["COP_m_venti"], cop_m_venti)
    
