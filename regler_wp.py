@@ -218,10 +218,10 @@ def main():
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
     if HK1_aktuell > HK1_max:   
-    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))
+        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))
     
     else:
-    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
+        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
         
     logging.info("********************************")
     
