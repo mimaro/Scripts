@@ -217,7 +217,7 @@ def main():
     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
-    if (HK1_aktuell > HK1_max)    
+    if HK1_aktuell > HK1_max    
     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))
     
     else:
