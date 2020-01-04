@@ -199,7 +199,7 @@ def main():
     if now.time() < AB_ein:
         b_absenk_ein = 1
         
-        if  (b_absenk_aus & b_absenk_ein):
+    if  (b_absenk_aus & b_absenk_ein):
         CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
         CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
             
