@@ -60,12 +60,13 @@ AB_AUS_HK2_T = 22
 AB_EIN_HK1_T = 20
 AB_EIN_HK2_T = 20
 
-#Sollwerte für Regulierung HK1 nach PV-Produktion
+#Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
 PV_min = 1
 HK1_min = 22 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
 HK1_max = 30
 HK1_Diff_max = 8 
+AT_Diff_max = 15
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -214,7 +215,9 @@ def main():
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
     PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
-    HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
+    Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
+    logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
+    HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor * Temp_Faktor
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
     if HK1_aktuell > HK1_max:   
