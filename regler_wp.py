@@ -66,7 +66,7 @@ PV_min = 1
 HK1_min = 22 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
 HK1_max = 30
 HK1_Diff_max = 8 
-AT_Diff_max = 15
+AT_Diff_max = 14
 
 REGISTER = {
     "Komfort_HK1": 1501,
