@@ -213,13 +213,13 @@ def main():
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-15min")["data"]["average"]
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
-    if  PV_Aktuell*(PV_min/PV_max) > 1:
+    if  (PV_Aktuell*(PV_min/PV_max)) > 1:
         PV_Faktor = 1
     else:
         PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
         
-    if  FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max > 1:
+    if  (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max) > 1:
         Temp_Faktor = 1   
     else:
         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
