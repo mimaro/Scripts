@@ -219,7 +219,7 @@ def main():
         PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
         
-    if  (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max) > 1:
+    if  (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max)) > 1:
         Temp_Faktor = 1   
     else:
         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
