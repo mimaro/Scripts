@@ -211,7 +211,7 @@ def main():
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-15min")["data"]["average"]
-        
+    logging.info("PV_aktuell: {}".format(PV_Aktuell))    
     PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
