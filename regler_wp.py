@@ -213,18 +213,22 @@ def main():
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-15min")["data"]["average"]
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
-    PV_Faktor = PV_Aktuell*(PV_min/PV_max)
+    if  PV_Aktuell*(PV_min/PV_max) > 1:
+        PV_Faktor = 1
+    else:
+        PV_Faktor = PV_Aktuell*(PV_min/PV_max)
     logging.info("PV_Faktor: {}".format(PV_Faktor))
-    Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
+        
+    if  FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max > 1
+        Temp_Faktor = 1   
+    else:
+        Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
     logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
+     
     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor * Temp_Faktor
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
-    if HK1_aktuell > HK1_max:   
-        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))
-    
-    else:
-        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
+    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
         
     logging.info("********************************")
     
