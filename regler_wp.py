@@ -61,7 +61,7 @@ AB_EIN_HK1_T = 20
 AB_EIN_HK2_T = 20
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
-PV_max = 3000
+PV_max = 2000
 HK1_min = 22 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
 HK1_max = 30
 HK1_Diff_max = 8 
@@ -210,7 +210,7 @@ def main():
 
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
-                        duration="-15min")["data"]["average"]
+                        duration="-30min")["data"]["average"]
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
     if  (PV_Aktuell/PV_max)) > 1:
         PV_Faktor = 1
