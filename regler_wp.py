@@ -227,7 +227,7 @@ def main():
         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
     logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
      
-    HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor * Temp_Faktor
+    HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor * 1
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
