@@ -37,6 +37,8 @@ FREIGABE_KALT_TEMP = -10
 SPERRUNG_SONDERBETRIEB = 100
 
 #Freigabewerte für Sonderbetrieb nach Zeit
+FREIGABE_WARM_T = 14
+FREIGABE_KALT_T = 0
 UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(6, 0)
 
@@ -98,8 +100,8 @@ def write_vals(uuid, val):
 def get_freigabezeit_12h_temp(t_roll_avg):
     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
     u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
-    f_time = u_w + (t_roll_avg - FREIGABE_WARM_TEMP) * (
-        (u_w - u_k) / (FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP))
+    f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
+        (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
     logging.info("Decimal Unlocktime: {}".format(f_time))
     f_time_12h_temp = datetime.time(
         hour=int(f_time), minute=int((f_time - int(f_time))*60))
