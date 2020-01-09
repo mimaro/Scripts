@@ -211,6 +211,9 @@ def main():
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-30min")["data"]["average"]
+    t_roll_avg_12_24 = get_vals(
+        UUID["T_outdoor"], duration="-1444+720min")["data"]["average"]
+    
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
     if  (PV_Aktuell/PV_max) > 1:
         PV_Faktor = 1
@@ -218,7 +221,7 @@ def main():
         PV_Faktor = PV_Aktuell/PV_max
     logging.info("PV_Faktor: {}".format(PV_Faktor))
         
-    if  ((FREIGABE_NORMAL_TEMP - t_roll_avg_12)/AT_Diff_max) > 1:
+    if  ((FREIGABE_NORMAL_TEMP - t_roll_avg_12_24)/AT_Diff_max) > 1:
         Temp_Faktor = 1   
     else:
         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
