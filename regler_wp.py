@@ -212,8 +212,8 @@ def main():
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-30min")["data"]["average"]
     t_roll_avg_12_24 = get_vals(
-        UUID["T_outdoor"], duration="-1444+720min")["data"]["average"]
-    
+        UUID["T_outdoor"], duration="-1444min+720min")["data"]["average"]
+    logging.info("T_12_24: {}".format(t_roll_avg_12_24))  
     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
     if  (PV_Aktuell/PV_max) > 1:
         PV_Faktor = 1
