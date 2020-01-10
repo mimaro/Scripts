@@ -66,7 +66,7 @@ AB_EIN_HK2_T = 19
 PV_max = 2000
 HK1_min = 21 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
 HK1_max = 30
-HK1_Diff_max = 8 
+HK1_Diff_max = 9 #muss zusammen mit HK1 30 ergeben 
 AT_Diff_max = 14
 
 REGISTER = {
