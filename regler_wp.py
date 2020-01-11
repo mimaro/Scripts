@@ -57,14 +57,14 @@ SB_AUS_HK2_ST = 0.40
 #Sollwerte für Nachtabsenkung über raspi
 AB_aus = datetime.time(5, 0)
 AB_ein = datetime.time(21, 0)
-AB_AUS_HK1_T = 21
+AB_AUS_HK1_T = 5
 AB_AUS_HK2_T = 21
-AB_EIN_HK1_T = 19
+AB_EIN_HK1_T = 5
 AB_EIN_HK2_T = 19
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 21 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK1_min = 5 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
 HK1_max = 30
 HK1_Diff_max = 9 #muss zusammen mit HK1 30 ergeben 
 AT_Diff_max = 14
