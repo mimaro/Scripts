@@ -58,8 +58,8 @@ def readTempLines(sensorName) :
 def main():
     logging.info("********************************")
     logging.info("Temp_schreiben")
-    temp_1 =  str(readTempLines(sensor1)[0])
-    temp_2 =  str(readTempLines(sensor2)[0])
+    temp_1 =  (str(readTempLines(sensor1)[0]))
+    temp_2 =  (str(readTempLines(sensor2)[0]))
     write_vals(UUID["Puffer_mitte"], temp_1)
     write_vals(UUID["Puffer_unten"], temp_2)
    
