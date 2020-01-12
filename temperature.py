@@ -55,7 +55,7 @@ def readTempLines(sensor1) :
         tempData = lines[1][temperaturStr+2:]
         tempCelsius = float(tempData) / 1000.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
-        print= tempCelsius   
+        print= (tempCelsius)   
     
     logging.info("********************************")
     
