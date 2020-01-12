@@ -3,10 +3,10 @@
 import time 
 import sys
 
-def LeseAktuelleTemperatur('/sys/bus/w1/devices/28-021492459fbf/w1_slave'):
+def LeseAktuelleTemperatur(pfad):
 
 # 1-wire Slave Datei lesen
-file = open('/sys/bus/w1/devices/28-021492459fbf/w1_slave')
+file = open(pfad)
 filecontent = file.read()
 file.close()
 
@@ -28,5 +28,5 @@ while Lauf <= Durchlauf:
 timestamp = time.strftime(„%d.%m.%Y %H:%M:%S“)
 
 # Temperatur 1 messen
-temperatur = LeseAktuelleTemperatur(‚/sys/bus/w1/devices/28-0517a2fd99ff/w1_slave‘)
+temperatur = LeseAktuelleTemperatur(‚/sys/bus/w1/devices/28-021492459fbf/w1_slave‘)
 print „1 – „, timestamp, „: „, temperatur, „°C“
