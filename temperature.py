@@ -23,13 +23,13 @@ def readTempLines(sensorName) :
         lines = readTempSensor(sensorName)
     temperaturStr = lines[1].find('t=')
     # Ich überprüfe ob die Temperatur gefunden wurde.
-    if temperaturStr != -1 :
-        tempData = lines[1][temperaturStr+2:]
-        tempCelsius = float(tempData) / 1000.0
-        tempKelvin = 273 + float(tempData) / 1000
-        tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
+    #if temperaturStr != -1 :
+        #tempData = lines[1][temperaturStr+2:]
+        #tempCelsius = float(tempData) / 1000.0
+        #tempKelvin = 273 + float(tempData) / 1000
+        #tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
-        return [tempCelsius, tempKelvin, tempFahrenheit]
+        #return [tempCelsius, tempKelvin, tempFahrenheit]
  
-print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor1)[0]) + " °C")
-print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor2)[0]) + " °C")     
+print (str(readTempLines(sensor1)[0]))
+print (str(readTempLines(sensor2)[0]))     
