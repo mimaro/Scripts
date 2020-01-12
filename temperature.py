@@ -40,8 +40,8 @@ try:
 #except KeyboardInterrupt:
     # Programm wird beendet wenn CTRL+C gedrückt wird.
  #   print('Temperaturmessung wird beendet')
-#except Exception as e:
- #   print(str(e))
+except Exception as e:
+    print(str(e))
     sys.exit(1)
 #finally:
     # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
