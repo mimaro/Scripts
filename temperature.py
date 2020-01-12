@@ -24,7 +24,7 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 
 ###########################################################################################################
 
-sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
+sensor1 = /sys/bus/w1/devices/28-021492459fbf/w1_slave
 logging.info("1")
 
 
