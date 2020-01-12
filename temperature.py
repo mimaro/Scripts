@@ -36,13 +36,13 @@ def readTempLines(sensorName) :
     print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
         # Nach 10 Sekunden erfolgt die nächste Messung
       #  time.sleep(10)
-except KeyboardInterrupt:
+#except KeyboardInterrupt:
     # Programm wird beendet wenn CTRL+C gedrückt wird.
-    print('Temperaturmessung wird beendet')
-except Exception as e:
-    print(str(e))
-    sys.exit(1)
-finally:
+ #   print('Temperaturmessung wird beendet')
+#except Exception as e:
+ #   print(str(e))
+ #   sys.exit(1)
+#finally:
     # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-    print('Programm wird beendet.')
-    sys.exit(0)
+#    print('Programm wird beendet.')
+#    sys.exit(0)
