@@ -31,7 +31,7 @@ def readTempLines(sensorName) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         #return [tempCelsius, tempKelvin, tempFahrenheit]
 
-temp_1 =  str(readTempLines(sensor1))
+temp_1 =  str(readTempLines(sensor1)[0])
 print (temp_1)
        
 #print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor1)[0]) + " °C")
