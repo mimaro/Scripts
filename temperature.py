@@ -23,79 +23,49 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 
 ###########################################################################################################
 
-def get_vals(uuid, duration="-0min"):
-    req = requests.get(VZ_GET_URL.format(uuid, duration))
-    #return(json.loads(req.content))
-    return req.json()
+sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 
-def write_vals(uuid, val):
-    poststring = VZ_POST_URL.format(uuid, val)
-    logging.info("Poststring {}".format(poststring))
-    postreq = requests.post(poststring)
-    logging.info("Ok? {}".format(postreq.ok))
+#def get_vals(uuid, duration="-0min"):
+ #   req = requests.get(VZ_GET_URL.format(uuid, duration))
+  #  return req.json()
+
+#def write_vals(uuid, val):
+ #   poststring = VZ_POST_URL.format(uuid, val)
+ #   logging.info("Poststring {}".format(poststring))
+ #   postreq = requests.post(poststring)
+ #   logging.info("Ok? {}".format(postreq.ok))
  
-    
-def main():
-    logging.info("********************************")
-    logging.info("COP")
-    wp_therm = get_vals(UUID["WP_th"])["data"]["tuples"][0][1]
-    wp_el = get_vals(UUID["WP_el"])["data"]["tuples"][0][1]
-    venti = get_vals(UUID["Venti"])["data"]["tuples"][0][1]
-    cop_o_venti = wp_therm / wp_el
-    cop_m_venti = wp_therm / (wp_el + venti)
-    write_vals(UUID["COP_o_venti"], cop_o_venti)
-    write_vals(UUID["COP_m_venti"], cop_m_venti)
-   
-if __name__ == "__main__":
-main()
-
-
-
-
-
-
-----------------------------
-
-sensor = '/sys/bus/w1/devices/28-02161f5a48ee/w1_slave'
- 
-def readTempSensor(sensorName) :
+def readTempSensor(sensor1) :
     """Aus dem Systembus lese ich die Temperatur der DS18B20 aus."""
-    f = open(sensorName, 'r')
+    f = open(sensor1, 'r')
     lines = f.readlines()
     f.close()
     return lines
  
-def readTempLines(sensorName) :
-    lines = readTempSensor(sensorName)
-    # Solange nicht die Daten gelesen werden konnten, bin ich hier in einer Endlosschleife
-    while lines[0].strip()[-3:] != 'YES':
-        time.sleep(0.2)
-        lines = readTempSensor(sensorName)
+def readTempLines(sensor1) :
+    lines = readTempSensor(sensor1)
     temperaturStr = lines[1].find('t=')
     # Ich überprüfe ob die Temperatur gefunden wurde.
     if temperaturStr != -1 :
         tempData = lines[1][temperaturStr+2:]
         tempCelsius = float(tempData) / 1000.0
-        tempKelvin = 273 + float(tempData) / 1000
-        tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
-        return [tempCelsius, tempKelvin, tempFahrenheit]
+        return [tempCelsius]   
+    
+    
+    
+#def main():    
+ #   write_vals(UUID["COP_o_venti"], cop_o_venti)
+  #  write_vals(UUID["COP_m_venti"], cop_m_venti)
+   
+#if __name__ == "__main__":
+#main()
+
+
+
+
+
+
  
-try:
-    while True :
-        # Mit einem Timestamp versehe ich meine Messung und lasse mir diese in der Console ausgeben.
-        print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
-        # Nach 10 Sekunden erfolgt die nächste Messung
-        time.sleep(10)
-except KeyboardInterrupt:
-    # Programm wird beendet wenn CTRL+C gedrückt wird.
-    print('Temperaturmessung wird beendet')
-except Exception as e:
-    print(str(e))
-    sys.exit(1)
-finally:
-    # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-    print('Programm wird beendet.')
-    sys.exit(0)
 
 
