@@ -3,10 +3,10 @@
 import time 
 import sys
 
-def LeseAktuelleTemperatur(/sys/bus/w1/devices):
+def LeseAktuelleTemperatur(‚/sys/bus/w1/devices/28-021492459fbf/w1_slave‘):
 
 # 1-wire Slave Datei lesen
-file = open(/sys/bus/w1/devices)
+file = open(‚/sys/bus/w1/devices/28-021492459fbf/w1_slave‘)
 filecontent = file.read()
 file.close()
 
