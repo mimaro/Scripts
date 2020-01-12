@@ -26,8 +26,8 @@ def readTempLines(sensorName) :
     if temperaturStr != -1 :
         tempData = lines[1][temperaturStr+2:]
         tempCelsius = float(tempData) / 1000.0
-        tempKelvin = 273 + float(tempData) / 1000
-        tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
+        #tempKelvin = 273 + float(tempData) / 1000
+        #tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius, tempKelvin, tempFahrenheit]
 
