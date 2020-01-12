@@ -30,11 +30,12 @@ def readTempLines(sensorName) :
         tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius, tempKelvin, tempFahrenheit]
+        print (str(readTempLInes(sensor)[0])
  
-try:
-    while True :
+#try:
+ #   while True :
         # Mit einem Timestamp versehe ich meine Messung und lasse mir diese in der Console ausgeben.
-        print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
+        #print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
         # Nach 10 Sekunden erfolgt die nächste Messung
        # time.sleep(10)
 #except KeyboardInterrupt:
@@ -45,5 +46,5 @@ try:
     #sys.exit(1)
 finally:
     # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-    print('Programm wird beendet.')
+    #print('Programm wird beendet.')
     sys.exit(0)
