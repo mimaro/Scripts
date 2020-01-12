@@ -49,8 +49,8 @@ def readTempLines(sensorName) :
 
 temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
-        #write_vals(UUID["Puffer_mitte"], temp_1)
-        #write_vals(UUID["Puffer_unten"], temp_2)
+write_vals(UUID["Puffer_mitte"], temp_1)
+write_vals(UUID["Puffer_unten"], temp_2)
 print (temp_1)
 print (temp_2)
 
