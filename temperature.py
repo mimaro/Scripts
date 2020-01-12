@@ -29,10 +29,10 @@ def readTempLines(sensorName) :
         #tempKelvin = 273 + float(tempData) / 1000
         #tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
-        #return [tempCelsius]
+        return [tempCelsius]
 
-temp_1 =  str(readTempLines(sensor1)[0])
-print (temp_1)
+#temp_1 =  str(readTempLines(sensor1)[0])
+#print (temp_1)
        
 #print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor1)[0]) + " °C")
 #print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor2)[0]) + " °C")
