@@ -5,10 +5,10 @@ import sys
 
 pfad = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 
-def LeseAktuelleTemperatur(pfad):
+def LeseAktuelleTemperatur(/sys/bus/w1/devices/28-021492459fbf/w1_slave):
 
 # 1-wire Slave Datei lesen
-file = open(pfad)
+file = open(/sys/bus/w1/devices/28-021492459fbf/w1_slave)
 filecontent = file.read()
 file.close()
 
