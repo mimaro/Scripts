@@ -7,10 +7,8 @@ import pprint
 import datetime
 import logging
 import sys
- 
-# Systempfad zum den Sensor, weitere Systempfade könnten über ein Array
-# oder weiteren Variablen hier hinzugefügt werden.
-# 28-02161f5a48ee müsst ihr durch die eures Sensors ersetzen!
+
+
 
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
@@ -50,20 +48,20 @@ def readTempLines(sensorName) :
         #tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius]
+        temp_1 =  str(readTempLines(sensor1)[0])
+        temp_2 =  str(readTempLines(sensor2)[0])
+        write_vals(UUID["Puffer_mitte"], temp_1)
+        write_vals(UUID["Puffer_unten"], temp_2)
+        print (temp_1)
+        print (temp_2)
 
-temp_1 =  str(readTempLines(sensor1)[0])
-temp_2 =  str(readTempLines(sensor2)[0])
-
-print (temp_1)
-print (temp_2)
-
-def main():
-    logging.info("********************************")
-    logging.info("Temp_schreiben")
-    write_vals(UUID["Puffer_mitte"], temp_1)
-    write_vals(UUID["Puffer_unten"], temp_2)
+#def main():
+    #logging.info("********************************")
+    #logging.info("Temp_schreiben")
+    #write_vals(UUID["Puffer_mitte"], temp_1)
+    #write_vals(UUID["Puffer_unten"], temp_2)
    
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+    #main()
 
 
