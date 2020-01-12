@@ -24,6 +24,7 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 ###########################################################################################################
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
+logging.info("1")
 
 #def get_vals(uuid, duration="-0min"):
  #   req = requests.get(VZ_GET_URL.format(uuid, duration))
@@ -41,6 +42,8 @@ def readTempSensor(sensor1) :
     lines = f.readlines()
     f.close()
     return lines
+ 
+logging.info("2")
  
 def readTempLines(sensor1) :
     lines = readTempSensor(sensor1)
