@@ -3,10 +3,10 @@
 import time 
 import sys
 
-def LeseAktuelleTemperatur(pfad):
+def LeseAktuelleTemperatur(/sys/bus/w1/devices):
 
 # 1-wire Slave Datei lesen
-file = open(pfad)
+file = open(/sys/bus/w1/devices)
 filecontent = file.read()
 file.close()
 
