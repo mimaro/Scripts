@@ -44,7 +44,7 @@ def readTempLines(sensorName) :
 #except Exception as e:
     #print(str(e))
     #sys.exit(1)
-#finally:
+finally:
     # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
-    #print('Programm wird beendet.')
-   # sys.exit(0)
+    print('Programm wird beendet.')
+    sys.exit(0)
