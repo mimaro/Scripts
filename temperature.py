@@ -5,7 +5,7 @@ import time, sys
 # Systempfad zum den Sensor, weitere Systempfade könnten über ein Array
 # oder weiteren Variablen hier hinzugefügt werden.
 # 28-02161f5a48ee müsst ihr durch die eures Sensors ersetzen!
-sensor = '/sys/bus/w1/devices/28-02161f5a48ee/w1_slave'
+sensor = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
  
 def readTempSensor(sensorName) :
     """Aus dem Systembus lese ich die Temperatur der DS18B20 aus."""
