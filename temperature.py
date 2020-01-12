@@ -33,7 +33,7 @@ def readTempLines(sensorName) :
 #try:
     #while True :
         # Mit einem Timestamp versehe ich meine Messung und lasse mir diese in der Console ausgeben.
-    print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
+print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
         # Nach 10 Sekunden erfolgt die nächste Messung
       #  time.sleep(10)
 #except KeyboardInterrupt:
