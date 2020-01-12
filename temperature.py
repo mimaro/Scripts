@@ -13,6 +13,7 @@ def readTempSensor(sensorName) :
     lines = f.readlines()
     f.close()
     return lines
+   print (f)
  
 def readTempLines(sensorName) :
     lines = readTempSensor(sensorName)
