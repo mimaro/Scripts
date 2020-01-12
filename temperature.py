@@ -42,7 +42,7 @@ try:
  #   print('Temperaturmessung wird beendet')
 #except Exception as e:
  #   print(str(e))
-  #  sys.exit(1)
+    sys.exit(1)
 #finally:
     # Das Programm wird hier beendet, sodass kein Fehler in die Console geschrieben wird.
  #   print('Programm wird beendet.')
