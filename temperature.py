@@ -31,7 +31,7 @@ def readTempLines(sensorName) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius, tempKelvin, tempFahrenheit]
         print (str(readTempLines(sensor)[0])
- 
+
 try:
     while True :
         # Mit einem Timestamp versehe ich meine Messung und lasse mir diese in der Console ausgeben.
