@@ -37,5 +37,3 @@ temp_2 =  str(readTempLines(sensor2)[0])
 print (temp_1)
 print (temp_2)
 
-#print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor1)[0]) + " °C")
-#print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor2)[0]) + " °C")
