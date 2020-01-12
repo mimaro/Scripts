@@ -52,14 +52,14 @@ def readTempLines(sensor1) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         print= tempCelsius   
     
-    
+    logging.info("********************************")
     
 #def main():    
  #   write_vals(UUID["COP_o_venti"], cop_o_venti)
   #  write_vals(UUID["COP_m_venti"], cop_m_venti)
    
-#if __name__ == "__main__":
-#main()
+if __name__ == "__main__":
+main()
 
 
 
