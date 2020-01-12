@@ -8,8 +8,6 @@ import datetime
 import logging
 import sys
 
-
-
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
 UUID = {
@@ -48,22 +46,23 @@ def readTempLines(sensorName) :
         #tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius]
-        #temp_1 =  str(readTempLines(sensor1)[0])
-        #temp_2 =  str(readTempLines(sensor2)[0])
+
+temp_1 =  str(readTempLines(sensor1)[0])
+temp_2 =  str(readTempLines(sensor2)[0])
         #write_vals(UUID["Puffer_mitte"], temp_1)
         #write_vals(UUID["Puffer_unten"], temp_2)
-        #print (temp_1)
-        #print (temp_2)
+print (temp_1)
+print (temp_2)
 
-def main():
-    logging.info("********************************")
-    logging.info("Temp_schreiben")
-    temp_1 =  (str(readTempLines(sensor1)[0]))
-    temp_2 =  (str(readTempLines(sensor2)[0]))
-    write_vals(UUID["Puffer_mitte"], temp_1)
-    write_vals(UUID["Puffer_unten"], temp_2)
+#def main():
+    #logging.info("********************************")
+    #logging.info("Temp_schreiben")
+    #temp_1 =  (str(readTempLines(sensor1)[0]))
+    #temp_2 =  (str(readTempLines(sensor2)[0]))
+    #write_vals(UUID["Puffer_mitte"], temp_1)
+    #write_vals(UUID["Puffer_unten"], temp_2)
    
-if __name__ == "__main__":
+#if __name__ == "__main__":
     #main()
 
 
