@@ -31,5 +31,8 @@ def readTempLines(sensorName) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         #return [tempCelsius, tempKelvin, tempFahrenheit]
  
-print (str(readTempLines(sensor1)[0]))
-print (str(readTempLines(sensor2)[0]))     
+sensor_3 = (str(readTempLines(sensor1)[0]))
+sensor_4 = (str(readTempLines(sensor2)[0])) 
+
+print (sensor3)
+print (sensor4)     
