@@ -3,9 +3,9 @@
 import time 
 import sys
 
-sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
+pfad = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 
-def LeseAktuelleTemperatur(sensor1):
+def LeseAktuelleTemperatur(pfad):
 
 # 1-wire Slave Datei lesen
 file = open(pfad)
