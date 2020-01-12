@@ -5,8 +5,9 @@ import time, sys
 # Systempfad zum den Sensor, weitere Systempfade könnten über ein Array
 # oder weiteren Variablen hier hinzugefügt werden.
 # 28-02161f5a48ee müsst ihr durch die eures Sensors ersetzen!
-sensor = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
- 
+sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
+sensor2 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+
 def readTempSensor(sensorName) :
     """Aus dem Systembus lese ich die Temperatur der DS18B20 aus."""
     f = open(sensorName, 'r')
@@ -30,5 +31,5 @@ def readTempLines(sensorName) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius, tempKelvin, tempFahrenheit]
  
-print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor)[0]) + " °C")
-       
+print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor1)[0]) + " °C")
+print("Temperatur um " + time.strftime('%H:%M:%S') +" drinnen: " + str(readTempLines(sensor2)[0]) + " °C")     
