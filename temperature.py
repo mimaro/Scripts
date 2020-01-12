@@ -16,6 +16,7 @@ def readTempSensor(sensorName) :
  
 def readTempLines(sensorName) :
     lines = readTempSensor(sensorName)
+  
     # Solange nicht die Daten gelesen werden konnten, bin ich hier in einer Endlosschleife
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
@@ -29,7 +30,8 @@ def readTempLines(sensorName) :
         tempFahrenheit = float(tempData) / 1000 * 9.0 / 5.0 + 32.0
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius, tempKelvin, tempFahrenheit]
- 
+       
+print (lines) 
 sensor_1 = (str(readTempLines(sensor)[0])) 
  
 #try:
