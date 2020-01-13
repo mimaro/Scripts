@@ -24,10 +24,10 @@ UUID = {
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 sensor2 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-sensor3 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-sensor4 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-sensor5 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-sensor6 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+#sensor3 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+#sensor4 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+#sensor5 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+#sensor6 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
 
 ##############################################################
 
@@ -62,26 +62,26 @@ def readTempLines(sensorName) :
 
 temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
-temp_3 =  str(readTempLines(sensor3)[0])
-temp_4 =  str(readTempLines(sensor4)[0])
-temp_5 =  str(readTempLines(sensor5)[0])
-temp_6 =  str(readTempLines(sensor6)[0])
+#temp_3 =  str(readTempLines(sensor3)[0])
+#temp_4 =  str(readTempLines(sensor4)[0])
+#temp_5 =  str(readTempLines(sensor5)[0])
+#temp_6 =  str(readTempLines(sensor6)[0])
 #temp_7 =  str(temp_5 - temp_6)
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
-write_vals(UUID["BWW_mitte"], temp_3)
-write_vals(UUID["BWW_oben"], temp_4)
-write_vals(UUID["HG_VL"], temp_5)
-write_vals(UUID["HG_RL"], temp_6)
+#write_vals(UUID["BWW_mitte"], temp_3)
+#write_vals(UUID["BWW_oben"], temp_4)
+#write_vals(UUID["HG_VL"], temp_5)
+#write_vals(UUID["HG_RL"], temp_6)
 #write_vals(UUID["HG_diff"], temp_7)
 
 print (temp_1)
 print (temp_2)
-print (temp_3)
-print (temp_4)
-print (temp_5)
-print (temp_6)
+#print (temp_3)
+#print (temp_4)
+#print (temp_5)
+#print (temp_6)
 #print (temp_7)
 
 
