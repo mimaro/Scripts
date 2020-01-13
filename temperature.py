@@ -66,7 +66,7 @@ temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
 temp_5 =  str(readTempLines(sensor5)[0])
 temp_6 =  str(readTempLines(sensor6)[0])
-temp_7 =  str(temp_5 - temp_6)
+#temp_7 =  str(temp_5 - temp_6)
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
@@ -74,7 +74,7 @@ write_vals(UUID["BWW_mitte"], temp_3)
 write_vals(UUID["BWW_oben"], temp_4)
 write_vals(UUID["HG_VL"], temp_5)
 write_vals(UUID["HG_RL"], temp_6)
-write_vals(UUID["HG_diff"], temp_7)
+#write_vals(UUID["HG_diff"], temp_7)
 
 print (temp_1)
 print (temp_2)
@@ -82,7 +82,7 @@ print (temp_3)
 print (temp_4)
 print (temp_5)
 print (temp_6)
-print (temp_7)
+#print (temp_7)
 
 
 
