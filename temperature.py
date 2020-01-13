@@ -26,8 +26,8 @@ sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 sensor2 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
 sensor3 = '/sys/bus/w1/devices/28-0302977901be/w1_slave'
 sensor4 = '/sys/bus/w1/devices/28-030297796ad5/w1_slave'
-sensor5 = '/sys/bus/w1/devices/28-c80e97e16ad5/w1_slave'
-sensor6 = '/sys/bus/w1/devices/28-280e97e16ad5/w1_slave'
+sensor5 = '/sys/bus/w1/devices/28-03029779113a/w1_slave'
+sensor6 = '/sys/bus/w1/devices/28-030297791325/w1_slave'
 
 ##############################################################
 
