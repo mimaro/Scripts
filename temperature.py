@@ -14,15 +14,20 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 
 UUID = {
     "Puffer_mitte": "63917860-3542-11ea-adc8-b388fcd48c7a",
-    "Puffer_unten": "68026710-3542-11ea-8d35-bdb641e3ce2b"
+    "Puffer_unten": "68026710-3542-11ea-8d35-bdb641e3ce2b",
+    "BWW_mitte": "e207c010-3630-11ea-8ccb-fdd7c2918630",
+    "BWW_oben": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
+    "HG_VL": "cd28ac80-3630-11ea-b83a-3dc3acc4c33d",
+    "HG_RL": "d06db0f0-3630-11ea-8cc1-9bd4441efb71",
+    "HG_diff": "d55719c0-3630-11ea-8764-7948b890f2b2",
 }
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 sensor2 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-#sensor3 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-#sensor4 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-#sensor5 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
-#sensor6 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+sensor3 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+sensor4 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+sensor5 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
+sensor6 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
 
 ##############################################################
 
@@ -57,25 +62,27 @@ def readTempLines(sensorName) :
 
 temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
-#temp_3 =  str(readTempLines(sensor3)[0])
-#temp_4 =  str(readTempLines(sensor4)[0])
-#temp_5 =  str(readTempLines(sensor5)[0])
-#temp_6 =  str(readTempLines(sensor6)[0])
+temp_3 =  str(readTempLines(sensor3)[0])
+temp_4 =  str(readTempLines(sensor4)[0])
+temp_5 =  str(readTempLines(sensor5)[0])
+temp_6 =  str(readTempLines(sensor6)[0])
+temp_7 = temp_5 - temp_6
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
-#write_vals(UUID["Puffer_unten"], temp_3)
-#write_vals(UUID["Puffer_unten"], temp_4)
-#write_vals(UUID["Puffer_unten"], temp_5)
-#
-write_vals(UUID["Puffer_unten"], temp_6)
+write_vals(UUID["BWW_mitte"], temp_3)
+write_vals(UUID["BWW_oben"], temp_4)
+write_vals(UUID["HG_VL"], temp_5)
+write_vals(UUID["HG_RL"], temp_6)
+write_vals(UUID["HG_diff"], temp_7)
 
-#print (temp_1)
-#print (temp_2)
-#print (temp_3)
-#print (temp_4)
-#print (temp_5)
-#print (temp_6)
+print (temp_1)
+print (temp_2)
+print (temp_3)
+print (temp_4)
+print (temp_5)
+print (temp_6)
+print (temp_7)
 
 
 
