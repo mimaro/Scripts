@@ -23,6 +23,8 @@ UUID = {
     "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
     "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd",
+    "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
+    "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b"
 }
 
 
@@ -34,7 +36,7 @@ FREIGABE_WARM_P = 600
 FREIGABE_KALT_P = 1400
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_SONDERBETRIEB = 100
+SPERRUNG_SONDERBETRIEB = 50
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
@@ -176,7 +178,9 @@ def main():
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
-    write_vals(UUID["Sperrung_excess"], b_sperrung_excess)   
+    write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
+    write_vals(UUID["Bilanz_avg_aus"], p_net2)
+    write_vals(UUID["Bilanz_avg_ein"], p_net)
    
    #Modbus Werte in für Sonderbetrieb ein schreiben 
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
