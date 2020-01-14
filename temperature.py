@@ -86,6 +86,6 @@ def main():
     write_vals(UUID["P_therm"], P_therm_HG)
    
 if __name__ == "__main__":
-main()
+    main()
 
 
