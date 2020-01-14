@@ -66,7 +66,7 @@ temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
-P_therm_HG = str((temp5-temp6)*1.16*0.9)
+P_therm_HG = str((temp_5-temp_6)*1.16*0.9)
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
