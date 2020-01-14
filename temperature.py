@@ -19,7 +19,6 @@ UUID = {
     "BWW_oben": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
     "HG_VL": "cd28ac80-3630-11ea-b83a-3dc3acc4c33d",
     "HG_RL": "d06db0f0-3630-11ea-8cc1-9bd4441efb71",
-    "HG_diff": "d55719c0-3630-11ea-8764-7948b890f2b2",
 }
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
@@ -71,8 +70,8 @@ write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
 write_vals(UUID["BWW_mitte"], temp_3)
 write_vals(UUID["BWW_oben"], temp_4)
-write_vals(UUID["HG_VL"], temp_5)
-write_vals(UUID["HG_RL"], temp_6)
+write_vals(UUID["HG_VL"], temp_5+1)
+write_vals(UUID["HG_RL"], temp_6+1)
 
 print (temp_1)
 print (temp_2)
