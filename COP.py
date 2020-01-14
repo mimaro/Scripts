@@ -52,6 +52,8 @@ def main():
     write_vals(UUID["COP_m_venti"], cop_m_venti)
     write_vals(UUID["P_therm"], p_therm_HG)
     print (p_therm_HG)
+    print (t_rl)
+    print (t_vl)
 
  
 if __name__ == "__main__":
