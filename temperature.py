@@ -63,8 +63,8 @@ temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
 temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
-temp_5 =  str(readTempLines(sensor5)[0]) + 1
-temp_6 =  str(readTempLines(sensor6)[0]) + 1
+temp_5 =  str(readTempLines(sensor5)[0]+1) 
+temp_6 =  str(readTempLines(sensor6)[0]+1) 
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
