@@ -73,12 +73,12 @@ write_vals(UUID["BWW_oben"], temp_4)
 write_vals(UUID["HG_VL"], temp_5)
 write_vals(UUID["HG_RL"], temp_6)
 
-print (temp_1)
-print (temp_2)
-print (temp_3)
-print (temp_4)
-print (temp_5)
-print (temp_6)
+#print (temp_1)
+#print (temp_2)
+#print (temp_3)
+#print (temp_4)
+#print (temp_5)
+#print (temp_6)
 
 
 
