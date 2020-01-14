@@ -81,11 +81,9 @@ write_vals(UUID["HG_RL"], temp_6)
 #print (temp_5)
 #print (temp_6)
 
-def main():
-    P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
-    write_vals(UUID["P_therm"], P_therm_HG)
+P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
+write_vals(UUID["P_therm"], P_therm_HG)
    
-if __name__ == "__main__":
-    main()
+
 
 
