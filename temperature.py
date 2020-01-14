@@ -66,7 +66,6 @@ temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
-P_therm_HG = int(input((temp_5 - temp_6)*1.16*0.9))
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
@@ -74,7 +73,6 @@ write_vals(UUID["BWW_mitte"], temp_3)
 write_vals(UUID["BWW_oben"], temp_4)
 write_vals(UUID["HG_VL"], temp_5)
 write_vals(UUID["HG_RL"], temp_6)
-write_vals(UUID["P_therm"], P_therm_HG)
 
 #print (temp_1)
 #print (temp_2)
@@ -83,7 +81,11 @@ write_vals(UUID["P_therm"], P_therm_HG)
 #print (temp_5)
 #print (temp_6)
 
-
-
+def main():
+    P_therm_HG = (temp_5 - temp_6)*1.16*0.9
+    write_vals(UUID["P_therm"], P_therm_HG)
+   
+if __name__ == "__main__":
+main()
 
 
