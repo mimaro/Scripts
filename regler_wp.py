@@ -32,8 +32,8 @@ UUID = {
 FREIGABE_NORMAL_TEMP = 14
 
 #Freigabewerte für Sonderbetrieb nach Leistung
-FREIGABE_WARM_P = 600
-FREIGABE_KALT_P = 1400
+FREIGABE_WARM_P = 1000
+FREIGABE_KALT_P = 1000
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
 SPERRUNG_SONDERBETRIEB = 50
@@ -60,14 +60,14 @@ SB_AUS_HK2_ST = 0.40
 AB_aus = datetime.time(5, 0)
 AB_ein = datetime.time(21, 0)
 AB_AUS_HK1_T = 5
-AB_AUS_HK2_T = 21
+AB_AUS_HK2_T = 20
 AB_EIN_HK1_T = 5
-AB_EIN_HK2_T = 19
+AB_EIN_HK2_T = 18
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 21 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
-HK2_min = 21
+HK1_min = 20 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK2_min = 20
 HK1_max = 30
 HK2_max = 30
 HK1_Diff_max = HK1_max - HK1_min
