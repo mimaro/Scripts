@@ -142,9 +142,9 @@ def main():
     
     #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
-        UUID["Power_balance"], duration="-15min")["data"]["average"]
+        UUID["Power_balance"], duration="-5min")["data"]["average"]
     p_charge = get_vals(UUID["Charge_station"],
-                        duration="-15min")["data"]["average"]
+                        duration="-5min")["data"]["average"]
     p_net = power_balance - p_charge
     print("Aktuelle Bilanz =",p_net)
     
