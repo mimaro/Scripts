@@ -33,11 +33,11 @@ UUID = {
 FREIGABE_NORMAL_TEMP = 14
 
 #Freigabewerte für Sonderbetrieb nach Leistung
-FREIGABE_WARM_P = 1500
-FREIGABE_KALT_P = 1500
+FREIGABE_WARM_P = 1600
+FREIGABE_KALT_P = 1600
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_SONDERBETRIEB = 50
+SPERRUNG_SONDERBETRIEB = 1600
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
@@ -143,20 +143,20 @@ def main():
     
     #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
-        UUID["Power_balance"], duration="-5min")["data"]["average"]
+        UUID["PV-Produktion"], duration="-5min")["data"]["average"]
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-5min")["data"]["average"]
     p_wp = get_vals(UUID["WP_Verbrauch"],
                         duration="-5min")["data"]["average"]
-    p_net = power_balance - p_charge - p_wp
+    p_net = power_balance 
     print("Aktuelle Bilanz =",p_net)
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
-        UUID["Power_balance"], duration="-30min")["data"]["average"]
+        UUID["PV-Produktion"], duration="-30min")["data"]["average"]
     p_charge2 = get_vals(UUID["Charge_station"],
                         duration="-30min")["data"]["average"]
-    p_net2 = power_balance2 - p_charge2
+    p_net2 = power_balance2 
     print("Aktuelle Bilanz =",p_net2)
         
     logging.info("Start Freigabe Zeit & Normalbetrieb")  
@@ -174,9 +174,9 @@ def main():
     #Generiere Freigabe-sperrsignal Leistung
     logging.info("Start Freigabe Leistung")
     p_freigabe_now = get_freigabezeit_excess(t_now)
-    if p_net < p_freigabe_now:
+    if p_net > p_freigabe_now:
         b_freigabe_excess = 1
-    if p_net2 > SPERRUNG_SONDERBETRIEB:
+    if p_net2 < SPERRUNG_SONDERBETRIEB:
         b_sperrung_excess = 1
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
