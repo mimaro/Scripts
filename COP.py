@@ -47,7 +47,7 @@ def main():
     t_vl = get_vals(UUID["HG_RL"])["data"]["tuples"][0][1]
     cop_o_venti = wp_therm / wp_el
     cop_m_venti = wp_therm / (wp_el + venti)
-    p_therm_HG = (t_vl-t_rl)*1160*1.4
+    p_therm_HG = (t_vl-t_rl)*1160*1.35
     write_vals(UUID["COP_o_venti"], cop_o_venti)
     write_vals(UUID["COP_m_venti"], cop_m_venti)
     write_vals(UUID["P_therm"], p_therm_HG)
