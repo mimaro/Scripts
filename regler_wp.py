@@ -153,7 +153,7 @@ def main():
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
-        UUID["PV_Produktion"], duration="-30min")["data"]["average"]
+        UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_charge2 = get_vals(UUID["Charge_station"],
                         duration="-30min")["data"]["average"]
     p_net2 = power_balance2 
