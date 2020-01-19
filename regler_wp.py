@@ -24,7 +24,8 @@ UUID = {
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
     "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd",
     "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
-    "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b"
+    "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
+    "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9"
 }
 
 
@@ -145,7 +146,9 @@ def main():
         UUID["Power_balance"], duration="-5min")["data"]["average"]
     p_charge = get_vals(UUID["Charge_station"],
                         duration="-5min")["data"]["average"]
-    p_net = power_balance - p_charge
+    p_wp = get_vals(UUID["WP_Verbrauch"],
+                        duration="-5min")["data"]["average"]
+    p_net = power_balance - p_charge - p_wp
     print("Aktuelle Bilanz =",p_net)
     
     #Ausschaltsignal Sonderbetrieb 
