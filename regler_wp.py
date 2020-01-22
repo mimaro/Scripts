@@ -63,7 +63,7 @@ AB_ein = datetime.time(21, 0)
 AB_AUS_HK1_T = 5
 AB_AUS_HK2_T = 20
 AB_EIN_HK1_T = 5
-AB_EIN_HK2_T = 18
+AB_EIN_HK2_T = 20
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
