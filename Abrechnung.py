@@ -14,7 +14,7 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 # Configuration
 UUID = {
     "Bilanz_8a": "9b251460-35ae-11e9-ba29-959207ffefe4",
-    "Uberschuss_8a": "4969e720-3e17-11ea-b1b1-bdbc58c0d681"
+    "Ueberschuss_8a": "4969e720-3e17-11ea-b1b1-bdbc58c0d681"
 }
 
 ###########################################################################################################
@@ -40,7 +40,7 @@ def main():
         
     else:
         ueberschuss_8a = 0
-    write_vals(UUID["COP_o_venti"], ueberschuss_8a) 
+    write_vals(UUID["Ueberschuss_8a"], ueberschuss_8a) 
 
  
 if __name__ == "__main__":
