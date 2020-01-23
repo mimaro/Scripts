@@ -35,7 +35,7 @@ def main():
     logging.info("********************************")
     logging.info("Ueberschuss")
     balance_8a = get_vals(UUID["Bilanz_8a"])["data"]["tuples"][0][1]
-    if  balance_8a > 0:
+    if  balance_8a <= 0:
         ueberschuss_8a = balance_8a
         
     else:
