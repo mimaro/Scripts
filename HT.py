@@ -58,7 +58,7 @@ def main():
     
    
     
-    if  (time > HT_ein_Mo_Fr & time < HT_aus_Mo_Fr):
+    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr):
         print ("Hochtarifzeit")
     else:
         print ("scheisse")
