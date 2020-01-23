@@ -61,22 +61,19 @@ def main():
    
     
     if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr and day < 5):
-        write_vals(UUID["Tarifumschaltung"], 1) 
+        write_vals(UUID["Tarifschaltung"], 1) 
         print(1)
         
     if  (HT_aus_Sa < time > HT_ein_Sa and day == 5):    
-        write_vals(UUID["Tarifumschaltung"], 1) 
+        write_vals(UUID["Tarifschaltung"], 1) 
         print(1)
   
     else:
-        write_vals(UUID["Tarifumschaltung"], 0) 
+        write_vals(UUID["Tarifschaltung"], 0) 
         print (0)
-    
-      
-    
-    
-   
-   #write_vals(UUID["Tarifumschaltung"], r_n_8a)  
+        
+ 
+     
 
 if __name__ == "__main__":
      main()
