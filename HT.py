@@ -64,7 +64,7 @@ def main():
         write_vals(UUID["Tarifumschaltung"], 1) 
         print(1)
         
-    if  (HT_aus_Sa < time > HT_ein_Sa and day = 5):    
+    if  (HT_aus_Sa < time > HT_ein_Sa and day == 5):    
         write_vals(UUID["Tarifumschaltung"], 1) 
         print(1)
   
