@@ -3,6 +3,7 @@ import json
 import pprint
 import datetime
 import logging
+import pytz
 
 #######################################################################################################
 # Format URLs
@@ -104,6 +105,26 @@ def main():
     r_n_8a = r_8a/(r_8a + r_8b + r_8c) * r_zev
     r_n_8b = r_8b/(r_8a + r_8b + r_8c) * r_zev
     r_n_8c = r_8b/(r_8a + r_8b + r_8c) * r_zev
+    
+    
+    #Definition Hoch- / Niedertarif
+    tz = pytz.UTC
+      
+   
+    now = datetime.datetime.now(tz=tz)
+    
+    
+    
+     from datetime import date
+>>> heute = date.today()
+>>> print heute
+2005-09-19
+>>> print heute.weekday()
+0
+>>> print ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")[heute.weekday()]
+Montag
+    
+    
     
     #Schreibe Netzbezug, Netzrückspeisung in Abhängigkeit HT / NT
     if t_ht = 1
