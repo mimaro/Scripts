@@ -47,9 +47,9 @@ def main():
   
     
     #Definition Hoch- / Niedertarif
-    tz = pytz.UTC
+    #tz = pytz.UTC
    
-    now = datetime.datetime.now(tz=tz)
+   #now = datetime.datetime.now(tz=tz)
     
     
     
