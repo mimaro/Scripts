@@ -57,8 +57,8 @@ def main():
     from datetime import time
     day = date.today()
     time = time.now()
-    print day
-    print time
+    print (day)
+    print (time)
    
    
     
