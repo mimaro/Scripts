@@ -42,8 +42,6 @@ def write_vals(uuid, val):
 def main():
     tz = pytz.UTC
     logging.basicConfig(level=logging.INFO)
-    logging.info("*****************************")
-    logging.info("*Starting WP controller")
     now = datetime.datetime.now(tz=tz)
     logging.info("UTC time: {}".format(now))
     logging.info("*****************************")
@@ -58,7 +56,9 @@ def main():
     time = now.time()
     #print (day)
     
-    if  now.time() > HT_ein_Mo_Fr:
+   
+    
+    if  (time > HT_ein_Mo_Fr & time < HT_aus_Mo_Fr):
         print ("Hochtarifzeit")
     else:
         print ("scheisse")
