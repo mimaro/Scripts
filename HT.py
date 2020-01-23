@@ -39,11 +39,8 @@ def main():
   
     
     #Definition Hoch- / Niedertarif
-    tz = pytz.UTC
-   
-    now = datetime.datetime.now(tz=tz)
-    
-    
+       
+    now = datetime.datetime.now()  
     
     from datetime import date
     from datetime import time
@@ -53,6 +50,8 @@ def main():
     print (time)
    
    
+        
+    
     
    
    #write_vals(UUID["Tarifumschaltung"], r_n_8a) 
