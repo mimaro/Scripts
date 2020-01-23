@@ -11,14 +11,6 @@ VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 ########################################################################################################
 
-#r_n = Rückspeisung Netz
-#r_zev = Rückspeisung ZEV
-#b_zev = Bezug ZEV
-#b_n = Bezug Netz
-#ht = Hochtarif
-#nt = Niedertarif
-#v = Verbrauch
-
 
 #######################################################################################################
 # Configuration
@@ -47,9 +39,9 @@ def main():
   
     
     #Definition Hoch- / Niedertarif
-    #tz = pytz.UTC
+    tz = pytz.UTC
    
-   #now = datetime.datetime.now(tz=tz)
+    now = datetime.datetime.now(tz=tz)
     
     
     
