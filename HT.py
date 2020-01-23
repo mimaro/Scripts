@@ -55,7 +55,7 @@ def main():
     #from datetime import date
     #from datetime import time
     #day = date.today()
-    time = time.now()
+    time = now.time()
     #print (day)
     print (time)
    
