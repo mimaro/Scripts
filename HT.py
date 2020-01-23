@@ -57,7 +57,11 @@ def main():
     #day = date.today()
     time = now.time()
     #print (day)
-    print (time)
+    
+    if now.time() > HT_ein_Mo_Fr & < HT_aus_Mo_Fr:
+        print ("Hochtarifzeit")
+    
+    
    
    
         
