@@ -72,6 +72,5 @@ def main():
    #write_vals(UUID["Tarifumschaltung"], r_n_8a) 
        
 
-    
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+     main()
