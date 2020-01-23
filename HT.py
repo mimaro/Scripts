@@ -61,16 +61,13 @@ def main():
     if  now.time() > HT_ein_Mo_Fr:
         print ("Hochtarifzeit")
     else:
-        print ("scheisse"
+        print ("scheisse")
     
-   
-   
-        
+      
     
     
    
-   #write_vals(UUID["Tarifumschaltung"], r_n_8a) 
-       
+   #write_vals(UUID["Tarifumschaltung"], r_n_8a)  
 
 if __name__ == "__main__":
      main()
