@@ -55,8 +55,8 @@ def main():
     #from datetime import time
     #day = date.today()
     time = now.time()
-    day = today.day()
-    #print (day)
+    day = now.weekday()
+    print (day)
     
    
     
