@@ -43,6 +43,7 @@ def main():
     tz = pytz.UTC
     logging.basicConfig(level=logging.INFO)
     now = datetime.datetime.now(tz=tz)
+    today = datetime.date.today()
     logging.info("UTC time: {}".format(now))
     logging.info("*****************************")
     
