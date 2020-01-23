@@ -54,12 +54,15 @@ def main():
     #from datetime import time
     #day = date.today()
     time = now.time()
+    day = now.day()
     #print (day)
     
    
     
-    if  (HT_aus_Mo_Fr > time < HT_ein_Mo_Fr):
+    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr):
         print ("Hochtarifzeit")
+        
+  
     else:
         print ("scheisse")
     
