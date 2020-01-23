@@ -60,7 +60,7 @@ def main():
     
    
     
-    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr & time < 5:
+    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr & day < 5:
         print ("1")
         
   
