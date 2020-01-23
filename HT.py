@@ -61,11 +61,16 @@ def main():
    
     
     if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr and day < 5):
-        print ("1")
+        write_vals(UUID["Tarifumschaltung"], 1) 
+        print(1)
         
+    if  (HT_aus_Sa < time > HT_ein_Sa and day = 5):    
+        write_vals(UUID["Tarifumschaltung"], 1) 
+        print(1)
   
     else:
-        print ("scheisse")
+        write_vals(UUID["Tarifumschaltung"], 0) 
+        print (0)
     
       
     
