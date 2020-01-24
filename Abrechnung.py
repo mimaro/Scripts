@@ -134,7 +134,7 @@ def main():
         print (t_ht) 
     
     #Schreibe Netzbezug, Netzrückspeisung in Abhängigkeit HT / NT
-    if t_ht = 1
+    if t_ht == 1
         write_vals(UUID["R_N_HT_8a"], r_n_8a) 
         write_vals(UUID["R_N_NT_8a"], 0) 
         #write_vals(UUID["R_N_HT_8b"], r_n_8b) 
