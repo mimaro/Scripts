@@ -39,11 +39,11 @@ UUID = {
     "R_N_HT_8a": "4b43ffc0-3e86-11ea-8f8a-a7e9720ddd79", 
     "R_N_NT_8a": "50820b60-3e86-11ea-b095-13c186d2fcd6", 
     "B_N_HT_8a": "55de7c70-3e86-11ea-9226-0f91d3b62fe3", 
-    "B_N_NT_8a": "	5abe1170-3e86-11ea-bd98-e31904c87335", 
+    "B_N_NT_8a": "5abe1170-3e86-11ea-bd98-e31904c87335", 
     "B_N_HT_8b": "606ad260-3e86-11ea-b7aa-cf34688802be", 
     "B_N_NT_8b": "5d4e2a00-3e86-11ea-ac59-6f12625419a5", 
     "B_N_HT_8c": "631d34f0-3e86-11ea-ab17-832a0fd324f5", 
-    "B_N_NT_8c": "	660c4f20-3e86-11ea-9da1-7113cf8e9e66", 
+    "B_N_NT_8c": "660c4f20-3e86-11ea-9da1-7113cf8e9e66", 
     "Tarifschaltung": "b646b7f0-3e2c-11ea-abd8-6121bdf54191"
 }
 
