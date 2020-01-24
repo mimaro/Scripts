@@ -51,7 +51,7 @@ def main():
     time = now.time()
     day = now.weekday()
      
-    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr and day < 5) or (HT_aus_Sa < time > HT_ein_Sa and day == 5):
+    if  (HT_aus_Mo_Fr > time > HT_ein_Mo_Fr and day < 5) or (HT_aus_Sa > time > HT_ein_Sa and day == 5):
         write_vals(UUID["Tarifschaltung"], 1) 
         print(1)
      
