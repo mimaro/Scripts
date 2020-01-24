@@ -105,12 +105,12 @@ def main():
     b_zev_8a = v_8a - b_n_8a
     b_zev_8b = v_8b - b_n_8b
     b_zev_8c = v_8c - b_n_8c
-    r_zev_8a = r_8a/(r_8a + r_8b + r_8c)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
-    r_zev_8b = r_8b/(r_8a + r_8b + r_8c)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
-    r_zev_8c = r_8c/(r_8a + r_8b + r_8c)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
-    r_n_8a = r_8a/(r_8a + r_8b + r_8c) * r_zev
-    r_n_8b = r_8b/(r_8a + r_8b + r_8c) * r_zev
-    r_n_8c = r_8b/(r_8a + r_8b + r_8c) * r_zev
+    r_zev_8a = r_8a/(r_8a + r_8b + r_8c + 0.00001)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
+    r_zev_8b = r_8b/(r_8a + r_8b + r_8c + 0.00001)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
+    r_zev_8c = r_8c/(r_8a + r_8b + r_8c + 0.00001)*(b_zev_8a + b_zev_8b + b_zev_8c) * -1
+    r_n_8a = r_8a/(r_8a + r_8b + r_8c + 0.00001) * r_zev
+    r_n_8b = r_8b/(r_8a + r_8b + r_8c + 0.00001) * r_zev
+    r_n_8c = r_8b/(r_8a + r_8b + r_8c + 0.00001) * r_zev
        
     #Umschaltzeiten Hoch- Niedertarig
     tz = pytz.UTC
