@@ -37,7 +37,6 @@ def write_vals(uuid, val):
     logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     logging.info("Ok? {}".format(postreq.ok))
- 
     
 def main():
     tz = pytz.UTC
@@ -47,33 +46,18 @@ def main():
     logging.info("UTC time: {}".format(now))
     logging.info("*****************************")
     
-    
     #Definition Hoch- / Niedertarif
      
-    
-    #from datetime import date
-    #from datetime import time
-    #day = date.today()
     time = now.time()
     day = now.weekday()
-    print (day)
-    
-   
-    
-    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr and day < 5):
+     
+    if  (HT_aus_Mo_Fr < time > HT_ein_Mo_Fr and day < 5) or (HT_aus_Sa < time > HT_ein_Sa and day == 5):
         write_vals(UUID["Tarifschaltung"], 1) 
         print(1)
-        
-    if  (HT_aus_Sa < time > HT_ein_Sa and day == 5):    
-        write_vals(UUID["Tarifschaltung"], 1) 
-        print(1)
-  
+     
     else:
         write_vals(UUID["Tarifschaltung"], 0) 
-        print (0)
-        
- 
-     
+        print (0) 
 
 if __name__ == "__main__":
      main()
