@@ -19,6 +19,12 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 #nt = Niedertarif
 #v = Verbrauch
 
+#######################################################################################################
+
+HT_ein_Mo_Fr = datetime.time(7, 0)
+HT_aus_Mo_Fr = datetime.time(20, 0)
+HT_ein_Sa = datetime.time(7, 0)
+HT_aus_Sa = datetime.time(13, 0)
 
 #######################################################################################################
 # Configuration
@@ -38,7 +44,7 @@ UUID = {
     "B_N_NT_8b": "
     "B_N_HT_8c": "
     "B_N_NT_8c": "
-    
+    "Tarifschaltung": "b646b7f0-3e2c-11ea-abd8-6121bdf54191"
 }
 
 ###########################################################################################################
@@ -105,26 +111,27 @@ def main():
     r_n_8a = r_8a/(r_8a + r_8b + r_8c) * r_zev
     r_n_8b = r_8b/(r_8a + r_8b + r_8c) * r_zev
     r_n_8c = r_8b/(r_8a + r_8b + r_8c) * r_zev
-    
-    
-    #Definition Hoch- / Niedertarif
+       
+    #Umschaltzeiten Hoch- Niedertarig
     tz = pytz.UTC
-      
-   
+    logging.basicConfig(level=logging.INFO)
     now = datetime.datetime.now(tz=tz)
-    
-    
-    
-     from datetime import date
->>> heute = date.today()
->>> print heute
-2005-09-19
->>> print heute.weekday()
-0
->>> print ("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag")[heute.weekday()]
-Montag
-    
-    
+    today = datetime.date.today()
+    logging.info("UTC time: {}".format(now))
+    logging.info("*****************************")
+         
+    time = now.time()
+    day = now.weekday()
+     
+    if  (HT_aus_Mo_Fr > time > HT_ein_Mo_Fr and day < 5) or (HT_aus_Sa > time > HT_ein_Sa and day == 5):
+        t_ht = 1
+        write_vals(UUID["Tarifschaltung"], 1) 
+        print (t_ht)
+     
+    else:
+        t_ht = 0
+        write_vals(UUID["Tarifschaltung"], 0) 
+        print (t_ht) 
     
     #Schreibe Netzbezug, Netzrückspeisung in Abhängigkeit HT / NT
     if t_ht = 1
