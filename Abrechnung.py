@@ -32,18 +32,18 @@ UUID = {
     "Bilanz_8a": "9b251460-35ae-11e9-ba29-959207ffefe4",
     "Bilanz_8b": "1e4b1530-4fc9-11e9-b832-cf5186ec2738", 
     "Bilanz_8c": "213946b0-4fc9-11e9-aacc-758bb6712b5f",
-    "Bilanz_ZEV: "
-    "R_ZEV_8a": "
-    "B_ZEV_8b": "
-    "B_ZEV_8c: "
-    "R_N_HT_8a": "
-    "R_N_NT_8a": "
-    "B_N_HT_8a": "
-    "B_N_NT_8a": "
-    "B_N_HT_8b": "
-    "B_N_NT_8b": "
-    "B_N_HT_8c": "
-    "B_N_NT_8c": "
+    "Bilanz_ZEV: "1669a740-4fc9-11e9-b7f5-0d9eb198ac7e", 
+    "R_ZEV_8a": "37030550-3e86-11ea-b35b-498d9048a2ac", 
+    "B_ZEV_8b": "3fe102c0-3e86-11ea-96b4-357fcc8814ed",
+    "B_ZEV_8c: "42087930-3e86-11ea-bf92-f72ac2a5c880", 
+    "R_N_HT_8a": "4b43ffc0-3e86-11ea-8f8a-a7e9720ddd79", 
+    "R_N_NT_8a": "50820b60-3e86-11ea-b095-13c186d2fcd6", 
+    "B_N_HT_8a": "55de7c70-3e86-11ea-9226-0f91d3b62fe3", 
+    "B_N_NT_8a": "	5abe1170-3e86-11ea-bd98-e31904c87335", 
+    "B_N_HT_8b": "606ad260-3e86-11ea-b7aa-cf34688802be", 
+    "B_N_NT_8b": "5d4e2a00-3e86-11ea-ac59-6f12625419a5", 
+    "B_N_HT_8c": "631d34f0-3e86-11ea-ab17-832a0fd324f5", 
+    "B_N_NT_8c": "	660c4f20-3e86-11ea-9da1-7113cf8e9e66", 
     "Tarifschaltung": "b646b7f0-3e2c-11ea-abd8-6121bdf54191"
 }
 
