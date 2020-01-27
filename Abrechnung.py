@@ -21,10 +21,10 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 
 #######################################################################################################
 
-HT_ein_Mo_Fr = datetime.time(7, 0)
-HT_aus_Mo_Fr = datetime.time(20, 0)
-HT_ein_Sa = datetime.time(7, 0)
-HT_aus_Sa = datetime.time(13, 0)
+HT_ein_Mo_Fr = datetime.time(6, 0)
+HT_aus_Mo_Fr = datetime.time(19, 0)
+HT_ein_Sa = datetime.time(6, 0)
+HT_aus_Sa = datetime.time(12, 0)
 
 #######################################################################################################
 # Configuration
