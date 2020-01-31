@@ -33,11 +33,12 @@ UUID = {
 FREIGABE_NORMAL_TEMP = 14
 
 #Freigabewerte für Sonderbetrieb nach Leistung
-FREIGABE_WARM_P = 800
+FREIGABE_WARM_P = 600
 FREIGABE_KALT_P = 800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_SONDERBETRIEB = 700
+SPERRUNG_WARM_P = FREIGABE_WARM_P - 100
+SPERRUNG_KALT_P = FREIGABE_KALT_P - 100
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
@@ -120,6 +121,12 @@ def get_freigabezeit_excess(t_now):
     logging.info("Freigabe Leistung: {}".format(p_unlock_now))
     return p_unlock_now
 
+def get_sperrleistung(t_now):
+     p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
+        (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
+    logging.info("Freigabe Leistung: {}".format(p_lock_now))
+    return p_lock_now
+
 def main():
     tz = pytz.UTC
     b_freigabe_12h_temp = 0
@@ -174,9 +181,10 @@ def main():
     #Generiere Freigabe-sperrsignal Leistung
     logging.info("Start Freigabe Leistung")
     p_freigabe_now = get_freigabezeit_excess(t_now)
+    p_sperrung_now = get_sperrleistung(t_now)
     if p_net > p_freigabe_now:
         b_freigabe_excess = 1
-    if p_net2 < SPERRUNG_SONDERBETRIEB:
+    if p_net2 < p_sperrung_now:
         b_sperrung_excess = 1
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
