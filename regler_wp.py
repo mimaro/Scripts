@@ -121,7 +121,7 @@ def get_freigabezeit_excess(t_now):
     return p_unlock_now
 
 def get_sperrleistung(t_now):
-     p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
+    p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
     logging.info("Sperrung_Leistung: {}".format(p_lock_now))
     return p_lock_now
