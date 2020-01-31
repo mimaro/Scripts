@@ -117,13 +117,13 @@ def get_freigabezeit_12h_temp(t_roll_avg):
 def get_freigabezeit_excess(t_now):
     p_unlock_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
-    logging.info("Freigabe Leistung: {}".format(p_unlock_now))
+    logging.info("Freigabe_Leistung: {}".format(p_unlock_now))
     return p_unlock_now
 
 def get_sperrleistung(t_now):
      p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
-    logging.info("Sperrung Leistung: {}".format(p_lock_now))
+    logging.info("Sperrung_Leistung: {}".format(p_lock_now))
     return p_lock_now
 
 def main():
