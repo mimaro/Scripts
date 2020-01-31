@@ -95,7 +95,6 @@ CLIENT = ModbusTcpClient(IP_ISG)
 
 def get_vals(uuid, duration="-0min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
-    #return(json.loads(req.content))
     return req.json()
 
 def write_vals(uuid, val):
@@ -124,8 +123,8 @@ def get_freigabezeit_excess(t_now):
 def get_sperrleistung(t_now):
      p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
-    #logging.info("Sperrung Leistung: {}".format(p_lock_now))
-    #return p_lock_now
+    logging.info("Sperrung Leistung: {}".format(p_lock_now))
+    return p_lock_now
 
 def main():
     tz = pytz.UTC
