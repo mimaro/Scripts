@@ -13,7 +13,7 @@ import sys
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
 UUID = {
-    "Puffer_mitte": "63917860-3542-11ea-adc8-b388fcd48c7a",
+    #"Puffer_mitte": "63917860-3542-11ea-adc8-b388fcd48c7a",
     "Puffer_unten": "68026710-3542-11ea-8d35-bdb641e3ce2b",
     "BWW_mitte": "e207c010-3630-11ea-8ccb-fdd7c2918630",
     "BWW_oben": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
@@ -22,7 +22,7 @@ UUID = {
     "P_therm": "1d74a950-36ce-11ea-9c6e-3536550a6365"
 }
 
-sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
+#sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
 sensor2 = '/sys/bus/w1/devices/28-02159245ba37/w1_slave'
 sensor3 = '/sys/bus/w1/devices/28-0302977901be/w1_slave'
 sensor4 = '/sys/bus/w1/devices/28-030297796ad5/w1_slave'
@@ -60,14 +60,14 @@ def readTempLines(sensorName) :
         # Rückgabe als Array - [0] tempCelsius => Celsius...
         return [tempCelsius]
 
-temp_1 =  str(readTempLines(sensor1)[0])
+#temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
 temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
 
-write_vals(UUID["Puffer_mitte"], temp_1)
+#write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
 write_vals(UUID["BWW_mitte"], temp_3)
 write_vals(UUID["BWW_oben"], temp_4)
@@ -75,11 +75,11 @@ write_vals(UUID["HG_VL"], temp_5)
 write_vals(UUID["HG_RL"], temp_6)
 
 #print (temp_1)
-#print (temp_2)
-#print (temp_3)
-#print (temp_4)
-#print (temp_5)
-#print (temp_6)
+print (temp_2)
+print (temp_3)
+print (temp_4)
+print (temp_5)
+print (temp_6)
 
 P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
 write_vals(UUID["P_therm"], P_therm_HG)
