@@ -81,8 +81,8 @@ print (temp_4)
 print (temp_5)
 print (temp_6)
 
-P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
-write_vals(UUID["P_therm"], P_therm_HG)
+#P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
+#write_vals(UUID["P_therm"], P_therm_HG)
    
 
 
