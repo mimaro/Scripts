@@ -19,7 +19,8 @@ UUID = {
     "BWW_oben": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
     "HG_VL": "cd28ac80-3630-11ea-b83a-3dc3acc4c33d",
     "HG_RL": "d06db0f0-3630-11ea-8cc1-9bd4441efb71",
-    "P_therm": "1d74a950-36ce-11ea-9c6e-3536550a6365"
+    "P_therm": "1d74a950-36ce-11ea-9c6e-3536550a6365",
+    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
@@ -28,6 +29,7 @@ sensor3 = '/sys/bus/w1/devices/28-0302977901be/w1_slave'
 sensor4 = '/sys/bus/w1/devices/28-030297796ad5/w1_slave'
 sensor5 = '/sys/bus/w1/devices/28-03029779113a/w1_slave'
 sensor6 = '/sys/bus/w1/devices/28-030297791325/w1_slave'
+sensor7 = '/sys/bus/w1/devices/28-02199245a854/w1_slave'
 
 ##############################################################
 
@@ -66,6 +68,7 @@ temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0])
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
+temp_7 =  str(readTempLines(sensor7)[0]) 
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
@@ -73,6 +76,7 @@ write_vals(UUID["BWW_mitte"], temp_3)
 write_vals(UUID["BWW_oben"], temp_4)
 write_vals(UUID["HG_VL"], temp_5)
 write_vals(UUID["HG_RL"], temp_6)
+write_vals(UUID["T_Raum"], temp_7)
 
 print (temp_1)
 print (temp_2)
@@ -80,6 +84,7 @@ print (temp_3)
 print (temp_4)
 print (temp_5)
 print (temp_6)
+print (temp_7)
 
 #P_therm_HG = str(temp_5)-str(temp_6)*1.16*0.9
 #write_vals(UUID["P_therm"], P_therm_HG)
