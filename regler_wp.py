@@ -25,7 +25,8 @@ UUID = {
     "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd",
     "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
     "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
-    "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9"
+    "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
+    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
 
 
