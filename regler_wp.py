@@ -217,14 +217,14 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
- 
+    
  # Sperrung WP wegen Raumtemp
     RT_akt = get_vals(UUID["T_Raum"],
                         duration="-15min")["data"]["average"] 
     if RT_akt < T_min_Nacht:
-       T_Freigabe_Nacht = 1
+         T_Freigabe_Nacht = 1
     if (b_sperrung_excess & T_Freigabe_Nacht):
-       CLIENT.write_register(REGISTER["Komfort_HK2"], int(T_HK2_Nacht*10))   
+         CLIENT.write_register(REGISTER["Komfort_HK2"], int(T_HK2_Nacht*10))   
 
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
