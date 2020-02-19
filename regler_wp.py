@@ -215,6 +215,7 @@ def main():
         #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK2"], int(SB_AUS_HK2_ST*100))
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10)) 
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
     
@@ -228,8 +229,7 @@ def main():
     logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
     if (b_sperrung_excess & T_Freigabe_Nacht):
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-    else: 
-         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10)) 
+    
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
