@@ -77,6 +77,10 @@ HK1_Diff_max = HK1_max - HK1_min
 HK2_Diff_max = HK2_max - HK2_min 
 AT_Diff_max = 14
 
+# Freigabe WP aufgrund Raumtemp Nacht
+T_min_Nacht = 21
+T_HK2_Nacht = 5
+
 REGISTER = {
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
@@ -213,20 +217,28 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
-  
+ 
+ # Sperrung WP wegen Raumtemp
+    RT_akt = get_vals(UUID["T_Raum"],
+                        duration="-15min")["data"]["average"] 
+    if RT_akt < T_min_Nacht:
+       T_Freigabe_Nacht = 1
+    if (b_sperrung_excess & T_Freigabe_Nacht):
+       CLIENT.write_register(REGISTER["Komfort_HK2"], int(T_HK2_Nacht*10))   
+
  #Nachtabsenkung über Raspi
-    if now.time() > AB_aus:
-        b_absenk_aus = 1
-    if now.time() < AB_ein:
-        b_absenk_ein = 1
-        
-    if  (b_absenk_aus & b_absenk_ein):
-        CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
-        CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
-            
-    else:
-       CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_EIN_HK1_T*10))
-       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))   
+ #   if now.time() > AB_aus:
+ #       b_absenk_aus = 1
+ #   if now.time() < AB_ein:
+ #       b_absenk_ein = 1
+ #       
+ #   if  (b_absenk_aus & b_absenk_ein):
+ #       CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
+ #       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
+ #           
+ #   else:
+ #      CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_EIN_HK1_T*10))
+ #      CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))   
 
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
