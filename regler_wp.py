@@ -34,12 +34,12 @@ UUID = {
 FREIGABE_NORMAL_TEMP = 14
 
 #Freigabewerte für Sonderbetrieb nach Leistung
-FREIGABE_WARM_P = 600
-FREIGABE_KALT_P = 800
+FREIGABE_WARM_P = -600
+FREIGABE_KALT_P = -800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_WARM_P = FREIGABE_WARM_P - 100
-SPERRUNG_KALT_P = FREIGABE_KALT_P - 100
+SPERRUNG_WARM_P = FREIGABE_WARM_P + 100
+SPERRUNG_KALT_P = FREIGABE_KALT_P + 100
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
@@ -48,16 +48,16 @@ UHRZEIT_WARM = datetime.time(8, 0)
 UHRZEIT_KALT = datetime.time(8, 0)
 
 #Sollwerte für Sonderbetrieb ein (aktuell keine Funktion)
-SB_EIN_HK1_T = 30
-SB_EIN_HK1_ST = 0.40
-SB_EIN_HK2_T = 24
-SB_EIN_HK2_ST = 0.40
+#SB_EIN_HK1_T = 30
+#SB_EIN_HK1_ST = 0.40
+#SB_EIN_HK2_T = 24
+#SB_EIN_HK2_ST = 0.40
 
 #Sollwerte für Sonderbetrieb aus (aktuell keine Funktion)
-SB_AUS_HK1_T = 22
-SB_AUS_HK1_ST = 0.40
-SB_AUS_HK2_T = 22
-SB_AUS_HK2_ST = 0.40
+#SB_AUS_HK1_T = 22
+#SB_AUS_HK1_ST = 0.40
+#SB_AUS_HK2_T = 22
+#SB_AUS_HK2_ST = 0.40
 
 #Sollwerte für Nachtabsenkung über raspi
 AB_aus = datetime.time(5, 0)
@@ -155,20 +155,20 @@ def main():
     #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-5min")["data"]["average"]
-    p_charge = get_vals(UUID["Charge_station"],
-                        duration="-5min")["data"]["average"]
-    p_wp = get_vals(UUID["WP_Verbrauch"],
-                        duration="-5min")["data"]["average"]
+    #p_charge = get_vals(UUID["Charge_station"],
+    #                    duration="-5min")["data"]["average"]
+    #p_wp = get_vals(UUID["WP_Verbrauch"],
+    #                    duration="-5min")["data"]["average"]
     p_net = power_balance 
-    print("Aktuelle Bilanz =",p_net)
+    print("Aktuelle Bilanz p_net =",p_net)
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
-    p_charge2 = get_vals(UUID["Charge_station"],
-                        duration="-30min")["data"]["average"]
+    #p_charge2 = get_vals(UUID["Charge_station"],
+    #                    duration="-30min")["data"]["average"]
     p_net2 = power_balance2 
-    print("Aktuelle Bilanz =",p_net2)
+    print("Aktuelle Bilanz p_net2=",p_net2)
         
     logging.info("Start Freigabe Zeit & Normalbetrieb")  
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
