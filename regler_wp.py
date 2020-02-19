@@ -221,6 +221,7 @@ def main():
  # Sperrung WP wegen Raumtemp
     RT_akt = get_vals(UUID["T_Raum"],
                         duration="-15min")["data"]["average"] 
+    T_Freigabe_Nacht = 0
     if RT_akt < T_min_Nacht:
          T_Freigabe_Nacht = 1
     if (b_sperrung_excess & T_Freigabe_Nacht):
