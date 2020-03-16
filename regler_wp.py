@@ -78,7 +78,7 @@ HK2_Diff_max = HK2_max - HK2_min
 AT_Diff_max = 14
 
 # Freigabe WP aufgrund Raumtemp Nacht
-T_min_Nacht = 21
+T_min_Nacht = 20.5
 T_HK2_Nacht = 5
 
 REGISTER = {
