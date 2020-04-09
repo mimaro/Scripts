@@ -43,8 +43,8 @@ SPERRUNG_KALT_P = FREIGABE_KALT_P + 100
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
-FREIGABE_KALT_T = 0
-UHRZEIT_WARM = datetime.time(8, 0)
+FREIGABE_KALT_T = -10
+UHRZEIT_WARM = datetime.time(12, 0)
 UHRZEIT_KALT = datetime.time(8, 0)
 
 #Sollwerte für Sonderbetrieb ein (aktuell keine Funktion)
@@ -63,22 +63,23 @@ UHRZEIT_KALT = datetime.time(8, 0)
 AB_aus = datetime.time(5, 0)
 AB_ein = datetime.time(21, 0)
 AB_AUS_HK1_T = 5
-AB_AUS_HK2_T = 20
+AB_AUS_HK2_T = 19
 AB_EIN_HK1_T = 5
-AB_EIN_HK2_T = 20
+AB_EIN_HK2_T = 19
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 20 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
-HK2_min = 20
-HK1_max = 26
-HK2_max = 26
+HK1_min = 19 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK2_min = 19
+HK1_max = 24
+HK2_max = 24
 HK1_Diff_max = HK1_max - HK1_min
 HK2_Diff_max = HK2_max - HK2_min 
 AT_Diff_max = 14
 
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 20.5
+T_max_Tag = 25
 T_HK2_Nacht = 5
 
 REGISTER = {
@@ -219,7 +220,7 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
     
- # Sperrung WP wegen Raumtemp
+ # Sperrung WP wegen Raumtemp (Tag & Nacht)
     RT_akt = get_vals(UUID["T_Raum"],
                         duration="-15min")["data"]["average"] 
     T_Freigabe_Nacht = 0
@@ -230,6 +231,11 @@ def main():
     if (b_sperrung_excess & T_Freigabe_Nacht):
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
     
+    T_Freigabe_Tag = 0
+    if RT_akt > T_max_Tag:
+         T_Freigabe_Tag = 1
+    if (T_Freigabe_Tag):
+         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
