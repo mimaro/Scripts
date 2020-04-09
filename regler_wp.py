@@ -26,7 +26,8 @@ UUID = {
     "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
     "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
-    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
+    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
+    "Betrieb": "232bec80-7a2a-11ea-b704-0de0b4780fba"
 }
 
 
@@ -92,6 +93,7 @@ REGISTER = {
     "Betriebsart": 1500,
     "SG1": 4001,
     "SG2": 4002,
+    
 }
 
 IP_ISG = "192.168.178.36"
@@ -219,7 +221,7 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10)) 
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
-    
+       
  # Sperrung WP wegen Raumtemp (Tag & Nacht)
     RT_akt = get_vals(UUID["T_Raum"],
                         duration="-15min")["data"]["average"] 
@@ -278,6 +280,13 @@ def main():
     CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))  
     
     logging.info("********************************")
+    
+    
+    # Aktueller Betriebszustand WP auslesen. 
+        
+    Betrieb = CLIENT.read_register(REGISTER["Betriebsart"], int()) 
+    write_vals(UUID["Bilanz_avg_ein"], Betrieb)
+    logging.info("Betrieb: {}".format(Betrieb))  
     
 if __name__ == "__main__":
     main()
