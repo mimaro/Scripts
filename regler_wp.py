@@ -27,7 +27,7 @@ UUID = {
     "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
     "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
-    "Betrieb": "232bec80-7a2a-11ea-b704-0de0b4780fba"
+    "Betrieb_Z": "232bec80-7a2a-11ea-b704-0de0b4780fba"
 }
 
 
@@ -284,9 +284,9 @@ def main():
     
     # Aktueller Betriebszustand WP auslesen. 
         
-    Betrieb = CLIENT.read_holding_register(REGISTER["Betriebsart"], int()) 
-    write_vals(UUID["Bilanz_avg_ein"], Betrieb)
-    logging.info("Betrieb: {}".format(Betrieb))  
+    Betrieb = CLIENT.read_holding_registers(REGISTER["Betriebsart"], int()) 
+    write_vals(UUID["Betrieb_Z"], Betrieb)
+    logging.info("Betriebszustand: {}".format(Betrieb))  
     
 if __name__ == "__main__":
     main()
