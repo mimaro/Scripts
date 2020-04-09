@@ -277,17 +277,16 @@ def main():
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
         
     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
-    CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))  
-    
-    logging.info("********************************")
-    
+    CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
+   
     
     # Aktueller Betriebszustand WP auslesen. 
         
-    Betrieb = CLIENT.read_holding_registers(REGISTER["Betriebsart"], int()) 
+    Betrieb = CLIENT.read_holding_register(REGISTER["Betriebsart"], int()) 
     logging.info("Betriebszustand: {}".format(Betrieb)) 
     write_vals(UUID["Betrieb_Z"], Betrieb)
     
+    logging.info("********************************")
     
 if __name__ == "__main__":
     main()
