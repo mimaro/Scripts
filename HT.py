@@ -39,7 +39,7 @@ def write_vals(uuid, val):
     logging.info("Ok? {}".format(postreq.ok))
     
 def main():
-    tz = pytz.CET
+    tz = pytz.timezone ('Europe/Vienna')
     logging.basicConfig(level=logging.INFO)
     now = datetime.datetime.now(tz=tz)
     today = datetime.date.today()
