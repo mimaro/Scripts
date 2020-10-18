@@ -45,7 +45,7 @@ SPERRUNG_KALT_P = FREIGABE_KALT_P + 100
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
 FREIGABE_KALT_T = -10
-UHRZEIT_WARM = datetime.time(12, 0)
+UHRZEIT_WARM = datetime.time(10, 0)
 UHRZEIT_KALT = datetime.time(8, 0)
 
 #Sollwerte für Sonderbetrieb ein (aktuell keine Funktion)
