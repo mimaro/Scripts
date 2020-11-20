@@ -99,9 +99,9 @@ def main():
         r_zev = balance_zev
     
     #Aufteilen Energie auf Verbraucher
-    b_n_8a = v_8a/(v_8a+v_8b+v_8c)*v_zev
-    b_n_8b = v_8b/(v_8a+v_8b+v_8c)*v_zev
-    b_n_8c = v_8c/(v_8a+v_8b+v_8c)*v_zev
+    b_n_8a = v_8a/(v_8a+v_8b+v_8c+0.00001)*v_zev
+    b_n_8b = v_8b/(v_8a+v_8b+v_8c+0.00001)*v_zev
+    b_n_8c = v_8c/(v_8a+v_8b+v_8c+0.00001)*v_zev
     b_zev_8a = v_8a - b_n_8a
     b_zev_8b = v_8b - b_n_8b
     b_zev_8c = v_8c - b_n_8c
