@@ -44,6 +44,8 @@ def main():
         poststring = URL_VZ.format(UUID[k], d)
         postreq = requests.post(poststring)
         print(postreq.ok)
+    
+   print(PMW_A)
 
 if __name__ == "__main__":
     main()
