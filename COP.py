@@ -38,7 +38,10 @@ def main():
     wp_therm = get_vals(UUID["WP_th"])["data"]["tuples"][0][1]
     wp_el = get_vals(UUID["WP_el"])["data"]["tuples"][0][1]
     cop_o_venti = wp_therm / wp_el
-    write_vals(UUID["COP_o_venti"], cop_o_venti)
+    if cop_o_venti >= 0:
+        write_vals(UUID["COP_o_venti"], cop_o_venti)
+    else:
+        write_vals(UUID["COP_o_venti"], "0")
     print(cop_o_venti)
   
 if __name__ == "__main__":
