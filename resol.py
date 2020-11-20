@@ -45,7 +45,7 @@ def main():
         postreq = requests.post(poststring)
         print(postreq.ok)
     
-print(PMW_A)
+print("PMW_A")
 
 if __name__ == "__main__":
     main()
