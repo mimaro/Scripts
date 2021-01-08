@@ -16,12 +16,7 @@ CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.cs
 
 
 req = requests.get(CSV_URL)
-data = csv.DictReader(open(data))
-
-
-
-for row in data:
-    print row
+print(req)
 
 
 #def main():
