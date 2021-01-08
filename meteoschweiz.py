@@ -34,6 +34,6 @@ print(req)
     #requests.post(URL_VZ.format(UUID_BUS_WS, BUS[WS]))
     #requests.post(URL_VZ.format(UUID_MOA_WS, MOA[WS]))
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
 
