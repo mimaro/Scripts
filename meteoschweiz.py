@@ -21,7 +21,7 @@ def main():
     data = req.content.split("\n")[2:]
     
     reader = csv.DictReader(data, delimiter = ';')
-    print(reader)
+    print(reader())
     #for row in reader:
     #    if row[''] == "BUS":
     #        BUS=row
