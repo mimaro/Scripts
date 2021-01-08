@@ -17,7 +17,7 @@ CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.cs
 def main():
     BUS, MOA = {}, {}
     req=requests.get(CSV_URL)
-    data = req.content.split("\n")[2:]
+    data = req.content.split("\n")[:]
     reader = csv.DictReader(data, delimiter = ';')
     for row in reader:
         if row['Station/Location'] == "BUS":
