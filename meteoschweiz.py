@@ -19,8 +19,9 @@ def main():
     BUS, MOA = {}, {}
     req=requests.get(CSV_URL)
     data = req.content.split("\n")[2:]
-    print(data)
-    #reader = csv.DictReader(data, delimiter = ';')
+    
+    reader = csv.DictReader(data, delimiter = ';')
+    print(reader)
     #for row in reader:
     #    if row[''] == "BUS":
     #        BUS=row
