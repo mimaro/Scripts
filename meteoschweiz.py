@@ -22,9 +22,9 @@ def main():
     data = req.content.split("\n")[2:]
     reader = csv.DictReader(data, delimiter = ';')
     for row in reader:
-        if row['Station'] == "BUS":
+        if row['Station/Location'] == "BUS":
             BUS=row
-        elif row['Station'] == "MOA":
+        elif row['Station/Location'] == "MOA":
             MOA=row
     requests.post(URL_VZ.format(UUID_BUS_GS, BUS[GS]))
     requests.post(URL_VZ.format(UUID_MOA_GS, MOA[GS]))
