@@ -15,7 +15,7 @@ URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&val
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
 
-req = request.get(CSV_URL)
+req = requests.get(CSV_URL)
 data = csv.DictReader(open(data))
 
 
