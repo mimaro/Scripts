@@ -121,6 +121,7 @@ def main():
     logging.info("*****************************")
          
     time = now.time()
+    print(time)
     day = now.weekday()
      
     if  (HT_aus_Mo_Fr > time > HT_ein_Mo_Fr and day < 5) or (HT_aus_Sa > time > HT_ein_Sa and day == 5):
