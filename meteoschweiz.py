@@ -14,14 +14,17 @@ URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&val
 
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
+data = csv.DictReader(open(CSV_URL))
 
-def main():
-    BUS, MOA = {}, {}
-    req=requests.get(CSV_URL)
-    data = req.content.split("\n")[2:]
-    
-    reader = csv.DictReader(data, delimiter = ';')
-    print(reader())
+for row in data:
+    print row
+
+
+#def main():
+   # BUS, MOA = {}, {}
+    #req=requests.get(CSV_URL)
+    #data = req.content.split("\n")[2:]
+    #reader = csv.DictReader(data, delimiter = ';')
     #for row in reader:
     #    if row[''] == "BUS":
     #        BUS=row
