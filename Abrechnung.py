@@ -113,11 +113,11 @@ def main():
     r_n_8c = r_8b/(r_8a + r_8b + r_8c + 0.00001) * r_zev
        
     #Umschaltzeiten Hoch- Niedertarig
-    tz = pytz.UTC+1
+    tz = pytz.Europe/Zurich
     logging.basicConfig(level=logging.INFO)
     now = datetime.datetime.now(tz=tz)
     today = datetime.date.today()
-    logging.info("UTC+1 time: {}".format(now))
+    logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
          
     time = now.time()
