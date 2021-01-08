@@ -14,26 +14,21 @@ URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&val
 
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
+def main():
+    BUS, MOA = {}, {}
+    req=requests.get(CSV_URL)
+    data = req.content.split("\n")[2:]
+    reader = csv.DictReader(data, delimiter = ';')
+    for row in reader:
+        if row['Station/Location'] == "BUS":
+            BUS=row
+        elif row['Station/Location'] == "MOA":
+            MOA=row
+    requests.post(URL_VZ.format(UUID_BUS_GS, BUS[GS]))
+    requests.post(URL_VZ.format(UUID_MOA_GS, MOA[GS]))
+    requests.post(URL_VZ.format(UUID_BUS_WS, BUS[WS]))
+    requests.post(URL_VZ.format(UUID_MOA_WS, MOA[WS]))
 
-req = requests.get(CSV_URL)
-print(req)
-
-
-#def main():
-   # BUS, MOA = {}, {}
-    #req=requests.get(CSV_URL)
-    #data = req.content.split("\n")[2:]
-    #reader = csv.DictReader(data, delimiter = ';')
-    #for row in reader:
-    #    if row[''] == "BUS":
-    #        BUS=row
-    #    elif row[''] == "MOA":
-    #        MOA=row
-    #requests.post(URL_VZ.format(UUID_BUS_GS, BUS[GS]))
-    #requests.post(URL_VZ.format(UUID_MOA_GS, MOA[GS]))
-    #requests.post(URL_VZ.format(UUID_BUS_WS, BUS[WS]))
-    #requests.post(URL_VZ.format(UUID_MOA_WS, MOA[WS]))
-
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()
 
