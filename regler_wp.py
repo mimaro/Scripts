@@ -282,7 +282,7 @@ def main():
     
     # Aktueller Betriebszustand WP auslesen. 
         
-    Betrieb = CLIENT.read_input_registers(REGISTER["Betriebsart"], 1) 
+    Betrieb = CLIENT.read_input_registers(REGISTER["Betriebsart"], 6) 
     print(Betrieb)
     logging.info("Betriebszustand: {}".format(Betrieb)) 
     write_vals(UUID["Betrieb_Z"], Betrieb)
