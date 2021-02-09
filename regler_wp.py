@@ -90,7 +90,7 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1,
+    "Betriebsart": 1501,
     "SG1": 4001,
     "SG2": 4002,
     
@@ -282,7 +282,7 @@ def main():
     
     # Aktueller Betriebszustand WP auslesen. 
         
-    Betrieb = CLIENT.read_input_registers(REGISTER["Betriebsart"], 6) 
+    Betrieb = CLIENT.read_holding_registers(REGISTER["Betriebsart"], 6) 
     print(Betrieb)
     logging.info("Betriebszustand: {}".format(Betrieb)) 
     write_vals(UUID["Betrieb_Z"], Betrieb)
