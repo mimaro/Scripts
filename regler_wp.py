@@ -90,7 +90,7 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500,
+    "Betriebsart": 1,
     "SG1": 4001,
     "SG2": 4002,
     
