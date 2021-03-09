@@ -70,10 +70,10 @@ AB_EIN_HK2_T = 20
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 20 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
-HK2_min = 20
-HK1_max = 26
-HK2_max = 26
+HK1_min = 19 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK2_min = 19
+HK1_max = 25
+HK2_max = 25
 HK1_Diff_max = HK1_max - HK1_min
 HK2_Diff_max = HK2_max - HK2_min 
 AT_Diff_max = 14
@@ -81,7 +81,9 @@ AT_Diff_max = 14
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
 T_max_Tag = 25
+T_HK1_Nacht = 5
 T_HK2_Nacht = 5
+
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -201,6 +203,7 @@ def main():
     write_vals(UUID["Bilanz_avg_ein"], p_net)
    
    #Modbus Werte in für Sonderbetrieb ein schreiben 
+    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
    # if True:
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_EIN_HK1_T*10))
@@ -212,6 +215,7 @@ def main():
         #CLIENT.write_register(REGISTER["SG2"], int(1))
       
     #Modbus Werte für Sonderbetrieb aus schreiben
+    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
     if b_sperrung_excess:
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
@@ -222,22 +226,6 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
        
- # Sperrung WP wegen Raumtemp (Tag & Nacht)
-    RT_akt = get_vals(UUID["T_Raum"],
-                        duration="-15min")["data"]["average"] 
-    T_Freigabe_Nacht = 0
-    if RT_akt > T_min_Nacht:
-         T_Freigabe_Nacht = 1
-    logging.info("Sperrung Leistung Temp: {}".format(T_Freigabe_Nacht))        
-    logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
-    if (b_sperrung_excess & T_Freigabe_Nacht):
-         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-    
-    T_Freigabe_Tag = 0
-    if RT_akt > T_max_Tag:
-         T_Freigabe_Tag = 1
-    if (T_Freigabe_Tag):
-         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
@@ -254,6 +242,8 @@ def main():
  #      CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))   
 
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
+    logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
+    
     PV_Aktuell = get_vals(UUID["PV_Produktion"],
                         duration="-30min")["data"]["average"]
     t_roll_avg_12_24 = get_vals(
@@ -275,10 +265,31 @@ def main():
     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
     HK2_aktuell = HK2_min + HK2_Diff_max * PV_Faktor
     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
+    logging.info("HK2_aktuell: {}".format(HK2_aktuell))  
         
     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
     CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
    
+    
+     # Sperrung WP wegen Raumtemp (Tag & Nacht)
+    logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
+    RT_akt = get_vals(UUID["T_Raum"],
+                        duration="-15min")["data"]["average"] 
+    T_Freigabe_Nacht = 0
+    if RT_akt > T_min_Nacht:
+         T_Freigabe_Nacht = 1
+    logging.info("Sperrung Leistung Temp: {}".format(T_Freigabe_Nacht))        
+    logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
+    if (b_sperrung_excess & T_Freigabe_Nacht):
+         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
+         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))   
+    
+    T_Freigabe_Tag = 0
+    if RT_akt > T_max_Tag:
+         T_Freigabe_Tag = 1
+    if (T_Freigabe_Tag):
+         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
+         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
     
     # Aktueller Betriebszustand WP auslesen. 
         
