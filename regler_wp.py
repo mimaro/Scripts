@@ -292,8 +292,6 @@ def main():
          CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
     
-  
-    
     # Aktueller Betriebszustand WP auslesen. 
         
     #Betrieb = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1) 
