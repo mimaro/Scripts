@@ -287,8 +287,7 @@ def main():
     T_Freigabe_Tag = 0
     if RT_akt > T_max_Tag:
          T_Freigabe_Tag = 1
-    logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))         
-            
+    logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))        
     if (T_Freigabe_Tag):
          CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
