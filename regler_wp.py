@@ -275,20 +275,20 @@ def main():
     logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
     RT_akt = get_vals(UUID["T_Raum"],
                         duration="-15min")["data"]["average"] 
-    T_Freigabe_Nacht = 0
+    #T_Freigabe_Nacht = 0
     if RT_akt > T_min_Nacht:
-         T_Freigabe_Nacht = 1
-    logging.info("Sperrung Leistung Temp Nacht: {}".format(T_Freigabe_Nacht))        
-    logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
-    if (b_sperrung_excess & T_Freigabe_Nacht):
+         #T_Freigabe_Nacht = 1
+    #logging.info("Sperrung Leistung Temp Nacht: {}".format(T_Freigabe_Nacht))        
+    #logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
+    #if (b_sperrung_excess & T_Freigabe_Nacht):
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
          CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))   
     
-    T_Freigabe_Tag = 0
-    if RT_akt > T_max_Tag:
-         T_Freigabe_Tag = 1
-    logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))        
-    if (T_Freigabe_Tag):
+    #T_Freigabe_Tag = 0
+    elif RT_akt > T_max_Tag:
+         #T_Freigabe_Tag = 1
+    #logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))        
+    #if (T_Freigabe_Tag):
          CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
          CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
     
