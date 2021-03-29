@@ -81,6 +81,7 @@ AT_Diff_max = 14
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
 T_max_Tag = 25
+T_verz_Tag = 22
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
@@ -187,13 +188,37 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
-    #Generiere Freigabe-sperrsignal Leistung
+    #Abrufen aktuelle Leistung Wärmepumpe
+    wp_consumption = get_vals(
+       UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
+    if wp_consumption < 100:
+        wp_freigabe = 1
+    
+    
+    #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     logging.info("Start Freigabe Leistung")
+    
+    RT_akt = get_vals(UUID["T_Raum"], # Frage aktuelle Raumtemperatur ab. 
+                      duration="-15min")["data"]["average"] 
+    
     p_freigabe_now = get_freigabezeit_excess(t_now)
     p_sperrung_now = get_sperrleistung(t_now)
-    if p_net > p_freigabe_now:
+    
+    T_Freigabe_Nacht = 0
+    T_Freigabe_Tag = 0
+    T_Verzoegerung_Tag = 0
+    
+    if RT_akt > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
+        T_Verzoegerung_Tag = 1
+    
+    
+    if RT_akt > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
+        T_Freigabe_Nacht = 1
+    if RT_akt > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
+        T_Freigabe_Tag = 1
+    if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
         b_freigabe_excess = 1
-    if p_net2 < p_sperrung_now:
+    if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
         b_sperrung_excess = 1
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
@@ -216,7 +241,7 @@ def main():
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
-    if b_sperrung_excess:
+    if (b_sperrung_excess or T_Freigabe_Tag or T_Freigabe_Nacht or T_Verzoegerung_Tag and wp_freigabe ):
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
         #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
@@ -272,25 +297,25 @@ def main():
    
     
      # Sperrung WP wegen Raumtemp (Tag & Nacht)
-    logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
-    RT_akt = get_vals(UUID["T_Raum"],
-                        duration="-15min")["data"]["average"] 
+    #logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
+    #RT_akt = get_vals(UUID["T_Raum"],
+                        #duration="-15min")["data"]["average"] 
     #T_Freigabe_Nacht = 0
-    if RT_akt > T_min_Nacht:
+    #if RT_akt > T_min_Nacht:
          #T_Freigabe_Nacht = 1
     #logging.info("Sperrung Leistung Temp Nacht: {}".format(T_Freigabe_Nacht))        
     #logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
     #if (b_sperrung_excess & T_Freigabe_Nacht):
-         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))   
+         #CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
+         #CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))   
     
     #T_Freigabe_Tag = 0
-    elif RT_akt > T_max_Tag:
+    #elif RT_akt > T_max_Tag:
          #T_Freigabe_Tag = 1
     #logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))        
     #if (T_Freigabe_Tag):
-         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
-         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
+         #CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
+         #CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
     
     # Aktueller Betriebszustand WP auslesen. 
         
