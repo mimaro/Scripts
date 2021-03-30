@@ -201,6 +201,8 @@ def main():
     RT_akt = get_vals(UUID["T_Raum"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
     
+    logging.info("Raumtemp_aktuell: {}".format(RT_akt))
+    
     p_freigabe_now = get_freigabezeit_excess(t_now)
     p_sperrung_now = get_sperrleistung(t_now)
     
