@@ -232,6 +232,10 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
    
+
+    Freigabe = 0
+    Sperrung = 0
+
    #Modbus Werte in für Sonderbetrieb ein schreiben 
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
     if (b_freigabe_normal & b_freigabe_12h_temp & b_freigabe_excess):
@@ -243,7 +247,8 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         #CLIENT.write_register(REGISTER["SG1"], int(1))
         #CLIENT.write_register(REGISTER["SG2"], int(1))
-        logging.info(f" Freigabe Sonderbetrieb ein")
+        Freigabe = 1
+        logging.info("Sonderbetrieb aus: {}".format(Freigabe))
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
@@ -256,7 +261,8 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10)) 
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
-        logging.info(f" Freigabe Sonderbetrieb aus")
+        Sperrung = 1
+        logging.info("Sonderbetrieb aus: {}".format(Sperrung))
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
