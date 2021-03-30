@@ -18,7 +18,10 @@ UUID = {
     "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
     "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
     "Charge_station": "8270f520-6690-11e9-9272-4dde30159c8f",
-    "Freigabe_sonderbetrieb": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
+    "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
+    "t_Sperrung_Nacht": "a15ab220-1d5a-11e9-9dd4-57fe91d5c03b",
+    "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
+    "WP_Freigabe": "232bec80-7a2a-11ea-b704-0de0b4780fba",
     "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
@@ -26,10 +29,11 @@ UUID = {
     "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
     "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
-    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
-    "Betrieb_Z": "232bec80-7a2a-11ea-b704-0de0b4780fba"
+    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
 
+	f60ca430-4a61-11e9-8fa1-47cb405220bd (venti)
+a15ab220-1d5a-11e9-9dd4-57fe91d5c03b (SG
 
 # Freigabewert für Sonderbetrieb nach Heizgrenze
 FREIGABE_NORMAL_TEMP = 14
@@ -228,6 +232,10 @@ def main():
     
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
+    write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag)
+    write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht)
+    write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag)
+    write_vals(UUID["WP_Freigabe"], wp_freigabe)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
    
