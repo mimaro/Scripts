@@ -81,7 +81,7 @@ AT_Diff_max = 14
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
 T_max_Tag = 25
-T_verz_Tag = 24
+T_verz_Tag = 22
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
@@ -243,7 +243,7 @@ def main():
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
-    if (b_sperrung_excess or T_Freigabe_Tag or T_Freigabe_Nacht or T_Verzoegerung_Tag and wp_freigabe ):
+    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or b_sperrung_excess or T_Freigabe_Nacht  ):
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
         #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
