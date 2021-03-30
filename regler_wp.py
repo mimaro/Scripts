@@ -32,8 +32,6 @@ UUID = {
     "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
 
-	f60ca430-4a61-11e9-8fa1-47cb405220bd (venti)
-a15ab220-1d5a-11e9-9dd4-57fe91d5c03b (SG
 
 # Freigabewert für Sonderbetrieb nach Heizgrenze
 FREIGABE_NORMAL_TEMP = 14
