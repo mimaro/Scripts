@@ -240,6 +240,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         #CLIENT.write_register(REGISTER["SG1"], int(1))
         #CLIENT.write_register(REGISTER["SG2"], int(1))
+        logging.info(f" Freigabe Sonderbetrieb ein")
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
@@ -252,7 +253,7 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10)) 
         #CLIENT.write_register(REGISTER["SG1"], int(0))
         #CLIENT.write_register(REGISTER["SG2"], int(0))
-       
+        logging.info(f" Freigabe Sonderbetrieb aus")
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
