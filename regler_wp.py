@@ -224,6 +224,9 @@ def main():
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     logging.info("Verzögerung: {}".format(T_Verzoegerung_Tag))
     logging.info("WP_Leistung: {}".format(wp_freigabe))
+    logging.info("Freigabe Tag: {}".format(T_Freigabe_Tag))
+    logging.info("Freigabe Nacht: {}".format(T_Freigabe_Nacht))
+    
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
