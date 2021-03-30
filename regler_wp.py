@@ -186,7 +186,7 @@ def main():
         b_freigabe_normal = 1
     logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
-    write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
+    #write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
