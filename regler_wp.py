@@ -189,6 +189,7 @@ def main():
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
     #Abrufen aktuelle Leistung Wärmepumpe
+    wp_freigabe = 0
     wp_consumption = get_vals(
        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
     if wp_consumption < 100:
@@ -221,7 +222,7 @@ def main():
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     logging.info("Verzögerung: {}".format(T_Verzoegerung_Tag))
-    #logging.info("WP_Leistung: {}".format(wp_freigabe))
+    logging.info("WP_Leistung: {}".format(wp_freigabe))
     logging.info("Freigabe Tag: {}".format(T_Freigabe_Tag))
     logging.info("Freigabe Nacht: {}".format(T_Freigabe_Nacht))
     
