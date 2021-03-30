@@ -210,16 +210,14 @@ def main():
     
     if RT_akt > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
         T_Verzoegerung_Tag = 1
-    
-    
-    if RT_akt > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
-        T_Freigabe_Nacht = 1
     if RT_akt > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
         b_freigabe_excess = 1
     if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
         b_sperrung_excess = 1
+    if RT_akt > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
+        T_Freigabe_Nacht = 1
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     logging.info("Verzögerung: {}".format(T_Verzoegerung_Tag))
@@ -232,7 +230,8 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
    
-
+    # Wenn RT in der Nacht über Soll-Wert liegt ist WP Raumtemp Eco HK1 & HK2 tief. 
+            
     Freigabe = 0
     Sperrung = 0
 
@@ -248,11 +247,11 @@ def main():
         #CLIENT.write_register(REGISTER["SG1"], int(1))
         #CLIENT.write_register(REGISTER["SG2"], int(1))
         Freigabe = 1
-        logging.info("Sonderbetrieb aus: {}".format(Freigabe))
+        logging.info("Sonderbetrieb ein: {}".format(Freigabe))
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
-    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or b_sperrung_excess or T_Freigabe_Nacht  ):
+    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or b_sperrung_excess ):
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
         #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
@@ -263,6 +262,11 @@ def main():
         #CLIENT.write_register(REGISTER["SG2"], int(0))
         Sperrung = 1
         logging.info("Sonderbetrieb aus: {}".format(Sperrung))
+    
+    if (T_Freigabe_Nacht):
+        CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
+        CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))       
+            
             
  #Nachtabsenkung über Raspi
  #   if now.time() > AB_aus:
@@ -312,14 +316,8 @@ def main():
     #logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
     #RT_akt = get_vals(UUID["T_Raum"],
                         #duration="-15min")["data"]["average"] 
-    #T_Freigabe_Nacht = 0
-    #if RT_akt > T_min_Nacht:
-         #T_Freigabe_Nacht = 1
-    #logging.info("Sperrung Leistung Temp Nacht: {}".format(T_Freigabe_Nacht))        
-    #logging.info("Sperrung Leistung PV: {}".format(b_sperrung_excess))        
-    #if (b_sperrung_excess & T_Freigabe_Nacht):
-         #CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-         #CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))   
+        
+    
     
     #T_Freigabe_Tag = 0
     #elif RT_akt > T_max_Tag:
