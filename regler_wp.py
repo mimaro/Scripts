@@ -19,7 +19,7 @@ UUID = {
     "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
     "Charge_station": "8270f520-6690-11e9-9272-4dde30159c8f",
     "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
-    "t_Sperrung_Nacht": "a15ab220-1d5a-11e9-9dd4-57fe91d5c03b",
+    "t_Sperrung_Nacht": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
     "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
     "WP_Freigabe": "232bec80-7a2a-11ea-b704-0de0b4780fba",
     "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
