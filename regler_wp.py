@@ -82,8 +82,8 @@ AT_Diff_max = 14
 
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
-T_max_Tag = 25
-T_verz_Tag = 22
+T_max_Tag = 24
+T_verz_Tag = 21.5
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
