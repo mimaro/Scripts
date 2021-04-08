@@ -72,10 +72,10 @@ AB_EIN_HK2_T = 20
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 19 #Muss mit ECO-Wert von HK1 in Servicewelt übereinstimmen
+HK1_min = 19 
 HK2_min = 19
-HK1_max = 25
-HK2_max = 25
+HK1_max = 26
+HK2_max = 26
 HK1_Diff_max = HK1_max - HK1_min
 HK2_Diff_max = HK2_max - HK2_min 
 AT_Diff_max = 14
