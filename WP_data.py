@@ -32,7 +32,7 @@ REGISTER = {
     "Betriebsart": 1500   
 }
 
-IP_ISG = "192.168.178.36, port = 8081"
+IP_ISG = "192.168.178.36"
 
 CLIENT = ModbusTcpClient(IP_ISG)
 CLIENT.connect()
