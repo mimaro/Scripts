@@ -32,10 +32,10 @@ REGISTER = {
     "Betriebsart": 1500   
 }
 
-IP_ISG = "192.168.178.36"
+IP_ISG = "192.168.178.36, port = 8081"
 
 CLIENT = ModbusTcpClient(IP_ISG)
-
+CLIENT.connect()
 ############################################################################################################
 
 #HK1_Temp = CLIENT.read_input_registers(506, count=1, unit=1)
