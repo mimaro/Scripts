@@ -336,7 +336,7 @@ def main():
         
     #REGISTER["Betriebsart"]    
         
-    Betrieb = CLIENT.read_input_registers(501, count=4)
+    Betrieb = CLIENT.read_input_registers(4501, count=1)
     print(Betrieb)
     #logging.info("Betriebszustand: {}".format(Betrieb)) 
     #write_vals(UUID["Betrieb_Z"], Betrieb)
