@@ -39,7 +39,7 @@ CLIENT.connect()
 ############################################################################################################
 
 response = CLIENT.read_input_registers(506, count=1, unit=1)
-print(response.registers)
+print(response.response.getRegister(0)
 
 #result = CLIENT.read_holding_registers(1500, count=1)
 #t = result.registers
