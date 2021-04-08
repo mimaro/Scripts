@@ -83,7 +83,7 @@ AT_Diff_max = 14
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
 T_max_Tag = 24
-T_verz_Tag = 21.5
+T_verz_Tag = 21
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
@@ -338,8 +338,8 @@ def main():
         
     #REGISTER["Betriebsart"]    
         
-    #Betrieb = CLIENT.read_holding_registers(1501, count=1)
-    #print(Betrieb)
+    Betrieb = CLIENT.read_holding_registers(1500, count=1)
+    print(Betrieb)
     #logging.info("Betriebszustand: {}".format(Betrieb)) 
     #write_vals(UUID["Betrieb_Z"], Betrieb)
     
