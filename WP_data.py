@@ -40,7 +40,7 @@ CLIENT = ModbusTcpClient(IP_ISG)
 
 value_1 = CLIENT.read_holding_registers(1500, count=1, unit=1)
 print(value_1)
-print response.getRegister(0); // This returns value of only one register
-print response.registers[0:] // This returns the response for whole length of register
+print response.getRegister(0) # This returns value of only one register
+print response.registers[0:] #This returns the response for whole length of register
 
 #CLIENT.write_register(REGISTER["Komfort_HK1"], int(200))
