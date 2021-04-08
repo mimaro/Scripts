@@ -4,7 +4,6 @@ import pprint
 import datetime
 import logging
 import pytz
-import paho.mqtt.client as mqtt
 from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
