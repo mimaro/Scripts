@@ -95,9 +95,7 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500,
-    "SG1": 4001,
-    "SG2": 4002,
+    "Betriebsart": 1500
     
 }
 
@@ -338,7 +336,7 @@ def main():
         
     #REGISTER["Betriebsart"]    
         
-    Betrieb = CLIENT.read_holding_registers(1500, count=1)
+    Betrieb = CLIENT.read_holding_registers(1501, count=1)
     print(Betrieb)
     #logging.info("Betriebszustand: {}".format(Betrieb)) 
     #write_vals(UUID["Betrieb_Z"], Betrieb)
