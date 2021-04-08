@@ -38,4 +38,5 @@ CLIENT = ModbusTcpClient(IP_ISG)
 #HK1_Temp = CLIENT.read_input_registers(501, count=1)
 #print(HK1_Temp)
 
-CLIENT.write_register(REGISTER["Eco_HK2"], int(150))
+value_1 = CLIENT.read_register(REGISTER["Eco_HK2"], count=1)
+print(value_1)
