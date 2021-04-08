@@ -42,4 +42,4 @@ CLIENT = ModbusTcpClient(IP_ISG)
 #print(value_1)
 
 #
-CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+CLIENT.write_register(REGISTER["Komfort_HK_1"], int(200))
