@@ -38,7 +38,7 @@ CLIENT = ModbusTcpClient(IP_ISG)
 #HK1_Temp = CLIENT.read_input_registers(506, count=1, unit=1)
 #print(HK1_Temp)
 
-value_1 = CLIENT.read_holding_registers(1500, count=1, unit=1)
+value_1 = CLIENT.read_holding_registers(1500, count=1, unit=0)
 print(value_1)
 
 
