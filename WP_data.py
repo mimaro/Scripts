@@ -15,8 +15,7 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 #######################################################################################################
 # Configuration
 UUID = {
-    "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
-    
+    "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca"
 }
 
 
@@ -27,8 +26,7 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500
-    
+    "Betriebsart": 1500   
 }
 
 IP_ISG = "192.168.178.36"
