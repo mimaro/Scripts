@@ -195,6 +195,13 @@ def main():
     if wp_consumption < 100:
         wp_freigabe = 1
     
+    #Abrufen aktueller Betriebszustand WP
+    wp_hot_water = False
+    wp_mode = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1)
+    if wp_mode == 5:
+        wp_hot_water = True
+    
+    print(result.getRegister(0))
     
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     logging.info("Start Freigabe Leistung")
@@ -256,7 +263,7 @@ def main():
       
     #Modbus Werte für Sonderbetrieb aus schreiben
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben") 
-    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or b_sperrung_excess ):
+    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or b_sperrung_excess or wp_hot_water ):
         #CLIENT.write_register(REGISTER["Komfort_HK1"], int(SB_AUS_HK1_T*10))
         #CLIENT.write_register(REGISTER["Steigung_HK1"], int(SB_AUS_HK1_ST*100))
         #CLIENT.write_register(REGISTER["Komfort_HK2"], int(SB_AUS_HK2_T*10))
