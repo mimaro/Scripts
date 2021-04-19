@@ -201,8 +201,8 @@ def main():
     if wp_mode == 5:
         wp_hot_water = True
     
-    print("Aktueller Betriebszustand:" wp_mode.getRegister(0))
-    
+    logging.info("Aktueller Betriebszustand: {}".format(wp_mode.getRegister(0)))
+   
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     logging.info("Start Freigabe Leistung")
     
