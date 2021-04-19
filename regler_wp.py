@@ -201,7 +201,7 @@ def main():
     if wp_mode == 5:
         wp_hot_water = True
     
-    print(result.getRegister(0))
+    print(wp_mode.getRegister(0))
     
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     logging.info("Start Freigabe Leistung")
