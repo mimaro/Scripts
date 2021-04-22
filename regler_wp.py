@@ -247,7 +247,7 @@ def main():
     Ww_stop = ww_stop.hour #Sperrzeit Warmwasser                        
     Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
     Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)
-    time_now = datetime.time(hour=int(now.time()))
+    time_now = datetime.time(hour=now.time())
     print(time_now)
     
         
