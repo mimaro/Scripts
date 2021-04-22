@@ -88,9 +88,9 @@ T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
-Solar_min = 4000
+Solar_min = 3500
 time_start = datetime.time(6, 0)
-time_stop = datetime.time(6, 0)
+time_stop = datetime.time(11, 0)
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -246,10 +246,16 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
        
-    is_true = True
-        
+
+    # Sperrung WP wenn am Morgen Solareintrag vorhanden
+    if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
+        logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung in Raum vorhanden") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(1))
+        Sperrung = 1
+        logging.info("Anlage aus: {}".format(Sperrung))
+    
     #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb
-    if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or wp_hot_water ):
+    elif (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or wp_hot_water ):
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von Raumtemp") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
