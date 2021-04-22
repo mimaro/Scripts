@@ -90,7 +90,11 @@ T_HK2_Nacht = 5
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
 Solar_min = 3500
 time_start = datetime.time(6, 0)
-time_stop = datetime.time(11, 0)
+time_stop = datetime.time(18, 0)
+
+#Freigabe WW Ladung
+ww_start = datetime.time(12, 0)
+ww_stop = datetime.time(13, 0)
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -245,11 +249,20 @@ def main():
     write_vals(UUID["WP_Freigabe"], wp_freigabe)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
-       
+    
+    
+    # Freigabe Programmbetrieb für Erzeugung Warmwasser
+    if (now.time() > ww_start and now.time() < ww_stop):
+        print(now.time())
+        logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        WW_Betrieb = 1
+        logging.info("WW-Betrieb: {}".format(WW_Betrieb))
+    
 
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
     if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
-        logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung in Raum vorhanden") 
+        logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Anlage aus: {}".format(Sperrung))
@@ -271,7 +284,7 @@ def main():
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     elif (b_freigabe_normal & T_Freigabe_Nacht):
         logging.info(f" ----------------------  Modbus Werte für Umwälzpumpe ein schreiben")
-        CLIENT.write_register(REGISTER["Betriebsart"], int(4))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
         Absenkbetrieb = 1
@@ -280,7 +293,7 @@ def main():
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_excess):
         logging.info(f" ----------------------  Modbus Werte für Absenkbetrieb ein schreiben") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(4))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
