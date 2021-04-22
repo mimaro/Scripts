@@ -242,13 +242,16 @@ def main():
 #         hour=int(f_time), minute=int((f_time - int(f_time))*60))
 #     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
     
+   
     #Formatierung Freigabezeiten
-    Ww_start = ww_start.hour # Freigabezeit Warmwasser
+    Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60))
+    print(Ww_start)
+    
+    ww_start.hour # Freigabezeit Warmwasser
     Ww_stop = ww_stop.hour #Sperrzeit Warmwasser                        
     Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
     Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)
-    time_now = datetime.time(hour=now.time())
-    print(time_now)
+  
     
         
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
