@@ -247,11 +247,12 @@ def main():
     Ww_stop = ww_stop.hour #Sperrzeit Warmwasser                        
     Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
     Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)
-    time_now = datetime.time(hour=int(now.time())
+    time_now = datetime.time(hour=int(now.time()))
+    print(time_now)
     
         
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > Ww_start and now.time() < Ww_stop):
+    if (time_now > Ww_start and time_now < Ww_stop):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
@@ -259,8 +260,7 @@ def main():
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
-    if (now.time() > Time_start and now.time() < Time_stop and p_net > Solar_min):
-        print(now.time())
+    if (time_now > Time_start and time_now < Time_stop and p_net > Solar_min):
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
