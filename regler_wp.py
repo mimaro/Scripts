@@ -262,6 +262,7 @@ def main():
 
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
     if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
+        print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
