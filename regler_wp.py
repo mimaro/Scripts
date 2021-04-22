@@ -241,16 +241,16 @@ def main():
     write_vals(UUID["WP_Freigabe"], wp_freigabe)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
-               
+       
+   is_true = True
+        
     #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben auf Grund von Raumtemp") 
     if (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or wp_hot_water ):
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Anlage aus: {}".format(Sperrung))
-    
-    is_true = True
-    
+
     elif is_true:
         print("ok")
     
