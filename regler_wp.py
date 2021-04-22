@@ -32,7 +32,6 @@ UUID = {
     "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
 
-
 # Freigabewert für Sonderbetrieb nach Heizgrenze
 FREIGABE_NORMAL_TEMP = 14
 
@@ -49,18 +48,6 @@ FREIGABE_WARM_T = 14
 FREIGABE_KALT_T = -10
 UHRZEIT_WARM = datetime.time(7, 0)
 UHRZEIT_KALT = datetime.time(7, 0)
-
-#Sollwerte für Sonderbetrieb ein (aktuell keine Funktion)
-#SB_EIN_HK1_T = 30
-#SB_EIN_HK1_ST = 0.40
-#SB_EIN_HK2_T = 24
-#SB_EIN_HK2_ST = 0.40
-
-#Sollwerte für Sonderbetrieb aus (aktuell keine Funktion)
-#SB_AUS_HK1_T = 22
-#SB_AUS_HK1_ST = 0.40
-#SB_AUS_HK2_T = 22
-#SB_AUS_HK2_ST = 0.40
 
 #Sollwerte für Nachtabsenkung über raspi
 AB_aus = datetime.time(5, 0)
@@ -169,18 +156,12 @@ def main():
     #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-5min")["data"]["average"]
-    #p_charge = get_vals(UUID["Charge_station"],
-    #                    duration="-5min")["data"]["average"]
-    #p_wp = get_vals(UUID["WP_Verbrauch"],
-    #                    duration="-5min")["data"]["average"]
     p_net = power_balance 
     print("Aktuelle Bilanz p_net =",p_net)
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
-    #p_charge2 = get_vals(UUID["Charge_station"],
-    #                    duration="-30min")["data"]["average"]
     p_net2 = power_balance2 
     print("Aktuelle Bilanz p_net2=",p_net2)
         
@@ -250,18 +231,22 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
     
+    #Formatierung Freigabezeiten
+    ww_start = datetime.time(hour=int(ww_start) # Freigabezeit Warmwasser 
+    ww_stop = datetime.time(hour=int(ww_stop) #Sperrzeit Warmwasser                        
+    time_start = datetime.time(hour=int(time_start) #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
+    time_stop = datetime.time(hour=int(time_stop) #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > ww_start.hour and now.time() < ww_stop.hour):
+    if (now.time() > ww_start and now.time() < ww_stop):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
         WW_Betrieb = 1
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
-
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
-    if (now.time() > time_start.hour and now.time() < time_stop.hour and p_net > Solar_min):
+    if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
