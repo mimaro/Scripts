@@ -157,7 +157,7 @@ def main():
     logging.info("*****************************")
     logging.info("*Starting WP controller")
     now = datetime.datetime.now(tz=tz)
-    logging.info("Swiss time": {}".format(now))
+    logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
     logging.info("Get values from VZ")
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
