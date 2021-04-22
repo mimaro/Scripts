@@ -87,6 +87,10 @@ T_verz_Tag = 21
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
+#Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
+Solar_min = 4000
+time_start = datetime.time(6, 0)
+time_stop = datetime.time(6, 0)
 
 REGISTER = {
     "Komfort_HK1": 1501,
