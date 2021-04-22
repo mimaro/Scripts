@@ -252,7 +252,7 @@ def main():
     
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > ww_start and now.time() < ww_stop):
+    if (now.time() > ww_start.hour and now.time() < ww_stop.hour):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
@@ -261,7 +261,7 @@ def main():
     
 
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
-    if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
+    if (now.time() > time_start.hour and now.time() < time_stop.hour and p_net > Solar_min):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
