@@ -255,13 +255,14 @@ def main():
         logging.info("Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden ist
-    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
-    elif (b_freigabe_normal & b_freigabe_excess):
-        CLIENT.write_register(REGISTER["Betriebsart"], int(3))
-        Freigabe = 1
-        logging.info("Sonderbetrieb ein: {}".format(Freigabe))
+#     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
+#     elif (b_freigabe_normal & b_freigabe_excess):
+#         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
+#         Freigabe = 1
+#         logging.info("Sonderbetrieb ein: {}".format(Freigabe))
          
-   # Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
+   #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
+    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
     elif (b_freigabe_normal & T_Freigabe_Nacht):
         CLIENT.write_register(REGISTER["Betriebsart"], int(4))
         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
@@ -269,7 +270,8 @@ def main():
         Absenkbetrieb = 1
         logging.info("Nur Umwälzpumpe ein: {}".format(Absenkbetrieb))
      
-    # Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
+    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
+    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
     elif (b_freigabe_normal & b_sperrung_excess):
         CLIENT.write_register(REGISTER["Betriebsart"], int(4))
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
