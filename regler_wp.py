@@ -241,9 +241,7 @@ def main():
     write_vals(UUID["WP_Freigabe"], wp_freigabe)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
-   
-    # Wenn RT in der Nacht über Soll-Wert liegt ist WP Raumtemp Eco HK1 & HK2 tief. 
-            
+               
     Freigabe = 0
     Sperrung = 0
 
@@ -255,11 +253,11 @@ def main():
         logging.info("Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden ist
-#     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
-#     elif (b_freigabe_normal & b_freigabe_excess):
-#         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
-#         Freigabe = 1
-#         logging.info("Sonderbetrieb ein: {}".format(Freigabe))
+    logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
+    elif (b_freigabe_normal & b_freigabe_excess):
+        CLIENT.write_register(REGISTER["Betriebsart"], int(3))
+        Freigabe = 1
+        logging.info("Sonderbetrieb ein: {}".format(Freigabe))
          
    #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben") 
