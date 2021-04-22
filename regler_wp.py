@@ -69,7 +69,7 @@ T_HK2_Nacht = 5
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
 Solar_min = 3500
 time_start = datetime.time(8, 0)
-time_stop = datetime.time(18, 0)
+time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
