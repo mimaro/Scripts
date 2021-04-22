@@ -248,7 +248,7 @@ def main():
     Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
     Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)    
     
-    print(now)
+    print(now.time())
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
     if (now.time() > Ww_start and now.time() < Ww_stop):
