@@ -146,7 +146,7 @@ def get_sperrleistung(t_now):
     return p_lock_now
 
 def main():
-    tz = pytz.UTC
+    tz = pytz.timezone('Europe/Zurich')
     b_freigabe_12h_temp = 0
     b_freigabe_excess = 0
     b_sperrung_excess = 0
