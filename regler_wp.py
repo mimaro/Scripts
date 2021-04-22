@@ -242,7 +242,7 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
        
-   is_true = True
+    is_true = True
         
     #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb
     logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb aus schreiben auf Grund von Raumtemp") 
