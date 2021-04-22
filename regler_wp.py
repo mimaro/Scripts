@@ -223,8 +223,28 @@ def main():
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
     
+     
+        #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
+# Solar_min = 3500
+# time_start = datetime.time(8, 0)
+# time_stop = datetime.time(11, 0)
+
+# #Freigabe WW Ladung
+# ww_start = datetime.time(12, 0)
+# ww_stop = datetime.time(13, 0)
+        
+#     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
+#     u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
+#     f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
+#         (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
+#     logging.info("Decimal Unlocktime: {}".format(f_time))
+#     f_time_12h_temp = datetime.time(
+#         hour=int(f_time), minute=int((f_time - int(f_time))*60))
+#     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
+    
     #Formatierung Freigabezeiten
-    Ww_start = ww_start.hour # Freigabezeit Warmwasser 
+    Ww_start = ww_start.hour # Freigabezeit Warmwasser
+    print(Ww_start)
     Ww_stop = ww_stop.hour #Sperrzeit Warmwasser                        
     Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
     Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
