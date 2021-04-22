@@ -49,14 +49,6 @@ FREIGABE_KALT_T = -10
 UHRZEIT_WARM = datetime.time(7, 0)
 UHRZEIT_KALT = datetime.time(7, 0)
 
-#Sollwerte für Nachtabsenkung über raspi
-AB_aus = datetime.time(5, 0)
-AB_ein = datetime.time(21, 0)
-AB_AUS_HK1_T = 5
-AB_AUS_HK2_T = 20
-AB_EIN_HK1_T = 5
-AB_EIN_HK2_T = 20
-
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
 HK1_min = 19 
@@ -76,12 +68,12 @@ T_HK2_Nacht = 5
 
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
 Solar_min = 3500
-time_start = 6
-time_stop = 18
+time_start = datetime.time(8, 0)
+time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
-ww_start = 12
-ww_stop = 13
+ww_start = datetime.time(12, 0)
+ww_stop = datetime.time(13, 0)
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -232,13 +224,13 @@ def main():
     write_vals(UUID["Bilanz_avg_ein"], p_net)
     
     #Formatierung Freigabezeiten
-    Ww_start = datetime.time(hour=int(ww_start)) # Freigabezeit Warmwasser 
-    Ww_stop = datetime.time(hour=int(ww_stop)) #Sperrzeit Warmwasser                        
-    Time_start = datetime.time(hour=int(time_start)) #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
-    Time_stop = datetime.time(hour=int(time_stop)) #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
+    Ww_start = ww_start.hour # Freigabezeit Warmwasser 
+    Ww_stop = ww_stop.hour #Sperrzeit Warmwasser                        
+    Time_start = time_start.hour #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
+    Time_stop = time_stop.hour #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > ww_start and now.time() < ww_stop):
+    if (now.time() > Ww_start and now.time() < Ww_stop):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
@@ -246,7 +238,7 @@ def main():
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
-    if (now.time() > time_start and now.time() < time_stop and p_net > Solar_min):
+    if (now.time() > Time_start and now.time() < Time_stop and p_net > Solar_min):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
