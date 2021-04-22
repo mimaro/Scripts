@@ -232,10 +232,10 @@ def main():
     write_vals(UUID["Bilanz_avg_ein"], p_net)
     
     #Formatierung Freigabezeiten
-    ww_start = datetime.time(hour=int(ww_start)) # Freigabezeit Warmwasser 
-    ww_stop = datetime.time(hour=int(ww_stop)) #Sperrzeit Warmwasser                        
-    time_start = datetime.time(hour=int(time_start)) #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
-    time_stop = datetime.time(hour=int(time_stop)) #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
+    Ww_start = datetime.time(hour=int(ww_start)) # Freigabezeit Warmwasser 
+    Ww_stop = datetime.time(hour=int(ww_stop)) #Sperrzeit Warmwasser                        
+    Time_start = datetime.time(hour=int(time_start)) #Freigabezeit Morgen (Verzögerung Sonneneinstrahlung) 
+    Time_stop = datetime.time(hour=int(time_stop)) #Sperrzeit Morgen (Verzögerung Sonneneinstrahlung)                 
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser
     if (now.time() > ww_start and now.time() < ww_stop):
