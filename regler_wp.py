@@ -76,12 +76,12 @@ T_HK2_Nacht = 5
 
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
 Solar_min = 3500
-time_start = datetime.time(6, 0)
-time_stop = datetime.time(18, 0)
+time_start = 6
+time_stop = 18
 
 #Freigabe WW Ladung
-ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(13, 0)
+ww_start = 12
+ww_stop = 13
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -285,22 +285,6 @@ def main():
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
     
-    
-            
- #Nachtabsenkung über Raspi
- #   if now.time() > AB_aus:
- #       b_absenk_aus = 1
- #   if now.time() < AB_ein:
- #       b_absenk_ein = 1
- #       
- #   if  (b_absenk_aus & b_absenk_ein):
- #       CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_AUS_HK1_T*10))
- #       CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_AUS_HK2_T*10))
- #           
- #   else:
- #      CLIENT.write_register(REGISTER["Eco_HK1"], int(AB_EIN_HK1_T*10))
- #      CLIENT.write_register(REGISTER["Eco_HK2"], int(AB_EIN_HK2_T*10))   
-
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
     
@@ -330,30 +314,6 @@ def main():
     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
     CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
    
-    
-     # Sperrung WP wegen Raumtemp (Tag & Nacht)
-    #logging.info(f" ----------------------  Sperrung WP wegen Raumtemp. Tag & Nacht.") 
-    #RT_akt = get_vals(UUID["T_Raum"],
-                        #duration="-15min")["data"]["average"] 
-        
-    
-    
-    #T_Freigabe_Tag = 0
-    #elif RT_akt > T_max_Tag:
-         #T_Freigabe_Tag = 1
-    #logging.info("Sperrung Leistung Temp Tag: {}".format(T_Freigabe_Tag))        
-    #if (T_Freigabe_Tag):
-         #CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))  
-         #CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))
-    
-    # Aktueller Betriebszustand WP auslesen. 
-        
-    #REGISTER["Betriebsart"]    
-        
-    #Betrieb = CLIENT.read_input_registers(501, count=1)
-    #print(Betrieb)
-    #logging.info("Betriebszustand: {}".format(Betrieb)) 
-    #write_vals(UUID["Betrieb_Z"], Betrieb)
     
     logging.info("********************************")
     
