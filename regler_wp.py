@@ -180,7 +180,11 @@ def main():
     
     #Abrufen aktuelle Vorlautemperatur WP:
     ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)   
+    
+    
     logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.getRegister(0)))
+    print(ww
+    
     Ww_max = True
     if ww_temp > ww_max:
         Ww_max = False
