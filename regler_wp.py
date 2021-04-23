@@ -249,14 +249,7 @@ def main():
     Time_start = datetime.time(hour=int(time_start.hour), minute=int((time_start.hour - int(time_start.hour))*60)) # Freigabezeit Warmwasser
     Time_stop = datetime.time(hour=int(time_stop.hour), minute=int((time_stop.hour - int(time_stop.hour))*60)) # Freigabezeit Warmwasser
     
-          
-    # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > Ww_start and now.time() < Ww_stop):
-        print(now.time())
-        logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
-        WW_Betrieb = 1
-        logging.info("WW-Betrieb: {}".format(WW_Betrieb))
+      
     
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
     if (now.time() > Time_start and now.time() < Time_stop and p_net > Solar_min):
@@ -296,6 +289,16 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
+    
+        
+    # Freigabe Programmbetrieb für Erzeugung Warmwasser
+    if (now.time() > Ww_start and now.time() < Ww_stop):
+        print(now.time())
+        logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        WW_Betrieb = 1
+        logging.info("WW-Betrieb: {}".format(WW_Betrieb))
+    
     
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
