@@ -179,7 +179,7 @@ def main():
     
     #Abrufen aktuelle Vorlautemperatur WP:
     ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)
-    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.registers[0]))
+    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.registers[1]))
     
     
     #Abrufen aktueller Betriebszustand WP
