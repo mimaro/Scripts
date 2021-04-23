@@ -99,9 +99,9 @@ def get_vals(uuid, duration="-0min"):
 
 def write_vals(uuid, val):
     poststring = VZ_POST_URL.format(uuid, val)
-    logging.info("Poststring {}".format(poststring))
+    #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
-    logging.info("Ok? {}".format(postreq.ok))
+    #logging.info("Ok? {}".format(postreq.ok))
 
 def get_freigabezeit_12h_temp(t_roll_avg):
     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
