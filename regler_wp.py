@@ -73,7 +73,7 @@ time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(13, 0)
+ww_stop = datetime.time(17, 0)
 
 REGISTER = {
     "Komfort_HK1": 1501,
