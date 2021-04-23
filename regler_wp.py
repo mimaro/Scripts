@@ -241,9 +241,8 @@ def main():
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
-        print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         WW_Betrieb = 1
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
