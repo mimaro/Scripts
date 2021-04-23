@@ -74,6 +74,7 @@ time_stop = datetime.time(11, 0)
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(20, 0)
+ww_max = 46.8 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -178,9 +179,11 @@ def main():
         wp_freigabe = 1
     
     #Abrufen aktuelle Vorlautemperatur WP:
-    ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)
+    ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1) / 10
     logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.getRegister(0)))
-   
+    Ww_max = True
+    if ww_temp > ww_max:
+        Ww_max = False
     
     #Abrufen aktueller Betriebszustand WP
     wp_hot_water = False
@@ -228,34 +231,12 @@ def main():
     write_vals(UUID["WP_Freigabe"], wp_freigabe)
     write_vals(UUID["Bilanz_avg_aus"], p_net2)
     write_vals(UUID["Bilanz_avg_ein"], p_net)
-    
-     
-        #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
-# Solar_min = 3500
-# time_start = datetime.time(8, 0)
-# time_stop = datetime.time(11, 0)
-
-# #Freigabe WW Ladung
-# ww_start = datetime.time(12, 0)
-# ww_stop = datetime.time(13, 0)
-        
-#     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
-#     u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
-#     f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
-#         (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
-#     logging.info("Decimal Unlocktime: {}".format(f_time))
-#     f_time_12h_temp = datetime.time(
-#         hour=int(f_time), minute=int((f_time - int(f_time))*60))
-#     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
-    
    
     #Formatierung Freigabezeiten
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
     Time_start = datetime.time(hour=int(time_start.hour), minute=int((time_start.hour - int(time_start.hour))*60)) # Freigabezeit Warmwasser
     Time_stop = datetime.time(hour=int(time_stop.hour), minute=int((time_stop.hour - int(time_stop.hour))*60)) # Freigabezeit Warmwasser
-    
-      
     
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
     if (now.time() > Time_start and now.time() < Time_stop and p_net > Solar_min):
@@ -290,15 +271,15 @@ def main():
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_excess):
         logging.info(f" ----------------------  Modbus Werte für Absenkbetrieb ein schreiben") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
     
         
-    # Freigabe Programmbetrieb für Erzeugung Warmwasser
-    if (now.time() > Ww_start and now.time() < Ww_stop):
+    # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
+    if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
         print(now.time())
         logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
