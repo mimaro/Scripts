@@ -83,7 +83,7 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "Vorlauftemp": 549
+    "Vorlauftemp": 514
     
 }
 
@@ -178,9 +178,9 @@ def main():
         wp_freigabe = 1
     
     #Abrufen aktuelle Vorlautemperatur WP:
-    ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 0x02)
-    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.registers[0]))
-    
+    ww_temp = CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)
+    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.getRegister(0)))
+   
     
     #Abrufen aktueller Betriebszustand WP
     wp_hot_water = False
