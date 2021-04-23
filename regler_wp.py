@@ -82,7 +82,8 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500
+    "Betriebsart": 1500,
+    "Vorlauftemp": 549
     
 }
 
@@ -175,6 +176,11 @@ def main():
        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
     if wp_consumption < 100:
         wp_freigabe = 1
+    
+    #Abrufen aktuelle Vorlautemperatur WP:
+    ww_temp = CLIENT.read_holding_registers(REGISTER["Vorlauftemp"], count=1, unit= 1)
+    logging.info("Aktueller Betriebszustand: {}".format(ww_temp.getRegister(0)))
+    
     
     #Abrufen aktueller Betriebszustand WP
     wp_hot_water = False
