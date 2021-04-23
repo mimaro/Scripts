@@ -185,12 +185,12 @@ def main():
     
    
     
-    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.getRegister(0)))
-    print(ww
+#     logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp.getRegister(0)))
+#     print(ww
     
-    Ww_max = True
-    if ww_temp > ww_max:
-        Ww_max = False
+#     Ww_max = True
+#     if ww_temp > ww_max:
+#         Ww_max = False
     
     #Abrufen aktueller Betriebszustand WP
     wp_hot_water = False
