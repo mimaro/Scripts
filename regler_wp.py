@@ -83,7 +83,7 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "Vorlauftemp": 513
+    "Vorlauftemp": 514
     
 }
 
