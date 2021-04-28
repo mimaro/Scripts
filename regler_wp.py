@@ -73,7 +73,7 @@ time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(20, 0)
+ww_stop = datetime.time(14, 0)
 ww_max = 46.8 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 
 REGISTER = {
