@@ -25,9 +25,7 @@ UUID = {
     "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
-    "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd",
-    "Bilanz_avg_aus": "ad5c8090-3698-11ea-8ad7-7f796afef9a1", 
-    "Bilanz_avg_ein": "a4f39770-3698-11ea-b87e-9f684e384f0b",
+    "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd", 
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
     "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
 }
@@ -229,8 +227,6 @@ def main():
     write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht)
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag)
     write_vals(UUID["WP_Freigabe"], wp_freigabe)
-    write_vals(UUID["Bilanz_avg_aus"], p_net2)
-    write_vals(UUID["Bilanz_avg_ein"], p_net)
    
     #Formatierung Freigabezeiten
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
