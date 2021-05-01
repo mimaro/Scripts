@@ -31,7 +31,7 @@ UUID = {
 }
 
 # Freigabewert für Sonderbetrieb nach Heizgrenze
-FREIGABE_NORMAL_TEMP = 14
+FREIGABE_NORMAL_TEMP = 15
 
 #Freigabewerte für Sonderbetrieb nach Leistung
 FREIGABE_WARM_P = -600
