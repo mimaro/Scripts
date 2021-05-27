@@ -151,6 +151,12 @@ def main():
     p_net = power_balance 
     print("Aktuelle Bilanz p_net =",p_net)
     
+    #Abfragen mittlere Solarleistung für Sperrung WP am Morgen bei Sonneneinstrahlung
+    power_balance1 = get_vals(
+        UUID["PV_Produktion"], duration="-15min")["data"]["average"]
+    p_net1 = power_balance1 
+    print("Aktuelle Bilanz p_net =",p_net1)
+    
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
@@ -243,7 +249,7 @@ def main():
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
     # Sperrung WP wenn am Morgen Solareintrag vorhanden
-    elif (now.time() > Time_start and now.time() < Time_stop and p_net > Solar_min):
+    elif (now.time() > Time_start and now.time() < Time_stop and p_net1 > Solar_min):
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
