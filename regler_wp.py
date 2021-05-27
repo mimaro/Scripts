@@ -82,7 +82,7 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "Vorlauftemp": 512
+    "Vorlauftemp": 514
     
 }
 
@@ -286,10 +286,7 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
-    
-        
-
-    
+       
     
   #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
     logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
