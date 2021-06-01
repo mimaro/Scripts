@@ -3,6 +3,7 @@ import csv
 
 UUID_BUS_GS = "bcc12cb0-6290-11e9-acca-29f0ac50e804"
 UUID_MOA_GS = "4f769670-52e4-11e9-840c-29fd59f140bc"
+UUID_SMA_GS = "a4f39770-3698-11ea-b87e-9f684e384f0b"
 
 UUID_BUS_WS = "cf251900-6290-11e9-b8c7-c1df28b9badb"
 UUID_MOA_WS = "ca315260-6290-11e9-86e7-519ba48bed8f"
@@ -15,7 +16,7 @@ URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&val
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
 def main():
-    BUS, MOA = {}, {}
+    BUS, MOA, SMA = {}, {}, {}
     req=requests.get(CSV_URL)
     data = req.content.split("\n")[:]
     reader = csv.DictReader(data, delimiter = ';')
@@ -24,8 +25,11 @@ def main():
             BUS=row
         elif row['Station/Location'] == "MOA":
             MOA=row
+        elif row['Station/Location'] == "SMA":
+            SMA=row 
     requests.post(URL_VZ.format(UUID_BUS_GS, BUS[GS]))
     requests.post(URL_VZ.format(UUID_MOA_GS, MOA[GS]))
+    requests.post(URL_VZ.format(UUID_SMA_GS, SMA[GS]))
     requests.post(URL_VZ.format(UUID_BUS_WS, BUS[WS]))
     requests.post(URL_VZ.format(UUID_MOA_WS, MOA[WS]))
 
