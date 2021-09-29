@@ -18,9 +18,19 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 #######################################################################################################
 # Configuration
 UUID = {
-    "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca"
+    "Aussentemp": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
+    "Volumenstrom": "e4179ff0-1e25-11e9-a9d1-7bc1d2c119b6",
+    "RL_WP": "05a40bc0-1e26-11e9-aebb-51a6700848c1",
+    "VL_WP": "a9d47be0-2ec6-11e9-8ccd-33ffc3253237",
+    "BWW_unten": "b27589b0-1cab-11e9-a06d-43024133319c",
+    "Puffer_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4",
+    "T_SOLL_BWW": "48cfb7f0-2ec7-11e9-8cb6-d3fb38afd2fe",
+    "T_SOLL_HK2": "5bb70670-2ec6-11e9-9ef5-b1cdc3699fde",
+    "T_SOLL_HK1": "dc9651b0-2ec5-11e9-8946-93157542391a"
 }
 
+
+#Betriebsart
 
 REGISTER = {
     "Komfort_HK1": 1501,
