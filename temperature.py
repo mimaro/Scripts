@@ -9,6 +9,9 @@ import logging
 import sys
 
 ##############################################################
+# Mit diesem Script werden die an das raspberri pi angeschlossenen Temperatursensoren ausgelesen und die Daten auf vz geladen
+
+##############################################################
 
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
