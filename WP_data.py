@@ -26,7 +26,8 @@ UUID = {
     "Puffer_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4",
     "T_SOLL_BWW": "48cfb7f0-2ec7-11e9-8cb6-d3fb38afd2fe",
     "T_SOLL_HK2": "5bb70670-2ec6-11e9-9ef5-b1cdc3699fde",
-    "T_SOLL_HK1": "dc9651b0-2ec5-11e9-8946-93157542391a"
+    "T_SOLL_HK1": "dc9651b0-2ec5-11e9-8946-93157542391a",
+    "Betriebszustand": "a15ab220-1d5a-11e9-9dd4-57fe91d5c03b"
 }
 
 
