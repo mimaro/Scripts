@@ -25,8 +25,8 @@ def get_vals(uuid, duration="-0min"):
     #return(json.loads(req.content))
     return req.json()
 
-WP_check = get_vals(UUID["T_Puffer"], duration="-0min")["data"]["min"]
-PV_check = get_vals(UUID["PV_Prod"], duration="-0min")["data"]["max"]
+WP_check = get_vals(UUID["T_Puffer"], duration="-0min")["data"]["average"]
+PV_check = get_vals(UUID["PV_Prod"], duration="-0min")["data"]["average"]
 
 print(WP_check)
 print(PV_check)
