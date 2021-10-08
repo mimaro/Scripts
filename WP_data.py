@@ -58,18 +58,17 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
 
 #Vorlage read input registers
-value_1 = CLIENT.read_input_registers(506, count=1, unit=1).getRegister(0)
-print(value_1)
+# value_1 = CLIENT.read_input_registers(506, count=1, unit=1).getRegister(0)
+# print(value_1)
 
 
 #Vorlage read holding registers
-value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
-print(value_2)
+# value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
+# print(value_2)
 
-
+#Auslesen Betriebszustand aus ISG und Schreiben auf vz
 betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
-print(betriebszustand)
-logging.info("Betriebszustand: {}".format(betriebszustand))
+print("Betriebszustand:" betriebszustand)
 write_vals(UUID["Betriebszustand"], betriebszustand)
 
     
