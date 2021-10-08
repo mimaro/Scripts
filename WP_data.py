@@ -57,11 +57,17 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-    
-response = CLIENT.read_input_registers(506, count=1, unit=1)
-print(response.getRegister(0))
+#Vorlage read input registers
+value_1 = CLIENT.read_input_registers(506, count=1, unit=1).getRegister(0)
+print(value_1)
 
-betriebszustand = (CLIENT.read_holding_registers(1500, count=1, unit= 1)).getRegister(0)
+
+#Vorlage read holding registers
+value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
+print(value_2)
+
+
+betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
 print(betriebszustand)
 logging.info("Betriebszustand: {}".format(betriebszustand))
 write_vals(UUID["Betriebszustand"], betriebszustand)
