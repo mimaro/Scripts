@@ -64,5 +64,11 @@ def write_vals(uuid, val):
 response = CLIENT.read_input_registers(506, count=1, unit=1)
 print(response.getRegister(0))
 
-result = CLIENT.read_holding_registers(1500, count=1, unit= 1)
-print(result.getRegister(0))
+betriebszustand = (CLIENT.read_holding_registers(1500, count=1, unit= 1)).getRegister(0)
+print(betriebszustand)
+
+
+
+#logging.info("Freigabe Nacht: {}".format(T_Freigabe_Nacht))
+    
+write_vals(UUID["Betriebszustand"], betriebszustand)
