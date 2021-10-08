@@ -23,7 +23,7 @@ UUID = {
 
 #######################################################################################################
 
-def get_vals(uuid, duration="-0min"):
+def get_vals(uuid, duration="0min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     #return(json.loads(req.content))
     return req.json()
