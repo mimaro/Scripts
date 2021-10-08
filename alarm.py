@@ -3,7 +3,7 @@ import json
 import pprint
 import datetime
 import logging
-import pytz
+#import pytz
 
 #######################################################################################################
 # Format URLs
@@ -20,6 +20,13 @@ UUID = {
 
 #######################################################################################################
 
+def get_vals(uuid, duration="-0min"):
+    req = requests.get(VZ_GET_URL.format(uuid, duration))
+    #return(json.loads(req.content))
+    return req.json()
 
 WP_check = get_vals(UUID["T_Puffer"], duration="-1min")["data"]["average"]
 PV_check = get_vals(UUID["PV_Prod"], duration="-1min")["data"]["average"]
+
+print(WP_check)
+print(PV_check)
