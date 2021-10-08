@@ -1,3 +1,4 @@
+from smtplib import SMTP
 import requests
 import json
 import pprint
@@ -30,3 +31,7 @@ PV_check = get_vals(UUID["PV_Prod"], duration="-0min")["data"]["average"]
 
 print(WP_check)
 print(PV_check)
+
+smtp = SMTP()
+smtp.connect(host="mail.gmx.net", port =587)
+smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz", 
