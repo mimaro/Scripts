@@ -62,8 +62,10 @@ response = CLIENT.read_input_registers(506, count=1, unit=1)
 print(response.getRegister(0))
 
 betriebszustand = (CLIENT.read_holding_registers(1500, count=1, unit= 1)).getRegister(0)
-write_vals(UUID["Betriebszustand"], betriebszustand)
+print(betriebszustand)
 logging.info("Betriebszustand: {}".format(betriebszustand))
+write_vals(UUID["Betriebszustand"], betriebszustand)
+
     
 
 
