@@ -45,8 +45,8 @@ print(PV_check)
 
 
 msg = EmailMessage()
-msg.set_content("The body of the email is here")
-msg["Subject"] = "An Email Alert"
+msg.set_content("Auf dem Volkszähler sind fehlende Daten vorhanden")
+msg["Subject"] = "Alarmierung Datenfehler VZ"
 msg["From"] = "m.roost@gmx.net"
 msg["To"] = "m.roost@gmx.net"
 
