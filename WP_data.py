@@ -30,9 +30,6 @@ UUID = {
     "Betriebszustand": "a15ab220-1d5a-11e9-9dd4-57fe91d5c03b"
 }
 
-
-#Betriebsart
-
 REGISTER = {
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
@@ -65,10 +62,9 @@ response = CLIENT.read_input_registers(506, count=1, unit=1)
 print(response.getRegister(0))
 
 betriebszustand = (CLIENT.read_holding_registers(1500, count=1, unit= 1)).getRegister(0)
-print(betriebszustand)
-
-
-
-#logging.info("Freigabe Nacht: {}".format(T_Freigabe_Nacht))
-    
 write_vals(UUID["Betriebszustand"], betriebszustand)
+logging.info("Betriebszustand: {}".format(betriebszustand))
+    
+
+
+
