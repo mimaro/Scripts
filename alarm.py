@@ -23,12 +23,11 @@ UUID = {
 
 #######################################################################################################
 
-def get_vals(uuid, duration="0min"):
+def get_vals(uuid, duration="-0sec"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
-    #return(json.loads(req.content))
     return req.json()
 
-WP_check = get_vals(UUID["T_Puffer"])#["data"]["average"]
+WP_check = get_vals(UUID["T_Puffer"])["data"]["average"]
 PV_check = get_vals(UUID["PV_Prod"])#["data"]["average"]
 
 print(WP_check)
