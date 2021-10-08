@@ -1,4 +1,5 @@
 from smtplib import SMTP
+import ssl
 import requests
 import json
 import pprint
@@ -34,8 +35,11 @@ print(PV_check)
 
 smtp = SMTP()
 
+with SMTP("mail.gmx.net", port =587) as smtp:
+  
+#smtp.connect(host="mail.gmx.net", port =587)
+  smtp.starttls(context=ssl.create_default_context())
+  smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO")
+  smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz")
 
-smtp.connect(host="mail.gmx.net", port =587)
-smtp.starttls()
-smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO", initial_response_ok = True)
-smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz")
+
