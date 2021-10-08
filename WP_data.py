@@ -69,15 +69,15 @@ def write_vals(uuid, val):
 #Auslesen Betriebszustand aus ISG und Schreiben auf vz
 betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
 
-if betriebszustand == 1
+if betriebszustand == 1:
     print("Betriebszustand:", "Bereitschaftsbetrieb")
-elif betriebszustand == 2
+elif betriebszustand == 2:
     print("Betriebszustand:", "Programmbetrieb")
-elif betriebszustand == 3
+elif betriebszustand == 3:
     print("Betriebszustand:", "Komfortbetrieb")
-elif betriebszustand == 4
+elif betriebszustand == 4:
     print("Betriebszustand:", "Eco-Betrieb")
-elif betriebszustand == 5
+elif betriebszustand == 5:
     print("Betriebszustand:", "Warmwasserbetrieb")    
     
 write_vals(UUID["Betriebszustand"], betriebszustand)
