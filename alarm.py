@@ -36,23 +36,15 @@ print(PV_check)
 
 
 
-# with SMTP("mail.gmx.net", port =587) as smtp:
-  
-# #smtp.connect(host="mail.gmx.net", port =587)
-#   smtp.starttls()
-#   smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO")
-#   smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz")
+# msg = EmailMessage()
+# msg.set_content("Auf dem Volkszähler sind fehlende Daten vorhanden")
+# msg["Subject"] = "Alarmierung Datenfehler VZ"
+# msg["From"] = "m.roost@gmx.net"
+# msg["To"] = "m.roost@gmx.net"
 
+# context=ssl.create_default_context()
 
-msg = EmailMessage()
-msg.set_content("Auf dem Volkszähler sind fehlende Daten vorhanden")
-msg["Subject"] = "Alarmierung Datenfehler VZ"
-msg["From"] = "m.roost@gmx.net"
-msg["To"] = "m.roost@gmx.net"
-
-context=ssl.create_default_context()
-
-with smtplib.SMTP("mail.gmx.net", port=587) as smtp:
-    smtp.starttls(context=context)
-    smtp.login(msg["From"], "TurionX2klm09LMFO")
-    smtp.send_message(msg)
+# with smtplib.SMTP("mail.gmx.net", port=587) as smtp:
+#     smtp.starttls(context=context)
+#     smtp.login(msg["From"], "TurionX2klm09LMFO")
+#     smtp.send_message(msg)
