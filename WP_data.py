@@ -68,7 +68,7 @@ def write_vals(uuid, val):
 
 #Auslesen Betriebszustand aus ISG und Schreiben auf vz
 betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
-print("Betriebszustand:" & betriebszustand)
+print("Betriebszustand:", betriebszustand)
 write_vals(UUID["Betriebszustand"], betriebszustand)
 
     
