@@ -33,5 +33,7 @@ print(WP_check)
 print(PV_check)
 
 smtp = SMTP()
+smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO", initial_response_ok = True)
+smtp.starttls()
 smtp.connect(host="mail.gmx.net", port =587)
 smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz", 
