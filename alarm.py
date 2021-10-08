@@ -1,4 +1,5 @@
-from smtplib import SMTP
+import smtplib 
+from email.message import EmailMessage
 import ssl
 import requests
 import json
@@ -33,13 +34,25 @@ PV_check = get_vals(UUID["PV_Prod"], duration="-0min")["data"]["average"]
 print(WP_check)
 print(PV_check)
 
-smtp = SMTP()
 
-with SMTP("mail.gmx.net", port =587) as smtp:
+
+# with SMTP("mail.gmx.net", port =587) as smtp:
   
-#smtp.connect(host="mail.gmx.net", port =587)
-  smtp.starttls()
-  smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO")
-  smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz")
+# #smtp.connect(host="mail.gmx.net", port =587)
+#   smtp.starttls()
+#   smtp.login("m.roost@gmx.net", "TurionX2klm09LMFO")
+#   smtp.sendmail("m.roost@gmx.net","m.roost@gmx.net", "Alarmierung vz")
 
 
+msg = EmailMessage()
+msg.set_content("The body of the email is here")
+msg["Subject"] = "An Email Alert"
+msg["From"] = "m.roost@gmx.net"
+msg["To"] = "m.roost@gmx.net"
+
+context=ssl.create_default_context()
+
+with smtplib.SMTP("mail.gmx.net", port=587) as smtp:
+    smtp.starttls(context=context)
+    smtp.login(msg["From"], "TurionX209LMFO")
+    smtp.send_message(msg)
