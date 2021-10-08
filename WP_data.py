@@ -49,12 +49,20 @@ CLIENT = ModbusTcpClient(IP_ISG)
 CLIENT.connect()
 ############################################################################################################
 
+
+def get_vals(uuid, duration="-0min"):
+    req = requests.get(VZ_GET_URL.format(uuid, duration))
+    return req.json()
+
+def write_vals(uuid, val):
+    poststring = VZ_POST_URL.format(uuid, val)
+    #logging.info("Poststring {}".format(poststring))
+    postreq = requests.post(poststring)
+    #logging.info("Ok? {}".format(postreq.ok))
+
+    
 response = CLIENT.read_input_registers(506, count=1, unit=1)
 print(response.getRegister(0))
 
 result = CLIENT.read_holding_registers(1500, count=1, unit= 1)
 print(result.getRegister(0))
-
-
-
-
