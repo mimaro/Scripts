@@ -175,7 +175,7 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
-    #Abrufen aktuelle Leistung Wärmepumpe
+    #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
     wp_consumption = get_vals(
        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
@@ -229,10 +229,10 @@ def main():
     
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
-    write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag)
-    write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht)
-    write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag)
-    write_vals(UUID["WP_Freigabe"], wp_freigabe)
+    write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
+    write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
+    write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
+    write_vals(UUID["WP_Freigabe"], wp_freigabe) # ==> Ist WP ausgeschaltet
    
     #Formatierung Freigabezeiten
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
@@ -248,15 +248,15 @@ def main():
         WW_Betrieb = 1
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
-    # Sperrung WP wenn am Morgen Solareintrag vorhanden
+    # Sperrung WP wenn am Morgen Solareintrag vorhanden (p_net1 = aktueller Solarertrag)
     elif (now.time() > Time_start and now.time() < Time_stop and p_net1 > Solar_min):
         logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Anlage aus: {}".format(Sperrung))
     
-    #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb
-    elif (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag or wp_hot_water ):
+    #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb und zeitliche Beschränkung
+    elif (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag): #or wp_hot_water ):
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von Raumtemp") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
