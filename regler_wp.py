@@ -257,7 +257,7 @@ def main():
         logging.info("Anlage aus: {}".format(Sperrung))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb und zeitliche Beschränkung
-    elif (ow.time() > Time_start and now.time() < Time_stop and T_Verzoegerung_Tag and wp_freigabe or T_Freigabe_Tag): #or wp_hot_water ):
+    elif (now.time() > Time_start and now.time() < Time_stop and T_Verzoegerung_Tag and wp_freigabe or T_Freigabe_Tag): #or wp_hot_water ):
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von Raumtemp") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
