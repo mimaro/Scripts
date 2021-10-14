@@ -181,6 +181,7 @@ def main():
        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
     if wp_consumption < 100:
         wp_freigabe = 1
+        logging.info("WP ist ausgeschaltet (1): {}".format(wp_freigabe))
     
     #Abrufen aktuelle Vorlautemperatur WP:
     ww_temp = (CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)).getRegister(0) / 10   
@@ -256,7 +257,7 @@ def main():
         logging.info("Anlage aus: {}".format(Sperrung))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur zu über 21°C und WP aus, Raumtemp über 25°C oder WW-Betrieb und zeitliche Beschränkung
-    elif (T_Verzoegerung_Tag & wp_freigabe or T_Freigabe_Tag): #or wp_hot_water ):
+    elif (ow.time() > Time_start and now.time() < Time_stop and T_Verzoegerung_Tag and wp_freigabe or T_Freigabe_Tag): #or wp_hot_water ):
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von Raumtemp") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
