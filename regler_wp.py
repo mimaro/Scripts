@@ -149,21 +149,18 @@ def main():
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-5min")["data"]["average"]
     p_net = power_balance 
-    print("Aktuelle Bilanz p_net =",p_net)
     
     #Abfragen mittlere Solarleistung für Sperrung WP am Morgen bei Sonneneinstrahlung
     power_balance1 = get_vals(
         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net1 = power_balance1 
-    print("Aktuelle Bilanz p_net =",p_net1)
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
-    print("Aktuelle Bilanz p_net2=",p_net2)
         
-    logging.info("Start Freigabe Zeit & Normalbetrieb")  
+    
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
         b_freigabe_12h_temp = 1
@@ -173,7 +170,6 @@ def main():
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
     #write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
-    logging.info("Ende Freigabe Zeit & Normalbetrieb")
     
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
@@ -181,7 +177,6 @@ def main():
        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
     if wp_consumption < 100:
         wp_freigabe = 1
-        logging.info("WP ist ausgeschaltet (1): {}".format(wp_freigabe))
     
     #Abrufen aktuelle Vorlautemperatur WP:
     ww_temp = (CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)).getRegister(0) / 10   
@@ -196,10 +191,9 @@ def main():
     if wp_mode == 5:
         wp_hot_water = True
     
-    logging.info("Aktueller Betriebszustand: {}".format(wp_mode.getRegister(0)))
+    #logging.info("Aktueller Betriebszustand: {}".format(wp_mode.getRegister(0)))
    
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
-    logging.info("Start Freigabe Leistung")
     
     RT_akt = get_vals(UUID["T_Raum"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
@@ -221,12 +215,12 @@ def main():
         b_sperrung_excess = 1
     if RT_akt > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
         T_Freigabe_Nacht = 1
-    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
-    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
-    logging.info("Verzögerung: {}".format(T_Verzoegerung_Tag))
-    logging.info("WP_Leistung: {}".format(wp_freigabe))
-    logging.info("Freigabe Tag: {}".format(T_Freigabe_Tag))
-    logging.info("Freigabe Nacht: {}".format(T_Freigabe_Nacht))
+    logging.info("Freigabe Leistung (freigegeben wenn 1): {}".format(b_freigabe_excess))
+    logging.info("Sperrung Leistung (: {}".format(b_sperrung_excess))
+    logging.info("Verzögerung (Temperatur zu hoch wenn 1): {}".format(T_Verzoegerung_Tag))
+    logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
+    logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
+    logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
     
     write_vals(UUID["Freigabe_excess"], b_freigabe_excess)
     write_vals(UUID["Sperrung_excess"], b_sperrung_excess)
