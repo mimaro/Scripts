@@ -8,6 +8,7 @@ IP_VENTI = "192.168.178.30"
 URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
 
+
 def main():
     req = requests.get("http://" + IP_VENTI + "/report")
     data = req.content
@@ -25,8 +26,7 @@ def main():
     print(postreq_t.ok)
 
 
+
+
 if __name__ == "__main__":
     main()
-
-    
-    
