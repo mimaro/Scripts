@@ -13,8 +13,9 @@ def main():
     req = requests.get("http://" + IP_VENTI + "/report")
     data = req.content
     decoded_data = json.loads(data)
-    print("Actual Power {}".format(decoded_data["power"]))
-    print("Actual Temperature {}".format(decoded_data["temperature"]))
+    print(decoded_data)
+#     print("Actual Power {}".format(decoded_data["power"]))
+#     print("Actual Temperature {}".format(decoded_data["temperature"]))
 #     print("Posting to VZ")
 #     poststring_p = URL_VZ.format(UUID_P, decoded_data["power"])
 #     poststring_t = URL_VZ.format(UUID_T, decoded_data["temperature"])
