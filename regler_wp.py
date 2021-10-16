@@ -196,10 +196,10 @@ def main():
    
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     
-    RT_EG_akt = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
+    RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
     
-    RT_OG_akt = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
+    RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
     
     p_freigabe_now = get_freigabezeit_excess(t_now)
