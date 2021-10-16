@@ -13,6 +13,7 @@ def main():
     req = requests.get("http://" + IP_VENTI + "/report")
     data = req.content
     decoded_data = json.loads(data)
+    print(decoded_data)
     print("Actual Power {}".format(decoded_data["power"]))
     print("Actual Temperature {}".format(decoded_data["temperature"]))
     print("Posting to VZ")
