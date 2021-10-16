@@ -27,7 +27,8 @@ UUID = {
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
     "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd", 
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
-    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
+    "T_Raum_EG": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
+    "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677"
 }
 
 # Freigabewert für Sonderbetrieb nach Heizgrenze
@@ -59,7 +60,7 @@ AT_Diff_max = 14
 
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
-T_max_Tag = 24
+T_max_Tag = 23
 T_verz_Tag = 21
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
@@ -195,9 +196,12 @@ def main():
    
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     
-    RT_akt = get_vals(UUID["T_Raum"], # Frage aktuelle Raumtemperatur ab. 
+    RT_EG_akt = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
-      
+    
+    RT_OG_akt = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
+                      duration="-15min")["data"]["average"] 
+    
     p_freigabe_now = get_freigabezeit_excess(t_now)
     p_sperrung_now = get_sperrleistung(t_now)
     
@@ -205,15 +209,15 @@ def main():
     T_Freigabe_Tag = 0
     T_Verzoegerung_Tag = 0
     
-    if RT_akt > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
+    if RT_akt_OG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
         T_Verzoegerung_Tag = 1
-    if RT_akt > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
+    if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
         b_freigabe_excess = 1
     if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
         b_sperrung_excess = 1
-    if RT_akt > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
+    if RT_akt_EG > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
         T_Freigabe_Nacht = 1
     logging.info("Freigabe Leistung (freigegeben wenn 1): {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung (: {}".format(b_sperrung_excess))
