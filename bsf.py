@@ -1,4 +1,6 @@
 
+# Dient nicht mehr als Messung bei BSF sondern als Raumtempfühler im 1. OG
+
 import requests 
 import json
 import logging
