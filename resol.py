@@ -13,7 +13,7 @@ RESOL_DATA = {
     "Sensor 2": 2,
     "Sensor 3": 3,
     "Sensor 4": 4,
-    "Sensor 5": 5
+    #"Sensor 5": 5
     #"PWM_A": 17,
     #"PWM_B": 16
 }
