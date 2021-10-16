@@ -13,7 +13,7 @@ def main():
     data = req.content
     decoded_data = json.loads(data)
     print(decoded_data)
-    print("Actual Power {}".format(decoded_data["power"])
+    print("Actual Power {}".format(decoded_data["power"]))
     print("Posting to VZ")
     poststring_p = URL_VZ.format(UUID_P, decoded_data["power"])
     postreq_p = requests.post(poststring_p)
