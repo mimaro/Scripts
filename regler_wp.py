@@ -161,7 +161,6 @@ def main():
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
         
-    
     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
     if now.time() > f_time_12h_temp:
         b_freigabe_12h_temp = 1
@@ -202,8 +201,8 @@ def main():
     RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["min"] 
     
-    #logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
-    #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG[1]))
+    logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
+    logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG[1]))
     
     
     p_freigabe_now = get_freigabezeit_excess(t_now)
