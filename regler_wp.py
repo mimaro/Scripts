@@ -200,7 +200,7 @@ def main():
                       duration="-15min")["data"]["average"] 
     
     RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-15min")["data"]["min"] 
+                      duration="-15min")["data"]["min[1]"] 
     
     print(RT_akt_OG)
     
