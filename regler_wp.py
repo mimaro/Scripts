@@ -60,8 +60,8 @@ AT_Diff_max = 14
 
 # Freigabe WP aufgrund Raumtemp Nacht
 T_min_Nacht = 21
-T_max_Tag = 23
-T_verz_Tag = 21
+T_max_Tag = 22.5
+T_verz_Tag = 21.5
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
@@ -209,7 +209,7 @@ def main():
     T_Freigabe_Tag = 0
     T_Verzoegerung_Tag = 0
     
-    if RT_akt_OG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
+    if RT_akt_EG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
         T_Verzoegerung_Tag = 1
     if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
@@ -254,14 +254,14 @@ def main():
         #Sperrung = 1
         #logging.info("Anlage aus: {}".format(Sperrung))
     
-    #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung vorhanden.
-    elif (T_Verzoegerung_Tag and b_freigabe_excess == 0):
+    #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung oder Raumtemp OG zu hoch vorhanden.
+    elif (T_Verzoegerung_Tag and b_freigabe_excess == 0 or T_Freigabe_Tag):
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von ausreichend hoher Raumtemp & zu wenig PV-Leistung") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Anlage aus: {}".format(Sperrung))
     
-    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden ist
+    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_excess):
         logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben da Heizgrenze erreicht und ausreichend PV")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
