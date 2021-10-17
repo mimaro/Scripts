@@ -11,8 +11,8 @@ RESOL_URL = "http://{}/dlx/download/live?sessionAuthUsername=admin&sessionAuthPa
 RESOL_DATA = {
     "Sensor 1": 1,
     "Sensor 2": 2,
-    "Sensor 3": 3,
-    "Sensor 4": 4,
+    "Sensor 3": 3
+    #"Sensor 4": 4,
     #"Sensor 5": 5
     #"PWM_A": 17,
     #"PWM_B": 16
