@@ -50,8 +50,8 @@ UHRZEIT_KALT = datetime.time(7, 0)
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
-HK1_min = 19 
-HK2_min = 19
+HK1_min = 20 
+HK2_min = 20
 HK1_max = 28
 HK2_max = 28
 HK1_Diff_max = HK1_max - HK1_min
