@@ -32,6 +32,8 @@ def write_vals(uuid, val):
     logging.info("Ok? {}".format(postreq.ok))
  
     
+    
+    
 def main():
     logging.info("********************************")
     logging.info("COP")
