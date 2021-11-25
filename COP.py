@@ -35,7 +35,7 @@ def main():
     logging.info("********************************")
     logging.info("COP")
     wp_therm = get_vals(UUID["WP_th"],duration="-5min")["data"]["average"]
-    wp_el = get_vals(UUID["WP_el"], druation = "-5min")["data"]["average"]
+    wp_el = get_vals(UUID["WP_el"], duration = "-5min")["data"]["average"]
     cop_o_venti = wp_therm / wp_el
     if cop_o_venti >= 0:
         write_vals(UUID["COP_o_venti"], cop_o_venti)
