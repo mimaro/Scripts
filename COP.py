@@ -33,7 +33,6 @@ def write_vals(uuid, val):
  
     
     
-    
 def main():
     logging.info("********************************")
     logging.info("COP")
