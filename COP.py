@@ -20,7 +20,7 @@ UUID = {
 
 ###########################################################################################################
 
-def get_vals(uuid, duration="-0min"):
+def get_vals(uuid, duration="-5min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     #return(json.loads(req.content))
     return req.json()
@@ -37,8 +37,8 @@ def write_vals(uuid, val):
 def main():
     logging.info("********************************")
     logging.info("COP")
-    wp_therm = get_vals(UUID["WP_th"])["data"]["tuples"][0][1]
-    wp_el = get_vals(UUID["WP_el"])["data"]["tuples"][0][1]
+    wp_therm = get_vals(UUID["WP_th"])["data"]["average"][0][1]
+    wp_el = get_vals(UUID["WP_el"])["data"]["average"][0][1]
     cop_o_venti = wp_therm / wp_el
     if cop_o_venti >= 0:
         write_vals(UUID["COP_o_venti"], cop_o_venti)
