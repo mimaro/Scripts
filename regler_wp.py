@@ -39,8 +39,8 @@ FREIGABE_WARM_P = -700
 FREIGABE_KALT_P = -1000
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_WARM_P = FREIGABE_WARM_P + 300
-SPERRUNG_KALT_P = FREIGABE_KALT_P + 300
+SPERRUNG_WARM_P = FREIGABE_WARM_P + 400
+SPERRUNG_KALT_P = FREIGABE_KALT_P + 400
 
 #Freigabewerte für Sonderbetrieb nach Zeit
 FREIGABE_WARM_T = 14
@@ -148,7 +148,7 @@ def main():
     
     #Einschaltsignal Sonderbetrieb
     power_balance = get_vals(
-        UUID["PV_Produktion"], duration="-5min")["data"]["average"]
+        UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net = power_balance 
     
     #Abfragen mittlere Solarleistung für Sperrung WP am Morgen bei Sonneneinstrahlung
