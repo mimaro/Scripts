@@ -93,36 +93,34 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
 
 def main():
-    tz = pytz.timezone('Europe/Zurich')
-    b_freigabe_12h_temp = 0
-    b_freigabe_wp = 0
-    b_sperrung_wp = 0
-    b_freigabe_normal = 0
-    b_absenk_aus = 0
-    b_absenk_ein = 0
     logging.basicConfig(level=logging.INFO)
     logging.info("*****************************")
     logging.info("*Starting WP controller")
+    tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Heizgrenze ----------") 
+    b_freigabe_normal = 0
     
     # Abfrage aktuelle Aussentemperatur
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
-    logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
-    logging.info("Heizgrenze: {}".format(FREIGABE_NORMAL_TEMP))
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
-    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)   
+    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
+    
+    logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
+    logging.info("Heizgrenze: {}".format(FREIGABE_NORMAL_TEMP))
     logging.info("Freigabe Normalbetrieb:{}".format(b_freigabe_normal))
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
+    b_freigabe_wp = 0
+    b_sperrung_wp = 0
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
@@ -150,42 +148,18 @@ def main():
         b_freigabe_wp = 1
     if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
         b_sperrung_wp = 1
-        
+    
+    write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
+    write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
     logging.info("Freigabe Leistung: {}".format(b_freigabe_wp))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
+    T_Freigabe_Nacht = 0
+    T_Freigabe_Tag = 0
+    T_Verzoegerung_Tag = 0
     
-    
-    
-    
-    
-    
-    logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
-    
-    
-    
-    
-
-    #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
-#     wp_freigabe = 0
-#     wp_consumption = get_vals(
-#        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
-#     if wp_consumption < 100:
-#         wp_freigabe = 1
-    
-    #Abrufen aktuelle Warmwassertemp Speicher unten:
-    ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
-    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
-    Ww_max = True
-    if ww_temp > ww_max:
-        Ww_max = False
-   
-    
-  
-   
-    #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
-    
+    #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min")["data"]["average"] 
     
@@ -195,52 +169,52 @@ def main():
     logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
     logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
-  
-    
-    T_Freigabe_Nacht = 0
-    T_Freigabe_Tag = 0
-    T_Verzoegerung_Tag = 0
-    
+    # Definition Betriebsfreigaben
     if RT_akt_EG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
         T_Verzoegerung_Tag = 1
     if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
-    
     if RT_akt_EG > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
         T_Freigabe_Nacht = 1
         
-    
-    
-    logging.info("Verzögerung (Temperatur zu hoch wenn 1): {}".format(T_Verzoegerung_Tag))
-    #logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
-    logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
-    logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
-    
-    write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
-    write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
     write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
-    #write_vals(UUID["WP_Freigabe"], wp_freigabe) # ==> Ist WP ausgeschaltet
+    
+    logging.info("Raumtemp. EG > {} °C: {}".format(T_verz_Tag,T_Verzoegerung_Tag))
+    logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
+    logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
+        
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
+    
+    #Abrufen aktuelle Warmwassertemp Speicher unten:
+    ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
+    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
+    Ww_max = True
+    if ww_temp > ww_max:
+        Ww_max = False
    
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
+    
+  
+   
+
+    
+   
+    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
         logging.info(f" ---------- WW-Betrieb ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
-        WW_Betrieb = 1
-        logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
-    #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung oder Raumtemp OG zu hoch vorhanden.
+    #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Verzoegerung_Tag and b_freigabe_wp == 0 or T_Freigabe_Tag):
         logging.info(f" ---------- Bereitschaftsbetrieb ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
-        Sperrung = 1
-        logging.info("Bereitschaftsbetrieb, Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_wp):
@@ -248,10 +222,6 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
-        Freigabe = 1
-        logging.info("Sonderbetrieb ein: {}".format(Freigabe))
-        logging.info("HK1_aktuell: {}".format(HK1_max))  
-        logging.info("HK2_aktuell: {}".format(HK2_max)) 
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     elif (b_freigabe_normal & T_Freigabe_Nacht):
@@ -259,10 +229,6 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
-        Absenkbetrieb = 1
-        logging.info("Nur Umwälzpumpe ein: {}".format(Absenkbetrieb))
-        logging.info("HK1_aktuell: {}".format(T_HK1_Nacht))  
-        logging.info("HK2_aktuell: {}".format(T_HK2_Nacht)) 
         
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_wp):
@@ -270,10 +236,6 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
-        Absenkbetrieb = 1
-        logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
-        logging.info("HK1_aktuell: {}".format(HK1_min))  
-        logging.info("HK2_aktuell: {}".format(HK2_min))  
     
     logging.info("********************************")
     
