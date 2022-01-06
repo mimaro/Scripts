@@ -212,7 +212,7 @@ def main():
     
     
     logging.info("Verzögerung (Temperatur zu hoch wenn 1): {}".format(T_Verzoegerung_Tag))
-    logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
+    #logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
     logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
     logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
     
@@ -221,7 +221,7 @@ def main():
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
     write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
-    write_vals(UUID["WP_Freigabe"], wp_freigabe) # ==> Ist WP ausgeschaltet
+    #write_vals(UUID["WP_Freigabe"], wp_freigabe) # ==> Ist WP ausgeschaltet
    
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
