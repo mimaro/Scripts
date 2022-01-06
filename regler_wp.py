@@ -177,9 +177,9 @@ def main():
     write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
     
-    logging.info("Raumtemp. EG > {} °C: {}".format(T_verz_Tag,T_Verzoegerung_Tag))
-    logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
-    logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
+    logging.info("Temp EG zu hoch {}°C: {}".format(T_verz_Tag,T_Verzoegerung_Tag))
+    logging.info("Temp OG zu hoch {}°C: {}".format(T_max_Tag,T_Freigabe_Tag))
+    logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     
