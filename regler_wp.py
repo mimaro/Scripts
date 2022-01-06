@@ -92,20 +92,6 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-def get_freigabeleistung_excess(t_now):
-    # Berechnen aktuelle PV-Freigabeleistung Sonderbetrieb WP
-    p_unlock_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
-        (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
-    logging.info("Freigabe_Leistung: {}".format(p_unlock_now))
-    return p_unlock_now
-
-def get_sperrleistung(t_now):
-    # Berechnen aktuelle PV-Sperrleistung Sonderbetrieb WP
-    p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
-        (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
-    logging.info("Sperrung_Leistung: {}".format(p_lock_now))
-    return p_lock_now
-
 def main():
     tz = pytz.timezone('Europe/Zurich')
     b_freigabe_12h_temp = 0
@@ -120,8 +106,9 @@ def main():
     now = datetime.datetime.now(tz=tz)
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
-    
-    #Abfragen aktuelle Aussentemperatur
+        
+    # ---------- Prüfen Freigabe Heizgrenze ----------
+    # Abfragen aktuelle Aussentemperatur
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
@@ -131,7 +118,9 @@ def main():
         b_freigabe_normal = 1
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
-    
+ 
+    # ---------- Prüfung Freigabe/ Sperrung Sonderbetrieb ----------
+    logging.info(f"Prüfung Freigabe / Sperrung Sonderbetrieb") 
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
@@ -144,6 +133,27 @@ def main():
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
     logging.info("Aktuelle Energiebilanz für Sperrung: {}".format(p_net2))
+    
+    # Aktuelle Einschaltschwelle Sonderbetrieb    
+    p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
+        (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
+    logging.info("Freigabe_Leistung: {}".format(p_unlock_now))
+    
+    # Aktuelle Ausschaltschwelle Sonderbetrieb
+    p_sperrung_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
+        (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
+    logging.info("Sperrung_Leistung: {}".format(p_lock_now))
+    
+    if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
+        b_freigabe_excess = 1
+    if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
+        b_sperrung_excess = 1
+        
+    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
+    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))    
+        
+        
+    
 
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
@@ -178,9 +188,7 @@ def main():
     logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
     logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
-    
-    p_freigabe_now = get_freigabeleistung_excess(t_now)
-    p_sperrung_now = get_sperrleistung(t_now)
+  
     
     T_Freigabe_Nacht = 0
     T_Freigabe_Tag = 0
@@ -190,16 +198,12 @@ def main():
         T_Verzoegerung_Tag = 1
     if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
-    if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
-        b_freigabe_excess = 1
-    if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
-        b_sperrung_excess = 1
+    
     if RT_akt_EG > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
         T_Freigabe_Nacht = 1
         
-    logging.info("Aktuelle Strombilanz: {}".format(b_freigabe_excess))
-    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
-    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
+    
+    
     logging.info("Verzögerung (Temperatur zu hoch wenn 1): {}".format(T_Verzoegerung_Tag))
     logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
     logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
@@ -216,7 +220,7 @@ def main():
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
      
-    
+    # ---------- Schreiben Betriebsfälle ----------
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
         logging.info(f" ---------- WW-Betrieb ----------") 
