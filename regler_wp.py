@@ -120,13 +120,13 @@ def main():
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net = power_balance 
-    logging.info("Aktuelle Energiebilanz für Freigabe: {}".format(p_net))
+    logging.info("PV-Produktion Einschaltschwelle (15 min): {}".format(p_net))
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
-    logging.info("Aktuelle Energiebilanz für Sperrung: {}".format(p_net2))
+    logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
     
     # Aktuelle Einschaltschwelle Sonderbetrieb    
     p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
@@ -134,7 +134,7 @@ def main():
     logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
     
     # Aktuelle Ausschaltschwelle Sonderbetrieb
-    p_sperrung_now = -SPERRUNG_HYST
+    p_sperrung_now = p_freigabe_now-SPERRUNG_HYST
     logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
     
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
