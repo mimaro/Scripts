@@ -109,8 +109,8 @@ def main():
         b_freigabe_normal = 1
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
-    logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
-    logging.info("Freigabe Heizgrenze ({}°C):{}".format(FREIGABE_NORMAL_TEMP,b_freigabe_normal))
+    #logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
+    logging.info("Aktuelle AT ({}°C) < Heizgrenze ({}°C):{}".format(t_now,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     b_freigabe_wp = 0
@@ -120,13 +120,13 @@ def main():
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net = power_balance 
-    logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
+    #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
-    logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
+    #logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
     
     # Aktuelle Einschaltschwelle Sonderbetrieb    
     p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
@@ -144,8 +144,8 @@ def main():
     
     write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
     write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
-    logging.info("Freigabe Leistung (>{}): {}".format(p_freigabe_now,b_freigabe_wp))
-    logging.info("Sperrung Leistung (<{}): {}".format(p_sperrung_now,b_sperrung_wp))    
+    logging.info("Aktuelle 15 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
+    logging.info("Aktuelle 45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
     #T_Freigabe_Nacht = 0
