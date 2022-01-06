@@ -199,7 +199,7 @@ def main():
         ww_time = 1
     
     logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,ww_max,Ww_max))
-    logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster {} {}: {}".format(now.time(),Ww_start,Ww_stop("hour"),ww_time))
+    logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster {} {}: {}".format(now.time(),ww_start,ww_stop,ww_time))
    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
