@@ -42,12 +42,6 @@ FREIGABE_KALT_TEMP = -10
 SPERRUNG_WARM_P = FREIGABE_WARM_P + 400
 SPERRUNG_KALT_P = FREIGABE_KALT_P + 400
 
-#Freigabewerte für Sonderbetrieb nach Zeit
-#FREIGABE_WARM_T = 14
-#FREIGABE_KALT_T = -10
-#UHRZEIT_WARM = datetime.time(7, 0)
-#UHRZEIT_KALT = datetime.time(7, 0)
-
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
 HK1_min = 5 #Pufferspeicher 
@@ -64,11 +58,6 @@ T_max_Tag = 22.5
 T_verz_Tag = 21.5
 T_HK1_Nacht = 5
 T_HK2_Nacht = 5
-
-#Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
-#Solar_min = 3500
-#time_start = datetime.time(8, 0)
-#time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
@@ -103,18 +92,7 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-# def get_freigabezeit_12h_temp(t_roll_avg):
-#     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
-#     u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
-#     f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
-#         (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
-#     logging.info("Decimal Unlocktime: {}".format(f_time))
-#     f_time_12h_temp = datetime.time(
-#         hour=int(f_time), minute=int((f_time - int(f_time))*60))
-#     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
-#     return(f_time_12h_temp)
-
-def get_freigabezeit_excess(t_now):
+def get_freigabeleistung_excess(t_now):
     # Berechnen aktuelle PV-Freigabeleistung Sonderbetrieb WP
     p_unlock_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
@@ -142,13 +120,13 @@ def main():
     now = datetime.datetime.now(tz=tz)
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
-    logging.info("Get values from VZ")
+    
+    #Abfragen aktuelle Aussentemperatur
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
-    
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
@@ -165,7 +143,6 @@ def main():
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
 
-    
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
     wp_consumption = get_vals(
@@ -200,7 +177,7 @@ def main():
     logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     
-    p_freigabe_now = get_freigabezeit_excess(t_now)
+    p_freigabe_now = get_freigabeleistung_excess(t_now)
     p_sperrung_now = get_sperrleistung(t_now)
     
     T_Freigabe_Nacht = 0
