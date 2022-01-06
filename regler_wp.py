@@ -168,11 +168,11 @@ def main():
     
 
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
-    wp_freigabe = 0
-    wp_consumption = get_vals(
-       UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
-    if wp_consumption < 100:
-        wp_freigabe = 1
+#     wp_freigabe = 0
+#     wp_consumption = get_vals(
+#        UUID["WP_Verbrauch"], duration="-5min")["data"]["average"]
+#     if wp_consumption < 100:
+#         wp_freigabe = 1
     
     #Abrufen aktuelle Warmwassertemp Speicher unten:
     ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
@@ -227,7 +227,7 @@ def main():
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
      
-    # ---------- Schreiben Betriebsfälle ----------
+    logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
         logging.info(f" ---------- WW-Betrieb ----------") 
@@ -244,7 +244,7 @@ def main():
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_wp):
-        logging.info(f" ---------- Freigabe Sonderbetrieb ----------")
+        logging.info(f" ---------- Sonderbetrieb ----------")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
