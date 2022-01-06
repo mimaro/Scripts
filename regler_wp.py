@@ -31,6 +31,8 @@ UUID = {
     "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677"
 }
 
+# t-sperrung Nacht löschen, WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
+
 # Parameter Freigabe Heizbetrieb
 FREIGABE_NORMAL_TEMP = 15
 
@@ -110,7 +112,7 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
     #logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
-    logging.info("24h Aussentemperatur ({}°C) < Heizgrenze ({}°C):{}".format(t_roll_avg_24,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
+    logging.info("24h Aussentemperatur ({}°C) < Heizgrenze ({}°C): {}".format(t_roll_avg_24,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     b_freigabe_wp = 0
@@ -163,9 +165,9 @@ def main():
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-    if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Tag wenn Raumtemp EG zu hoch
+    if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Raumtemp EG zu hoch
         T_Freigabe_min = 1
-    if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher Raumtemp im OG
+    if RT_akt_OG > T_max_Tag: #Sperrung WP wenn Raumtemp OG zu hoch
         T_Freigabe_max = 1
     #if RT_akt_EG > T_min_Nacht: #Sperren WP Nacht wenn Raumtemp im EG zu hoch
     #    T_Freigabe_Nacht = 1
