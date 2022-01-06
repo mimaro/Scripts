@@ -280,6 +280,8 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         Freigabe = 1
         logging.info("Sonderbetrieb ein: {}".format(Freigabe))
+        logging.info("HK1_aktuell: {}".format(HK1_max))  
+        logging.info("HK2_aktuell: {}".format(HK2_max)) 
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     elif (b_freigabe_normal & T_Freigabe_Nacht):
@@ -289,6 +291,9 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
         Absenkbetrieb = 1
         logging.info("Nur Umwälzpumpe ein: {}".format(Absenkbetrieb))
+        logging.info("HK1_aktuell: {}".format(T_HK1_Nacht))  
+        logging.info("HK2_aktuell: {}".format(T_HK2_Nacht)) 
+        
      
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_excess):
@@ -298,6 +303,8 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
+        logging.info("HK1_aktuell: {}".format(HK1_min))  
+        logging.info("HK2_aktuell: {}".format(HK2_min)) 
        
     
   #Schreiben Soll-Temp HK1 und HK 2 in Abhängigkeit von PV-Leistung 
