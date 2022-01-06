@@ -39,7 +39,7 @@ FREIGABE_WARM_P = -700
 FREIGABE_KALT_P = -1000
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
+SPERRUNG_HYST = 200 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -134,7 +134,7 @@ def main():
     logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
     
     # Aktuelle Ausschaltschwelle Sonderbetrieb
-    p_sperrung_now -= SPERRUNG_HYST
+    p_sperrung_now = -SPERRUNG_HYST
     logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
     
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
