@@ -107,9 +107,12 @@ def main():
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
         
-    # ---------- Prüfen Freigabe Heizgrenze ----------
-    # Abfragen aktuelle Aussentemperatur
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
+    
+    # Abfrage aktuelle Aussentemperatur
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
+    logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
+    logging.info("Heizgrenze: {}".format(FREIGABE_NORMAL_TEMP))
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
     t_roll_avg_24 = get_vals(
@@ -119,8 +122,7 @@ def main():
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
  
-    # ---------- Prüfung Freigabe/ Sperrung Sonderbetrieb ----------
-    logging.info(f"Prüfung Freigabe / Sperrung Sonderbetrieb") 
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
