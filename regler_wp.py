@@ -39,8 +39,7 @@ FREIGABE_WARM_P = -700
 FREIGABE_KALT_P = -1000
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_WARM_P = FREIGABE_WARM_P + 400
-SPERRUNG_KALT_P = FREIGABE_KALT_P + 400
+SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -111,8 +110,7 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
     logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
-    logging.info("Heizgrenze: {}".format(FREIGABE_NORMAL_TEMP))
-    logging.info("Freigabe Normalbetrieb:{}".format(b_freigabe_normal))
+    logging.info("Freigabe Heizgrenze ({}°C):{}".format(FREIGABE_NORMAL_TEMP,b_freigabe_normal))
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     b_freigabe_wp = 0
@@ -131,13 +129,12 @@ def main():
     logging.info("Aktuelle Energiebilanz für Sperrung: {}".format(p_net2))
     
     # Aktuelle Einschaltschwelle Sonderbetrieb    
-    p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
-        (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
+    p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
+                       (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP))
     logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
     
     # Aktuelle Ausschaltschwelle Sonderbetrieb
-    p_sperrung_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
-        (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
+    p_sperrung_now -= SPERRUNG_HYST
     logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
     
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
@@ -177,8 +174,8 @@ def main():
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
     #write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT EG > 21°C
    
-    logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Tag,T_Freigabe_min))
-    logging.info("Temp OG zu hoch {}°C: {}".format(T_max_Tag,T_Freigabe_max))
+    logging.info("Temp EG zu hoch (>{}°C): {}".format(T_min_Tag,T_Freigabe_min))
+    logging.info("Temp OG zu hoch (>{}°C): {}".format(T_max_Tag,T_Freigabe_max))
     #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
