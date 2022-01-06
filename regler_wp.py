@@ -43,10 +43,10 @@ SPERRUNG_WARM_P = FREIGABE_WARM_P + 400
 SPERRUNG_KALT_P = FREIGABE_KALT_P + 400
 
 #Freigabewerte für Sonderbetrieb nach Zeit
-FREIGABE_WARM_T = 14
-FREIGABE_KALT_T = -10
-UHRZEIT_WARM = datetime.time(7, 0)
-UHRZEIT_KALT = datetime.time(7, 0)
+#FREIGABE_WARM_T = 14
+#FREIGABE_KALT_T = -10
+#UHRZEIT_WARM = datetime.time(7, 0)
+#UHRZEIT_KALT = datetime.time(7, 0)
 
 #Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
 PV_max = 2000
@@ -66,9 +66,9 @@ T_HK1_Nacht = 5
 T_HK2_Nacht = 5
 
 #Sperrung WP wegen Sonneneinstrahlung & Uhrzeit
-Solar_min = 3500
-time_start = datetime.time(8, 0)
-time_stop = datetime.time(11, 0)
+#Solar_min = 3500
+#time_start = datetime.time(8, 0)
+#time_stop = datetime.time(11, 0)
 
 #Freigabe WW Ladung
 ww_start = datetime.time(12, 0)
@@ -93,33 +93,37 @@ CLIENT = ModbusTcpClient(IP_ISG)
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
+    # Daten von vz lesen. 
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     return req.json()
 
 def write_vals(uuid, val):
+    # Daten auf vz schreiben.
     poststring = VZ_POST_URL.format(uuid, val)
     #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-def get_freigabezeit_12h_temp(t_roll_avg):
-    u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
-    u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
-    f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
-        (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
-    logging.info("Decimal Unlocktime: {}".format(f_time))
-    f_time_12h_temp = datetime.time(
-        hour=int(f_time), minute=int((f_time - int(f_time))*60))
-    logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
-    return(f_time_12h_temp)
+# def get_freigabezeit_12h_temp(t_roll_avg):
+#     u_w = UHRZEIT_WARM.hour + UHRZEIT_WARM.minute / 60
+#     u_k = UHRZEIT_KALT.hour + UHRZEIT_KALT.minute / 60
+#     f_time = u_w + (t_roll_avg - FREIGABE_WARM_T) * (
+#         (u_w - u_k) / (FREIGABE_WARM_T - FREIGABE_KALT_T))
+#     logging.info("Decimal Unlocktime: {}".format(f_time))
+#     f_time_12h_temp = datetime.time(
+#         hour=int(f_time), minute=int((f_time - int(f_time))*60))
+#     logging.info("DMS Unlocktime: {}".format(f_time_12h_temp))
+#     return(f_time_12h_temp)
 
 def get_freigabezeit_excess(t_now):
+    # Berechnen aktuelle PV-Freigabeleistung Sonderbetrieb WP
     p_unlock_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
     logging.info("Freigabe_Leistung: {}".format(p_unlock_now))
     return p_unlock_now
 
 def get_sperrleistung(t_now):
+    # Berechnen aktuelle PV-Sperrleistung Sonderbetrieb WP
     p_lock_now = -(SPERRUNG_WARM_P + (t_now - FREIGABE_WARM_TEMP) * (
         (SPERRUNG_WARM_P - SPERRUNG_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP)))
     logging.info("Sperrung_Leistung: {}".format(p_lock_now))
@@ -141,8 +145,10 @@ def main():
     logging.info("*****************************")
     logging.info("Get values from VZ")
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
-    t_roll_avg_12 = get_vals(
-        UUID["T_outdoor"], duration="-720min")["data"]["average"]
+#     t_roll_avg_12 = get_vals(
+#         UUID["T_outdoor"], duration="-720min")["data"]["average"]
+    
+    # Abfragen 24h Aussentemperatur für Aktivierung Heizgrenze
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     
@@ -152,21 +158,23 @@ def main():
     p_net = power_balance 
     
     #Abfragen mittlere Solarleistung für Sperrung WP am Morgen bei Sonneneinstrahlung
-    power_balance1 = get_vals(
-        UUID["PV_Produktion"], duration="-15min")["data"]["average"]
-    p_net1 = power_balance1 
+#     power_balance1 = get_vals(
+#         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
+#     p_net1 = power_balance1 
     
     #Ausschaltsignal Sonderbetrieb 
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
         
-    f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
-    if now.time() > f_time_12h_temp:
-        b_freigabe_12h_temp = 1
+#     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
+#     if now.time() > f_time_12h_temp:
+#         b_freigabe_12h_temp = 1
+
+    
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
-    logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
+    #logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
     logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
     #write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
@@ -239,8 +247,8 @@ def main():
     #Formatierung Freigabezeiten
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
-    Time_start = datetime.time(hour=int(time_start.hour), minute=int((time_start.hour - int(time_start.hour))*60)) # Freigabezeit Warmwasser
-    Time_stop = datetime.time(hour=int(time_stop.hour), minute=int((time_stop.hour - int(time_stop.hour))*60)) # Freigabezeit Warmwasser
+    #Time_start = datetime.time(hour=int(time_start.hour), minute=int((time_start.hour - int(time_start.hour))*60)) # Sperrung WP bei Sonneneinstrahlung
+    #Time_stop = datetime.time(hour=int(time_stop.hour), minute=int((time_stop.hour - int(time_stop.hour))*60)) # Freigabezeit WP bei Sonneneinstrahlung
     
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
@@ -268,6 +276,8 @@ def main():
     elif (b_freigabe_normal & b_freigabe_excess):
         logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben da Heizgrenze erreicht und ausreichend PV")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
+        CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
+        CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         Freigabe = 1
         logging.info("Sonderbetrieb ein: {}".format(Freigabe))
          
@@ -290,34 +300,34 @@ def main():
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
        
     
-  #Schreiben Soll-Temp HK1 in Abhängigkeit von PV-Leistung 
-    logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
+  #Schreiben Soll-Temp HK1 und HK 2 in Abhängigkeit von PV-Leistung 
+#     logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
     
-    PV_Aktuell = get_vals(UUID["PV_Produktion"],
-                        duration="-30min")["data"]["average"]
-    t_roll_avg_12_24 = get_vals(
-        UUID["T_outdoor"], duration="-1444min+720min")["data"]["average"]
-    logging.info("T_12_24: {}".format(t_roll_avg_12_24))  
-    logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
-    if  (PV_Aktuell/PV_max) > 1:
-        PV_Faktor = 1
-    else:
-        PV_Faktor = PV_Aktuell/PV_max
-    logging.info("PV_Faktor: {}".format(PV_Faktor))
+#     PV_Aktuell = get_vals(UUID["PV_Produktion"],
+#                         duration="-30min")["data"]["average"]
+#     t_roll_avg_12_24 = get_vals(
+#         UUID["T_outdoor"], duration="-1444min+720min")["data"]["average"]
+#     logging.info("T_12_24: {}".format(t_roll_avg_12_24))  
+#     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
+#     if  (PV_Aktuell/PV_max) > 1:
+#         PV_Faktor = 1
+#     else:
+#         PV_Faktor = PV_Aktuell/PV_max
+#     logging.info("PV_Faktor: {}".format(PV_Faktor))
         
-    if  ((FREIGABE_NORMAL_TEMP - t_roll_avg_12_24)/AT_Diff_max) > 1:
-        Temp_Faktor = 1   
-    else:
-        Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
-    logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
+#     if  ((FREIGABE_NORMAL_TEMP - t_roll_avg_12_24)/AT_Diff_max) > 1:
+#         Temp_Faktor = 1   
+#     else:
+#         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
+#     logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
      
-    HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
-    HK2_aktuell = HK2_min + HK2_Diff_max * PV_Faktor
-    logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
-    logging.info("HK2_aktuell: {}".format(HK2_aktuell))  
+#     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
+#     HK2_aktuell = HK2_min + HK2_Diff_max * PV_Faktor
+#     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
+#     logging.info("HK2_aktuell: {}".format(HK2_aktuell))  
         
-    CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
-    CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
+#     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
+#     CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
    
     
     logging.info("********************************")
