@@ -110,7 +110,7 @@ def main():
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
     #logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
-    logging.info("Aktuelle AT ({}°C) < Heizgrenze ({}°C):{}".format(t_now,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
+    logging.info("24h Aussentemperatur ({}°C) < Heizgrenze ({}°C):{}".format(t_roll_avg_24,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     b_freigabe_wp = 0
@@ -144,8 +144,8 @@ def main():
     
     write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
     write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
-    logging.info("Aktuelle 15 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
-    logging.info("Aktuelle 45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
+    logging.info("15 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
+    logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
     #T_Freigabe_Nacht = 0
@@ -159,8 +159,8 @@ def main():
     RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-30min")["data"]["average"] 
     
-    logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
-    logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
+    #logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
+    #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
     if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Tag wenn Raumtemp EG zu hoch
@@ -174,8 +174,8 @@ def main():
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
     #write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT EG > 21°C
    
-    logging.info("Temp EG zu hoch (>{}°C): {}".format(T_min_Tag,T_Freigabe_min))
-    logging.info("Temp OG zu hoch (>{}°C): {}".format(T_max_Tag,T_Freigabe_max))
+    logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
+    logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
     #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
