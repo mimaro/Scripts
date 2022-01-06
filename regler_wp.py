@@ -214,7 +214,7 @@ def main():
     
     if RT_akt_EG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
         T_Verzoegerung_Tag = 1
-    if RT_akt_OG[1] > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
+    if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
         T_Freigabe_Tag = 1
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
         b_freigabe_excess = 1
