@@ -137,11 +137,13 @@ def main():
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net = power_balance 
+    logging.info("Aktuelle Energiebilanz für Freigabe: {}".format(p_net))
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
+    logging.info("Aktuelle Energiebilanz für Sperrung: {}".format(p_net2))
 
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
@@ -194,8 +196,10 @@ def main():
         b_sperrung_excess = 1
     if RT_akt_EG > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
         T_Freigabe_Nacht = 1
-    logging.info("Freigabe Leistung (freigegeben wenn 1): {}".format(b_freigabe_excess))
-    logging.info("Sperrung Leistung (: {}".format(b_sperrung_excess))
+        
+    logging.info("Aktuelle Strombilanz: {}".format(b_freigabe_excess))
+    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
+    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))
     logging.info("Verzögerung (Temperatur zu hoch wenn 1): {}".format(T_Verzoegerung_Tag))
     logging.info("WP_Leistung (ausgeschaltet wenn 1): {}".format(wp_freigabe))
     logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
