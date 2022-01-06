@@ -181,46 +181,55 @@ def main():
     #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
+    ww_time = 0
+    Ww_max = 1
     
-    #Abrufen aktuelle Warmwassertemp Speicher unten:
-    ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
-    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
-    Ww_max = True
-    if ww_temp > ww_max:
-        Ww_max = False
-   
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
+    
+    #Auslesen aktuelle Warmwassertemperatur
+    ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
+    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
+    
+    if ww_temp > ww_max:
+        Ww_max = 0
+    
+    if now.time() > Ww_start and now.time() < Ww_stop:
+        ww_time = 1
+    
+    logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,WW-Temp,Ww_max))
+    logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster {} {}: {}".format(now.time(),Ww_start,Ww_stop,ww_time))
+   
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
-    if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
-        logging.info(f" ---------- WW-Betrieb ----------") 
+    if (ww_time and Ww_max):
+        logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
-        logging.info(f" ---------- Bereitschaftsbetrieb ----------") 
+        logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_wp):
-        logging.info(f" ---------- Komfortbetrieb ----------")
+        logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
 #     elif (b_freigabe_normal & T_Freigabe_Nacht):
-#         logging.info(f" ---------- Absenkbetrieb nur Umwälzpumpe ----------")
+#         logging.info(f" ==> Absenkbetrieb nur Umwälzpumpe")
 #         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
 #         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
 #         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
         
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_wp):
-        logging.info(f" ---------- Absenkbetrieb WP & Umwälzpumpe ----------") 
+        logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
