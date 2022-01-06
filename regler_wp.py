@@ -49,9 +49,9 @@ HK1_max = 32 # Tempvorgabe für Komfortbetrieb Pufferspeicher
 HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
-T_min_Nacht = 21 # Minimaltemp für EG
+T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag = 22.5 # Maximaltemp für OG
-T_verz_Tag = 21.5
+T_min_Tag = 21 # Minimale Raumtemp zur Freigabe WP
 T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
@@ -151,35 +151,35 @@ def main():
     logging.info("Sperrung Leistung: {}".format(b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
-    T_Freigabe_Nacht = 0
-    T_Freigabe_Tag = 0
-    T_Verzoegerung_Tag = 0
+    #T_Freigabe_Nacht = 0
+    T_Freigabe_max = 0
+    T_Freigabe_min = 0
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-15min")["data"]["average"] 
+                      duration="-30min")["data"]["average"] 
     
     RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-15min")["data"]["average"] 
+                      duration="-30min")["data"]["average"] 
     
     logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
     logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-    if RT_akt_EG > T_verz_Tag: #Sperrung WP wenn Tag wenn Raumtemp EG zu hoch
-        T_Verzoegerung_Tag = 1
+    if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Tag wenn Raumtemp EG zu hoch
+        T_Freigabe_min = 1
     if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher Raumtemp im OG
-        T_Freigabe_Tag = 1
-    if RT_akt_EG > T_min_Nacht: #Sperren WP Nacht wenn Raumtemp im EG zu hoch
-        T_Freigabe_Nacht = 1
+        T_Freigabe_max = 1
+    #if RT_akt_EG > T_min_Nacht: #Sperren WP Nacht wenn Raumtemp im EG zu hoch
+    #    T_Freigabe_Nacht = 1
         
-    write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
-    write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
-    write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
-    
-    logging.info("Temp EG zu hoch {}°C: {}".format(T_verz_Tag,T_Verzoegerung_Tag))
-    logging.info("Temp OG zu hoch {}°C: {}".format(T_max_Tag,T_Freigabe_Tag))
-    logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
+    write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21.5°C 
+    write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
+    #write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT EG > 21°C
+   
+    logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Tag,T_Freigabe_min))
+    logging.info("Temp OG zu hoch {}°C: {}".format(T_max_Tag,T_Freigabe_max))
+    #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     
@@ -213,11 +213,11 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
-    elif (b_freigabe_normal & T_Freigabe_Nacht):
-        logging.info(f" ---------- Absenkbetrieb nur Umwälzpumpe ----------")
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
-        CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-        CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
+#     elif (b_freigabe_normal & T_Freigabe_Nacht):
+#         logging.info(f" ---------- Absenkbetrieb nur Umwälzpumpe ----------")
+#         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
+#         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
+#         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
         
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_wp):
