@@ -31,10 +31,10 @@ UUID = {
     "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677"
 }
 
-# Freigabewert für Sonderbetrieb nach Heizgrenze
+# Parameter Freigabe Heizbetrieb
 FREIGABE_NORMAL_TEMP = 15
 
-#Freigabewerte für Sonderbetrieb nach Leistung
+#Parameter Freigabe Komfortbetrieb
 FREIGABE_WARM_P = -700
 FREIGABE_KALT_P = -1000
 FREIGABE_WARM_TEMP = 15
@@ -42,24 +42,20 @@ FREIGABE_KALT_TEMP = -10
 SPERRUNG_WARM_P = FREIGABE_WARM_P + 400
 SPERRUNG_KALT_P = FREIGABE_KALT_P + 400
 
-#Sollwerte für Regulierung HK1 nach PV-Produktion & Temp
-PV_max = 2000
-HK1_min = 5 #Pufferspeicher 
-HK2_min = 20 #Heizgruppe
-HK1_max = 32
-HK2_max = 28
-HK1_Diff_max = HK1_max - HK1_min
-HK2_Diff_max = HK2_max - HK2_min 
-AT_Diff_max = 14
+#Parameter Absenk- und Komfortbetrieb
+HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
+HK2_min = 20 # Tempvorgabe für Absenkbetrieb Heizgruppe
+HK1_max = 32 # Tempvorgabe für Komfortbetrieb Pufferspeicher
+HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
-# Freigabe WP aufgrund Raumtemp Nacht
-T_min_Nacht = 21
-T_max_Tag = 22.5
+# Parameter Freigabe Raumtemperaturen
+T_min_Nacht = 21 # Minimaltemp für EG
+T_max_Tag = 22.5 # Maximaltemp für OG
 T_verz_Tag = 21.5
-T_HK1_Nacht = 5
-T_HK2_Nacht = 5
+T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
+T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
-#Freigabe WW Ladung
+#Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
 ww_max = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
@@ -170,11 +166,11 @@ def main():
     logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-    if RT_akt_EG > T_verz_Tag: #Verzögerung WP Freigabe Tag wenn RT noch zu hoch
+    if RT_akt_EG > T_verz_Tag: #Sperrung WP wenn Tag wenn Raumtemp EG zu hoch
         T_Verzoegerung_Tag = 1
-    if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher RT am Tag
+    if RT_akt_OG > T_max_Tag: #Sperrung WP auf Grund zu hoher Raumtemp im OG
         T_Freigabe_Tag = 1
-    if RT_akt_EG > T_min_Nacht: #Sperren WP auf Grund zu hoher RT in Nacht
+    if RT_akt_EG > T_min_Nacht: #Sperren WP Nacht wenn Raumtemp im EG zu hoch
         T_Freigabe_Nacht = 1
         
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
@@ -197,13 +193,6 @@ def main():
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
-    
-  
-   
-
-    
-   
-    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
@@ -218,7 +207,7 @@ def main():
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_wp):
-        logging.info(f" ---------- Sonderbetrieb ----------")
+        logging.info(f" ---------- Komfortbetrieb ----------")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
