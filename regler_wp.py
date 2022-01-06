@@ -22,8 +22,8 @@ UUID = {
     "t_Sperrung_Nacht": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
     "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
     "WP_Freigabe": "232bec80-7a2a-11ea-b704-0de0b4780fba",
-    "Freigabe_excess": "90212900-d972-11e9-910d-078a5d14d2c9",
-    "Sperrung_excess": "dd2e3400-d973-11e9-b9c6-038d9113070b",
+    "Freigabe_WP": "90212900-d972-11e9-910d-078a5d14d2c9",
+    "Sperrung_WP": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
     "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd", 
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
@@ -95,8 +95,8 @@ def write_vals(uuid, val):
 def main():
     tz = pytz.timezone('Europe/Zurich')
     b_freigabe_12h_temp = 0
-    b_freigabe_excess = 0
-    b_sperrung_excess = 0
+    b_freigabe_wp = 0
+    b_sperrung_wp = 0
     b_freigabe_normal = 0
     b_absenk_aus = 0
     b_absenk_ein = 0
@@ -147,12 +147,12 @@ def main():
     logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
     
     if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
-        b_freigabe_excess = 1
+        b_freigabe_wp = 1
     if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
-        b_sperrung_excess = 1
+        b_sperrung_wp = 1
         
-    logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
-    logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))    
+    logging.info("Freigabe Leistung: {}".format(b_freigabe_wp))
+    logging.info("Sperrung Leistung: {}".format(b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
     
@@ -180,12 +180,7 @@ def main():
     Ww_max = True
     if ww_temp > ww_max:
         Ww_max = False
-    
-    #Abrufen aktueller Betriebszustand WP
-#     wp_hot_water = False
-#     wp_mode = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1)
-#     if wp_mode == 5:
-#         wp_hot_water = True
+   
     
   
    
@@ -221,8 +216,8 @@ def main():
     logging.info("Freigabe Tag (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Tag))
     logging.info("Freigabe Nacht (Temperatur zu hoch wenn 1): {}".format(T_Freigabe_Nacht))
     
-    write_vals(UUID["Freigabe_excess"], b_freigabe_excess) # Aktiv wenn ausreichend PV Leistung vorhanden
-    write_vals(UUID["Sperrung_excess"], b_sperrung_excess) # Aktiv wenn zu wenig PV Leistung vorhanden
+    write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
+    write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_Tag) # Aktiv wenn RT > 25°C
     write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT > 21
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
@@ -241,14 +236,14 @@ def main():
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung oder Raumtemp OG zu hoch vorhanden.
-    elif (T_Verzoegerung_Tag and b_freigabe_excess == 0 or T_Freigabe_Tag):
+    elif (T_Verzoegerung_Tag and b_freigabe_wp == 0 or T_Freigabe_Tag):
         logging.info(f" ---------- Bereitschaftsbetrieb ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Bereitschaftsbetrieb, Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
-    elif (b_freigabe_normal & b_freigabe_excess):
+    elif (b_freigabe_normal & b_freigabe_wp):
         logging.info(f" ---------- Freigabe Sonderbetrieb ----------")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
@@ -270,7 +265,7 @@ def main():
         logging.info("HK2_aktuell: {}".format(T_HK2_Nacht)) 
         
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
-    elif (b_freigabe_normal & b_sperrung_excess):
+    elif (b_freigabe_normal & b_sperrung_wp):
         logging.info(f" ---------- Absenkbetrieb WP & Umwälzpumpe ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
