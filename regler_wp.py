@@ -262,7 +262,7 @@ def main():
         logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von ausreichend hoher Raumtemp & zu wenig PV-Leistung") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
-        logging.info("Anlage aus: {}".format(Sperrung))
+        logging.info("Bereitschaftsbetrieb, Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_excess):
