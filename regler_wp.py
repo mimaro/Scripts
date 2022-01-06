@@ -144,39 +144,27 @@ def main():
     logging.info("*****************************")
     logging.info("Get values from VZ")
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
-#     t_roll_avg_12 = get_vals(
-#         UUID["T_outdoor"], duration="-720min")["data"]["average"]
     
-    # Abfragen 24h Aussentemperatur für Aktivierung Heizgrenze
+    # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     
-    #Einschaltsignal Sonderbetrieb
+    if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
+        b_freigabe_normal = 1
+    logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
+    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
+    
+    
+    #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     p_net = power_balance 
     
-    #Abfragen mittlere Solarleistung für Sperrung WP am Morgen bei Sonneneinstrahlung
-#     power_balance1 = get_vals(
-#         UUID["PV_Produktion"], duration="-15min")["data"]["average"]
-#     p_net1 = power_balance1 
-    
-    #Ausschaltsignal Sonderbetrieb 
+    #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
     power_balance2 = get_vals(
         UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net2 = power_balance2 
-        
-#     f_time_12h_temp = get_freigabezeit_12h_temp(t_roll_avg_12)
-#     if now.time() > f_time_12h_temp:
-#         b_freigabe_12h_temp = 1
 
-    
-    if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
-        b_freigabe_normal = 1
-    #logging.info("Freigabe Zeit Status: {}".format(b_freigabe_12h_temp))
-    logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
-    #write_vals(UUID["Freigabe_sonderbetrieb"], b_freigabe_12h_temp)
-    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
     wp_freigabe = 0
@@ -198,7 +186,7 @@ def main():
     if wp_mode == 5:
         wp_hot_water = True
     
-    #logging.info("Aktueller Betriebszustand: {}".format(wp_mode.getRegister(0)))
+  
    
     #Generiere Freigabe-sperrsignal Leistung & Raumttemperatur
     
@@ -243,37 +231,28 @@ def main():
     write_vals(UUID["t_Verzoegerung_Tag"], T_Verzoegerung_Tag) # Aktiv wenn RT > 21°C
     write_vals(UUID["WP_Freigabe"], wp_freigabe) # ==> Ist WP ausgeschaltet
    
-    #Formatierung Freigabezeiten
+    #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
-    #Time_start = datetime.time(hour=int(time_start.hour), minute=int((time_start.hour - int(time_start.hour))*60)) # Sperrung WP bei Sonneneinstrahlung
-    #Time_stop = datetime.time(hour=int(time_stop.hour), minute=int((time_stop.hour - int(time_stop.hour))*60)) # Freigabezeit WP bei Sonneneinstrahlung
-    
+     
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
-        logging.info(f" ----------------------  WW-Betrieb") 
+        logging.info(f" ---------- WW-Betrieb ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         WW_Betrieb = 1
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
     
-    # Sperrung WP wenn am Morgen Solareintrag vorhanden (p_net1 = aktueller Solarertrag)
-    #elif (now.time() > Time_start and now.time() < Time_stop and p_net1 > Solar_min):
-        #logging.info(f" ----------------------  Modbus Werte für Sperrung wenn viel Solareinstrahlung vorhanden") 
-        #CLIENT.write_register(REGISTER["Betriebsart"], int(1))
-        #Sperrung = 1
-        #logging.info("Anlage aus: {}".format(Sperrung))
-    
     #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung oder Raumtemp OG zu hoch vorhanden.
     elif (T_Verzoegerung_Tag and b_freigabe_excess == 0 or T_Freigabe_Tag):
-        logging.info(f" ----------------------  Bereitschaftsbetrieb") 
+        logging.info(f" ---------- Bereitschaftsbetrieb ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Bereitschaftsbetrieb, Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_excess):
-        logging.info(f" ----------------------  Freigabe Sonderbetrieb")
+        logging.info(f" ---------- Freigabe Sonderbetrieb ----------")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
@@ -284,7 +263,7 @@ def main():
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     elif (b_freigabe_normal & T_Freigabe_Nacht):
-        logging.info(f" ----------------------  Absenkbetrieb nur Umwälzpumpe")
+        logging.info(f" ---------- Absenkbetrieb nur Umwälzpumpe ----------")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
@@ -293,48 +272,16 @@ def main():
         logging.info("HK1_aktuell: {}".format(T_HK1_Nacht))  
         logging.info("HK2_aktuell: {}".format(T_HK2_Nacht)) 
         
-     
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_excess):
-        logging.info(f" ----------------------  Absenkbetrieb WP & Umwälzpumpe") 
+        logging.info(f" ---------- Absenkbetrieb WP & Umwälzpumpe ----------") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         Absenkbetrieb = 1
         logging.info("Absenkbetrieb ein: {}".format(Absenkbetrieb))
         logging.info("HK1_aktuell: {}".format(HK1_min))  
-        logging.info("HK2_aktuell: {}".format(HK2_min)) 
-       
-    
-  #Schreiben Soll-Temp HK1 und HK 2 in Abhängigkeit von PV-Leistung 
-#     logging.info(f" ----------------------  Temp HK 1 & 2 in Abhängigkeit von PV Leistung.") 
-    
-#     PV_Aktuell = get_vals(UUID["PV_Produktion"],
-#                         duration="-30min")["data"]["average"]
-#     t_roll_avg_12_24 = get_vals(
-#         UUID["T_outdoor"], duration="-1444min+720min")["data"]["average"]
-#     logging.info("T_12_24: {}".format(t_roll_avg_12_24))  
-#     logging.info("PV_Aktuell: {}".format(PV_Aktuell))   
-#     if  (PV_Aktuell/PV_max) > 1:
-#         PV_Faktor = 1
-#     else:
-#         PV_Faktor = PV_Aktuell/PV_max
-#     logging.info("PV_Faktor: {}".format(PV_Faktor))
-        
-#     if  ((FREIGABE_NORMAL_TEMP - t_roll_avg_12_24)/AT_Diff_max) > 1:
-#         Temp_Faktor = 1   
-#     else:
-#         Temp_Faktor = (FREIGABE_NORMAL_TEMP-t_roll_avg_12)/AT_Diff_max
-#     logging.info("Temp_Faktor: {}".format(Temp_Faktor))  
-     
-#     HK1_aktuell = HK1_min + HK1_Diff_max * PV_Faktor
-#     HK2_aktuell = HK2_min + HK2_Diff_max * PV_Faktor
-#     logging.info("HK1_aktuell: {}".format(HK1_aktuell))  
-#     logging.info("HK2_aktuell: {}".format(HK2_aktuell))  
-        
-#     CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_aktuell*10))    
-#     CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_aktuell*10))     
-   
+        logging.info("HK2_aktuell: {}".format(HK2_min))  
     
     logging.info("********************************")
     
