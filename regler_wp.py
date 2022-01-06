@@ -84,7 +84,6 @@ REGISTER = {
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
     "Vorlauftemp": 521
-    
 }
 
 IP_ISG = "192.168.178.36"
@@ -253,7 +252,7 @@ def main():
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (now.time() > Ww_start and now.time() < Ww_stop and Ww_max):
-        logging.info(f" ----------------------  Modbus Werte für Freigabe WW-Betrieb schreiben") 
+        logging.info(f" ----------------------  WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         WW_Betrieb = 1
         logging.info("WW-Betrieb: {}".format(WW_Betrieb))
@@ -267,14 +266,14 @@ def main():
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur über 21°C und nicht ausreichend PV Leistung oder Raumtemp OG zu hoch vorhanden.
     elif (T_Verzoegerung_Tag and b_freigabe_excess == 0 or T_Freigabe_Tag):
-        logging.info(f" ----------------------  Modbus Werte für Bereitschaftsbetrieb schreiben auf Grund von ausreichend hoher Raumtemp & zu wenig PV-Leistung") 
+        logging.info(f" ----------------------  Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         Sperrung = 1
         logging.info("Bereitschaftsbetrieb, Anlage aus: {}".format(Sperrung))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
     elif (b_freigabe_normal & b_freigabe_excess):
-        logging.info(f" ----------------------  Modbus Werte für Sonderbetrieb ein schreiben da Heizgrenze erreicht und ausreichend PV")
+        logging.info(f" ----------------------  Freigabe Sonderbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
@@ -285,7 +284,7 @@ def main():
          
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
     elif (b_freigabe_normal & T_Freigabe_Nacht):
-        logging.info(f" ----------------------  Modbus Werte für Umwälzpumpe ein schreiben")
+        logging.info(f" ----------------------  Absenkbetrieb nur Umwälzpumpe")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
@@ -297,7 +296,7 @@ def main():
      
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
     elif (b_freigabe_normal & b_sperrung_excess):
-        logging.info(f" ----------------------  Modbus Werte für Absenkbetrieb ein schreiben") 
+        logging.info(f" ----------------------  Absenkbetrieb WP & Umwälzpumpe") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
