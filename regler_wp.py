@@ -72,7 +72,7 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "Vorlauftemp": 521
+    "WW_Temp": 521
 }
 
 IP_ISG = "192.168.178.36"
@@ -106,8 +106,8 @@ def main():
     now = datetime.datetime.now(tz=tz)
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
-        
-    logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
+    
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Heizgrenze ----------") 
     
     # Abfrage aktuelle Aussentemperatur
     t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
@@ -119,9 +119,9 @@ def main():
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
-    logging.info("Freigabe Normalbetrieb Status:{}".format(b_freigabe_normal))
-    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
- 
+    write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)   
+    logging.info("Freigabe Normalbetrieb:{}".format(b_freigabe_normal))
+     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
@@ -154,7 +154,17 @@ def main():
     logging.info("Freigabe Leistung: {}".format(b_freigabe_excess))
     logging.info("Sperrung Leistung: {}".format(b_sperrung_excess))    
         
-        
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
+    
+    
+    
+    
+    
+    
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
+    
+    
+    
     
 
     #Abrufen aktuelle Leistung Wärmepumpe ==> Prüfen ob WP ausgeschaltet
@@ -164,18 +174,18 @@ def main():
     if wp_consumption < 100:
         wp_freigabe = 1
     
-    #Abrufen aktuelle Vorlautemperatur WP:
-    ww_temp = (CLIENT.read_input_registers(REGISTER["Vorlauftemp"], count=1, unit = 1)).getRegister(0) / 10   
-    logging.info("Aktuelle Vorlauftemp: {}".format(ww_temp))
+    #Abrufen aktuelle Warmwassertemp Speicher unten:
+    ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
+    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
     Ww_max = True
     if ww_temp > ww_max:
         Ww_max = False
     
     #Abrufen aktueller Betriebszustand WP
-    wp_hot_water = False
-    wp_mode = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1)
-    if wp_mode == 5:
-        wp_hot_water = True
+#     wp_hot_water = False
+#     wp_mode = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1)
+#     if wp_mode == 5:
+#         wp_hot_water = True
     
   
    
