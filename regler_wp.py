@@ -198,7 +198,7 @@ def main():
     if now.time() > Ww_start and now.time() < Ww_stop:
         ww_time = 1
     
-    logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,WW_Temp,Ww_max))
+    logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,ww_max,Ww_max))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster {} {}: {}".format(now.time(),Ww_start,Ww_stop,ww_time))
    
      
