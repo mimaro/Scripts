@@ -41,7 +41,7 @@ FREIGABE_WARM_P = -700
 FREIGABE_KALT_P = -1000
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_HYST = 200 # Hysterese zur Sperrung Komfortbetrieb
+SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -59,7 +59,7 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
-ww_max = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+#ww_max = 44 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -182,7 +182,7 @@ def main():
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
-    Ww_max = 1
+   # Ww_max = 1
     
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
@@ -192,19 +192,19 @@ def main():
     ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
     #logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
     
-    if ww_temp > ww_max:
-        Ww_max = 0
+   # if ww_temp > ww_max:
+    #    Ww_max = 0
     
     if now.time() > Ww_start and now.time() < Ww_stop:
         ww_time = 1
     
-    logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,ww_max,Ww_max))
+    #logging.info("Ist-Wert WW-Temp ({}°C) < Soll-Wert WW-Temp ({}°C): {}".format(ww_temp,ww_max,Ww_max))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
-    if (ww_time and Ww_max):
+    if (ww_time):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
     
