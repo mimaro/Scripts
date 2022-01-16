@@ -209,7 +209,7 @@ def main():
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------") 
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
-    if (ww_time ans Ww_max):
+    if (ww_time and Ww_max):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
     
