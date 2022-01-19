@@ -34,6 +34,8 @@ sensor5 = '/sys/bus/w1/devices/28-03029779113a/w1_slave'
 sensor6 = '/sys/bus/w1/devices/28-030297791325/w1_slave'
 sensor7 = '/sys/bus/w1/devices/28-02199245a854/w1_slave'
 
+Offset_RT = 0.3
+
 ##############################################################
 
 def write_vals(uuid, val):
@@ -71,7 +73,7 @@ temp_3 =  str(readTempLines(sensor3)[0])
 temp_4 =  str(readTempLines(sensor4)[0]-6.2)
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
-temp_7 =  str(readTempLines(sensor7)[0]) 
+temp_7 =  str(readTempLines(sensor7)[0]+Offset_RT) 
 
 write_vals(UUID["Puffer_mitte"], temp_1)
 write_vals(UUID["Puffer_unten"], temp_2)
