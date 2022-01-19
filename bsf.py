@@ -20,7 +20,7 @@ def main():
     print("Actual Temperature {}".format(decoded_data["temperature"]))
     print("Posting to VZ")
     poststring_p = URL_VZ.format(UUID_P, decoded_data["power"])
-    poststring_t = URL_VZ.format(UUID_T, decoded_data["temperature"])
+    poststring_t = URL_VZ.format(UUID_T, decoded_data["temperature"]-2.4)
     postreq_p = requests.post(poststring_p)
     postreq_t = requests.post(poststring_t)
     print(poststring_p)
