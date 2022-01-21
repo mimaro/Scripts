@@ -7,7 +7,7 @@ import logging
 
 #UUID_P = "ad5c8090-3698-11ea-8ad7-7f796afef9a1"
 UUID_T = "70d65570-4a61-11e9-b638-fb0f3e7a4677"
-IP_VENTI = "192.168.178.102"
+IP_VENTI = "192.168.178.24"
 URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
 Offset = -2.1
