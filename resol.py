@@ -3,7 +3,7 @@ import json
 import logging
 import pprint
 
-IP_RESOL = "192.168.178.61"
+IP_RESOL = "192.168.178.22"
 RESOL_URL = "http://{}/dlx/download/live?sessionAuthUsername=admin&sessionAuthPassword=admin".format(
     IP_RESOL)
 
