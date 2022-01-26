@@ -38,8 +38,8 @@ UUID = {
 FREIGABE_NORMAL_TEMP = 15
 
 #Parameter Freigabe Komfortbetrieb
-FREIGABE_WARM_P = -700
-FREIGABE_KALT_P = -1000
+FREIGABE_WARM_P = -400
+FREIGABE_KALT_P = -800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
 SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
@@ -121,7 +121,7 @@ def main():
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
-        UUID["PV_Produktion"], duration="-15min")["data"]["average"]
+        UUID["PV_Produktion"], duration="-30min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
