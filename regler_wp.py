@@ -58,9 +58,9 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
 #Parameter WW-Ladung
-ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(14, 0)
-ww_max = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+ww_start = datetime.time(0, 0)
+ww_stop = datetime.time(23, 55)
+ww_max = 53 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 
 REGISTER = {
     "Komfort_HK1": 1501,
