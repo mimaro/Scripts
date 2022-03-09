@@ -188,7 +188,7 @@ def main():
     
     HK2_min 
     
-    VL_Temp_Soll_min = HK2_Steigung * 1.8317984*(HK2_min-t_now)^0.8281902 + HK2_min
+    VL_Temp_Soll_min = HK2_Steigung * 1.8317984*(HK2_min-t_now)**0.8281902 + HK2_min
     logging.info("SOLL min VL-Temp: {}".format(VL_Temp_Soll_min))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
