@@ -29,7 +29,8 @@ UUID = {
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
     "T_Raum_EG": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
     "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677",
-    "WW_Temp_oben": "e207c010-3630-11ea-8ccb-fdd7c2918630"
+    "WW_Temp_oben": "e207c010-3630-11ea-8ccb-fdd7c2918630",
+    "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
 }
 
 # t-sperrung Nacht löschen, WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -182,15 +183,18 @@ def main():
     
 
     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
-    
+    T_Freigabe_Puffer = 0
+
     HK2_Steigung = CLIENT.read_holding_registers(REGISTER["Steigung_HK1"], count=1, unit= 1).getRegister(0)/100
-    logging.info("Steigung HK2: {}".format(HK2_Steigung))
-    
-    HK2_min 
-    
     VL_Temp_Soll_min = HK2_Steigung * 1.8317984*(HK2_min-t_now)**0.8281902 + HK2_min
     logging.info("SOLL min VL-Temp: {}".format(VL_Temp_Soll_min))
-        
+    
+    T_Puffer_akt = get_vals(UUID["Puffer_Temp_oben"])["data"]["tuples"][0][1]
+    logging.info("Aktuelle Temp Puffer: {}".format(T_Puffer_akt))
+    
+    if T_Puffer_akt < VL_Temp_Soll_min:
+        T_Freigabe_Puffer = 1
+            
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
     Ww_max = 1
@@ -225,22 +229,15 @@ def main():
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
-    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht und ausreichend PV-Leistung vorhanden 
-    elif (b_freigabe_normal & b_freigabe_wp):
+    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Puffertemperatur nicht zu hoch
+    elif (b_freigabe_normal & b_freigabe_wp & T_Freigabe_Puffer):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
-         
-    #Freigabe Absenkbetrieb wenn Heizperiode aktiv aber zu warm im Raum (==> Es läuft nur Umwälzpumpe)
-#     elif (b_freigabe_normal & T_Freigabe_Nacht):
-#         logging.info(f" ==> Absenkbetrieb nur Umwälzpumpe")
-#         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv
-#         CLIENT.write_register(REGISTER["Eco_HK2"], int(T_HK2_Nacht*10))   
-#         CLIENT.write_register(REGISTER["Eco_HK1"], int(T_HK1_Nacht*10))
-        
-    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und zu wenig PV-Leistung
-    elif (b_freigabe_normal & b_sperrung_wp):
+               
+    #Freigabe Absenkbetrieb wenn Heizperiode aktiv 
+    elif (b_freigabe_normal): #b_sperrung_wp
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
