@@ -69,8 +69,7 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500,
-    "WW_Temp": 521
+    "Betriebsart": 1500
 }
 
 IP_ISG = "192.168.178.36"
@@ -180,6 +179,9 @@ def main():
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
     #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
+    
+    #Berechnung akt. VL-Temp nach AT
+ 
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
@@ -187,10 +189,7 @@ def main():
     
     #Formatierung Freigabezeiten Warmwasser
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
-    Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser
-    
-    #Auslesen aktuelle Warmwassertemperatur
-    #ww_temp = (CLIENT.read_input_registers(REGISTER["WW_Temp"], count=1, unit = 1)).getRegister(0) / 10   
+    Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
         
     ww_temp = get_vals(
         UUID["WW_Temp_oben"], duration="-1min")["data"]["average"]
