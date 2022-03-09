@@ -183,9 +183,13 @@ def main():
 
     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
     
-    HK2_Steigung = CLIENT.read_holding_registers(REGISTER["Steigung_HK2"], count=1, unit= 1).getRegister(0)
+    HK2_Steigung = CLIENT.read_holding_registers(REGISTER["Steigung_HK1"], count=1, unit= 1).getRegister(0)
     logging.info("Steigung HK2: {}".format(HK2_Steigung))
- 
+    
+    HK2_min 
+    
+    VL_Temp_Soll_min = HK2_Steigung * 1.8317984*(HK2_min-t_now)^0.8281902 + HK2_min
+    logging.info("SOLL min VL-Temp: {}".format(VL_Temp_Soll_min))
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
