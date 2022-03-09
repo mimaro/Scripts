@@ -183,7 +183,7 @@ def main():
 
     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
     
-    HK2_Steigung = CLIENT.read_holding_registers(Steigung_HK2, count=1, unit= 1).getRegister(0)
+    HK2_Steigung = CLIENT.read_holding_registers(REGISTER["Steigung_HK2"], count=1, unit= 1).getRegister(0)
     logging.info("Steigung HK2: {}".format(HK2_Steigung))
  
         
