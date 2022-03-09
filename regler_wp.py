@@ -192,7 +192,12 @@ def main():
     T_Puffer_akt = get_vals(UUID["Puffer_Temp_oben"])["data"]["tuples"][0][1]
     logging.info("Aktuelle Temp Puffer: {}".format(T_Puffer_akt))
     
-    if T_Puffer_akt < VL_Temp_Soll_min:
+    betriebszustand = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1).getRegister(0)
+    
+    if betriebszustand == 3:
+        T_Freigabe_Puffer = 1
+    
+    elif T_Puffer_akt < VL_Temp_Soll_min:
         T_Freigabe_Puffer = 1
             
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
