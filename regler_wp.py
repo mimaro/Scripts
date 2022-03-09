@@ -180,7 +180,11 @@ def main():
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
     #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
     
-    #Berechnung akt. VL-Temp nach AT
+
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
+    
+    HK2_Steigung = CLIENT.read_holding_registers(Steigung_HK2, count=1, unit= 1).getRegister(0)
+    logging.info("Steigung HK2: {}".format(HK2_Steigung)
  
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
