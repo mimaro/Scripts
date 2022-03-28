@@ -219,7 +219,7 @@ def main():
     
   
     
-    sunset_time_CH = str(sunset) + datetime.timedelta(hours=d_time)).strftime('%H:%M:%S')
+    sunset_time_CH = (str(sunset) + datetime.timedelta(hours=d_time)).strftime('%H:%M:%S')
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
     logging.info("sunset time: {}".format(sunset_time_CH))
