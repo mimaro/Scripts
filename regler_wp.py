@@ -220,7 +220,7 @@ def main():
     logging.info("Swiss time: {}".format(now.time()))
     
     tz_UTC = pytz.utc
-    now_UTC = datetime.datetime.now(tz=tz)
+    now_UTC = datetime.datetime.now(tz=tz_UTC)
     logging.info("UTC time: {}".format(now_UTC.time()))
     
     
