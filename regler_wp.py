@@ -210,7 +210,7 @@ def main():
     now_CH = now.time().hour
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
-    d_time = int(now_CH) - int(now_UTC)
+    d_time = now_CH - now_UTC
     
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
