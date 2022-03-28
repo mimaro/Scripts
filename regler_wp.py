@@ -216,9 +216,9 @@ def main():
     print(sunset)
   
     
- 
+    sunset_time = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
 
-    
+    logging.info("sunset time: {}".format(sunset_time))
     
     now_CH = now.time().hour
     
@@ -228,7 +228,7 @@ def main():
     
     logging.info("Swiss time: {}".format(now_CH))
     logging.info("UTC time: {}".format(now_UTC))
-    logging.info("UTC time: {}".format(d_time))
+    logging.info("delta time: {}".format(d_time))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
