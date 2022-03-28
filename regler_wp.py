@@ -212,7 +212,7 @@ def main():
     #time_now = d.time() # Momentane Uhrzeit
 
     data = json.loads(r.content)
-    sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+    sunset = data['results']['sunset'].hour # Daten für Sonnenuntergang
     print(sunset)
     #sunset_time = time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
     
