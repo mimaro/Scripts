@@ -10,6 +10,8 @@ from pymodbus.client.sync import ModbusTcpClient
 # Format URLs
 VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+SUNSET = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
+
 ########################################################################################################
 
 #######################################################################################################
@@ -201,7 +203,21 @@ def main():
         T_Freigabe_Puffer = 1
         
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
-            
+    
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
+    r = requests.get(url) # Daten abfragen
+
+    d = datetime.now()
+    today_date = d.date() # Heutiges Datum
+    time_now = d.time() # Momentane Uhrzeit
+
+    data = json.loads(r.content)
+    sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+    print(sunset)
+    #sunset_time = time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+    
+    
+    
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
     Ww_max = 1
