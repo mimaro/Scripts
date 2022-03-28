@@ -207,7 +207,7 @@ def main():
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     r = requests.get(SUNSET_URL) # Daten abfragen
 
-    #d = datetime.now()
+    #d = d.now()
     #today_date = d.date() # Heutiges Datum
     #time_now = d.time() # Momentane Uhrzeit
 
@@ -217,7 +217,7 @@ def main():
     #sunset_time = time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
     
  
-    logging.info("Swiss time: {}".format(time.now))
+    logging.info("Swiss time: {}".format(now.time()))
     
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz)
