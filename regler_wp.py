@@ -212,7 +212,6 @@ def main():
     #time_now = d.time() # Momentane Uhrzeit
 
     data = json.loads(r.content)
-    print(data)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     print(sunset)
   
@@ -225,8 +224,9 @@ def main():
     
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
+    d_time = now_CH - now_UTC
     
-    
+    print(d_time)
     logging.info("Swiss time: {}".format(now_CH))
     logging.info("UTC time: {}".format(now_UTC))
     
