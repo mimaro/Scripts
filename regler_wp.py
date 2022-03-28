@@ -10,7 +10,7 @@ from pymodbus.client.sync import ModbusTcpClient
 # Format URLs
 VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
 VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
-SUNSET = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
+SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
 
 ########################################################################################################
 
@@ -205,7 +205,7 @@ def main():
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
-    r = requests.get(url) # Daten abfragen
+    r = requests.get(SUNSET_URL) # Daten abfragen
 
     d = datetime.now()
     today_date = d.date() # Heutiges Datum
