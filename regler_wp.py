@@ -210,14 +210,14 @@ def main():
     now_CH = now.time().hour
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
-    d_time = now_CH - now_UTC
+    d_time = int(now_CH) - int(now_UTC)
     
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
         
     sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwand
     
-    sunset_time_CH = sunset_time_UTC + d_time
+    sunset_time_CH = sunset + timedelta(hours=d_time)).strftime('%H:%M:%S')
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
     logging.info("sunset time: {}".format(sunset_time_CH))
