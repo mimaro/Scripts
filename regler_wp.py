@@ -217,11 +217,13 @@ def main():
     #sunset_time = time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
     
  
-    logging.info("Swiss time: {}".format(now.hour()))
+    logging.info("Swiss time: {}".format(now.time()[0]))
     
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC)
-    logging.info("UTC time: {}".format(now_UTC.hour()))
+    
+    
+    logging.info("UTC time: {}".format(now_UTC.hour))
     
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
