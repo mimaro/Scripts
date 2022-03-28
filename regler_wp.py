@@ -216,7 +216,7 @@ def main():
     str_sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     print(str_sunset)
     
-    datetime_sunset = datetime.strptime(str_sunset,'%d/%m/%y %H:%M:%S')
+    datetime_sunset = datetime.datetime.strptime(str_sunset,'%d/%m/%y %H:%M:%S')
     
     
     
