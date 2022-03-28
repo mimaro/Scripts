@@ -213,9 +213,15 @@ def main():
     d_time = now_CH - now_UTC
     
     data = json.loads(r.content)
-    sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+    str_sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+    print(str_sunset)
+    
+    datetime_sunset = datetime.strptime(str_sunset,'%d/%m/%y %H:%M:%S')
+    
+    
     
     print(type(sunset))
+    print(type(datetime_sunset)
     sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwand
     print(type(sunset_time_UTC))
   
