@@ -223,7 +223,7 @@ def main():
     #sunset_time_CH = (sunset + datetime.timedelta(hours=9)).strftime('%H:%M:%S')
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
-    logging.info("sunset time: {}".format(sunset_time_CH))
+    #logging.info("sunset time: {}".format(sunset_time_CH))
     
     logging.info("Swiss time: {}".format(now_CH))
     logging.info("UTC time: {}".format(now_UTC))
