@@ -221,7 +221,7 @@ def main():
     
     
     print(type(sunset))
-    print(type(datetime_sunset)
+    print(type(datetime_sunset))
     sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwand
     print(type(sunset_time_UTC))
   
