@@ -211,20 +211,22 @@ def main():
     #today_date = d.date() # Heutiges Datum
     #time_now = d.time() # Momentane Uhrzeit
 
+    now_CH = now.time().hour
+    tz_UTC = pytz.utc
+    now_UTC = datetime.datetime.now(tz=tz_UTC).hour
+    d_time = now_CH - now_UTC
+    
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     print(sunset)
   
     
-    sunset_time = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+    sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+    
+    sunset_time_CH= sunset_time_UTC + datetime.timedelta(hours=d_time)
 
-    logging.info("sunset time: {}".format(sunset_time))
-    
-    now_CH = now.time().hour
-    
-    tz_UTC = pytz.utc
-    now_UTC = datetime.datetime.now(tz=tz_UTC).hour
-    d_time = now_CH - now_UTC
+    logging.info("sunset time: {}".format(sunset_time_UTC))
+    logging.info("sunset time: {}".format(sunset_time_CH))
     
     logging.info("Swiss time: {}".format(now_CH))
     logging.info("UTC time: {}".format(now_UTC))
