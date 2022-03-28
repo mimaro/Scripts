@@ -226,8 +226,8 @@ def main():
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
     
     
-    logging.info("Swiss time: {}".format(now_CH)
-    logging.info("UTC time: {}".format(now_UTC)
+    logging.info("Swiss time: {}".format(now_CH))
+    logging.info("UTC time: {}".format(now_UTC))
     
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
