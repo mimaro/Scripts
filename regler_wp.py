@@ -215,8 +215,8 @@ def main():
     data = json.loads(r.content)
     sunset = int(data['results']['sunset']) # Daten für Sonnenuntergang
    
-    sunset_time_UTC = datetime.datetime(sunset)
-    #sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+   
+    #sunset_time_UTC = datetime.datetime(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
     
    
     print(type(sunset_time_UTC))
