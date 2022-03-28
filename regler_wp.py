@@ -222,7 +222,7 @@ def main():
     print(type(sunset_time_UTC))
   
     
-    sunset_time_CH = (sunset_time_UTC + datetime.timedelta(hours=9)).strftime('%H:%M:%S')
+    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=9)
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
     #logging.info("sunset time: {}".format(sunset_time_CH))
