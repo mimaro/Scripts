@@ -221,9 +221,9 @@ def main():
     print(sunset)
   
     
-    sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+    sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwand
     
-    sunset_time_CH= sunset_time_UTC + datetime.timedelta(hours=d_time)
+    sunset_time_CH = datetime.sunset_time_UTC + datetime.timedelta(hours=d_time)
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
     logging.info("sunset time: {}".format(sunset_time_CH))
