@@ -207,10 +207,6 @@ def main():
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     r = requests.get(SUNSET_URL) # Daten abfragen
 
-    #d = d.now()
-    #today_date = d.date() # Heutiges Datum
-    #time_now = d.time() # Momentane Uhrzeit
-
     now_CH = now.time().hour
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
@@ -218,12 +214,10 @@ def main():
     
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
-    print(sunset)
-  
-    
+        
     sunset_time_UTC = datetime.time(int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwand
     
-    sunset_time_CH = datetime.sunset_time_UTC + datetime.timedelta(hours=d_time)
+    sunset_time_CH = sunset_time_UTC + d_time
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
     logging.info("sunset time: {}".format(sunset_time_CH))
