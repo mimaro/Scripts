@@ -218,14 +218,16 @@ def main():
     
  
 
-    logging.info("Swiss time: {}".format(now.time()))
+    
+    
+    now_CH = now.time().hour
     
     tz_UTC = pytz.utc
-    now_UTC = datetime.datetime.now(tz=tz_UTC)
+    now_UTC = datetime.datetime.now(tz=tz_UTC).hour
     
     
-    
-    logging.info("UTC time: {}".format(now_UTC.hour))
+    logging.info("Swiss time: {}".format(now_CH)
+    logging.info("UTC time: {}".format(now_UTC)
     
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
