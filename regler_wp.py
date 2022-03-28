@@ -60,6 +60,8 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
+#Parameter 
+
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
@@ -214,22 +216,18 @@ def main():
     
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
-   
-   
     sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
-    
-   
-    print(type(sunset_time_UTC))
-  
-    
     sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time)
 
     logging.info("sunset time: {}".format(sunset_time_UTC))
-    logging.info("sunset time: {}".format(sunset_time_CH))
+    logging.info("sunset time CH: {}".format(sunset_time_CH))
     
     logging.info("Swiss time: {}".format(now_CH))
     logging.info("UTC time: {}".format(now_UTC))
     logging.info("delta time: {}".format(d_time))
+    
+ 
+    #t_roll_avg_24
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
