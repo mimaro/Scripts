@@ -207,9 +207,9 @@ def main():
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     r = requests.get(SUNSET_URL) # Daten abfragen
 
-    d = datetime.now()
-    today_date = d.date() # Heutiges Datum
-    time_now = d.time() # Momentane Uhrzeit
+    #d = datetime.now()
+    #today_date = d.date() # Heutiges Datum
+    #time_now = d.time() # Momentane Uhrzeit
 
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
