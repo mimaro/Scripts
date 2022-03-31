@@ -228,8 +228,9 @@ def main():
     
     t_delta_sunset_freigabe = 9
     
-    t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
-    now_time = datetime.time(now)
+    t_sunset_freigabe = datetime.strptime((sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe), '%Y-%m-%d-%H-%M-%S').time()
+    
+    now_time = datetime.strptime(now, '%Y-%m-%d-%H-%M-%S').time()
     
     logging.info("delta time: {}".format(now_time))
     
