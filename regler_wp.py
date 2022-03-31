@@ -21,7 +21,7 @@ UUID = {
     "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
     "Charge_station": "8270f520-6690-11e9-9272-4dde30159c8f",
     "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
-    "t_Sperrung_Nacht": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
+    "t_Sperrung_Sonnenuntergang": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
     "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
     "WP_Freigabe": "232bec80-7a2a-11ea-b704-0de0b4780fba",
     "Freigabe_WP": "90212900-d972-11e9-910d-078a5d14d2c9",
@@ -35,7 +35,7 @@ UUID = {
     "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
 }
 
-# t-sperrung Nacht löschen, WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
+#, WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
 # Parameter Freigabe Heizbetrieb
 FREIGABE_NORMAL_TEMP = 15
@@ -63,8 +63,8 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
 AT_MAX = 15
-T_FREIGABE_MIN = 0
-T_FREIGABE_MAX = 8
+T_FREIGABE_MIN = 1
+T_FREIGABE_MAX = 11
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
@@ -221,26 +221,24 @@ def main():
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
-    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time)
-    time_now = now.time()
+    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
+    time_now = now.time() #Aktuelle Zeit
 
-    logging.info("sunset time CH: {}".format(sunset_time_CH))
-    logging.info("time now: {}".format(time_now))    
-    
     t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX - t_roll_avg_24)
-    t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
-    
-    logging.info("24 h AT: {}".format(t_roll_avg_24))
-    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
-    logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
+    t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
     
     sunset_freigabe = 0
     if time_now > t_sunset_freigabe:
         sunset_freigabe = 1
     
+    write_vals(UUID["t_Sperrung_Sonnenuntergang"], sunset_freigabe) 
+   
+    logging.info("sunset time CH: {}".format(sunset_time_CH))
+    logging.info("time now: {}".format(time_now))    
+    logging.info("24 h AT: {}".format(t_roll_avg_24))
+    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
+    logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
-    
-
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
@@ -277,7 +275,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Puffertemperatur nicht zu hoch
-    elif (b_freigabe_normal & b_freigabe_wp & T_Freigabe_Puffer):
+    elif (b_freigabe_normal & b_freigabe_wp & T_Freigabe_Puffer & sunset_freigabe):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
