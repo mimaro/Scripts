@@ -63,8 +63,8 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
 AT_MAX = 15
-T_FREIGABE_MIN = 1
-T_FREIGABE_MAX = 11
+T_FREIGABE_MIN = 2
+T_FREIGABE_MAX = 12
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
