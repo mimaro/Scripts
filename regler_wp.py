@@ -228,19 +228,16 @@ def main():
     
     t_delta_sunset_freigabe = 9
     
-    t_sunset_freigabe = datetime.strptime((sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)), '%Y-%m-%d-%H-%M-%S').time()
+    t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
     
-    #now_time = datetime.strptime(now, '%Y-%m-%d-%H-%M').time()
-    
-    #logging.info("delta time: {}".format(now_time))
-    
-    #tme = datetime.strptime(strg, '%Y-%m-%d-%H-%M').time()
-    
-    sunset_freigabe = 0
-    if now_time > t_sunset_freigabe:
-        sunset_freigabe = 1
-    
+      
+    logging.info("delta time: {}".format(now))
     logging.info("delta time: {}".format(t_sunset_freigabe))
+    
+    #sunset_freigabe = 0
+    #if now > t_sunset_freigabe:
+    #    sunset_freigabe = 1
+        
  
     #t_roll_avg_24
     
