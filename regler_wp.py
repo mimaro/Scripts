@@ -228,9 +228,13 @@ def main():
     
     t_delta_sunset_freigabe = 9
     
+    
+    
+    time_now = tz.localize(now)
+    
     t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
     
-    print(type(now))
+    print(type(time_now))
     print(type(t_sunset_freigabe))
     
     logging.info("time now: {}".format(now))
