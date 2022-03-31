@@ -226,6 +226,12 @@ def main():
     logging.info("UTC time: {}".format(now_UTC))
     logging.info("delta time: {}".format(d_time))
     
+    t_delta_sunet_freigabe = 9
+    
+    
+    t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
+    
+    logging.info("delta time: {}".format(t_sunset_freigabe))
  
     #t_roll_avg_24
     
