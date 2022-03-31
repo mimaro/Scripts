@@ -230,14 +230,14 @@ def main():
     
     
     
-    time_now = tz.localize(now)
+    time_now = now.time()
     
     t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
     
     print(type(time_now))
     print(type(t_sunset_freigabe))
     
-    logging.info("time now: {}".format(now))
+    logging.info("time now: {}".format(time_now))
     logging.info("time sunset freigabe: {}".format(t_sunset_freigabe))
     
     sunset_freigabe = 0
