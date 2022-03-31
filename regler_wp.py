@@ -230,7 +230,8 @@ def main():
     t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX - t_roll_avg_24)
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
     
-    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_sunset_freigabe))
+    logging.info("24 h AT: {}".format(t_roll_avg_24))
+    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     
     sunset_freigabe = 0
