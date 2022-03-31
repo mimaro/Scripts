@@ -230,7 +230,8 @@ def main():
     
     t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
     
-      
+    print(type(now))
+    
     logging.info("delta time: {}".format(now))
     logging.info("delta time: {}".format(t_sunset_freigabe))
     
