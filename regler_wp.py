@@ -231,6 +231,10 @@ def main():
     
     t_sunset_freigabe = sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)
     
+    sunset_freigabe = 0
+    if now > t_sunset_freigabe:
+        sunset_freigabe = 1
+    
     logging.info("delta time: {}".format(t_sunset_freigabe))
  
     #t_roll_avg_24
