@@ -236,9 +236,9 @@ def main():
     logging.info("time now: {}".format(now))
     logging.info("time sunset freigabe: {}".format(t_sunset_freigabe))
     
-    #sunset_freigabe = 0
-    #if now > t_sunset_freigabe:
-    #    sunset_freigabe = 1
+    sunset_freigabe = 0
+    if now > t_sunset_freigabe:
+        sunset_freigabe = 1
         
  
     #t_roll_avg_24
