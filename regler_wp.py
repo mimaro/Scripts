@@ -225,7 +225,7 @@ def main():
     time_now = now.time()
 
     logging.info("sunset time CH: {}".format(sunset_time_CH))
-    logging.info("time now: {}".format(time_now)    
+    logging.info("time now: {}".format(time_now))    
     
     t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX - t_roll_avg_24)
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
