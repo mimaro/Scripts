@@ -60,7 +60,11 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
-#Parameter 
+#Parameter Freigabe vor Sonnenuntergang
+AT_MIN = 0
+AT_MAX = 15
+T_FREIGABE_MIN = 0
+T_FREIGABE_MAX = 8
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
@@ -221,17 +225,13 @@ def main():
     time_now = now.time()
 
     logging.info("sunset time CH: {}".format(sunset_time_CH))
-    logging.info("time now: {}".format(time_now))
-
+    logging.info("time now: {}".format(time_now)    
     
-    t_delta_sunset_freigabe = 5
-       
-   
-    
+    t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX - t_roll_avg_24
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
     
-    
-    logging.info("time sunset freigabe: {}".format(t_sunset_freigabe))
+    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_sunset_freigabe))
+    logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     
     sunset_freigabe = 0
     if time_now > t_sunset_freigabe:
@@ -239,8 +239,7 @@ def main():
     
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
- 
-    #t_roll_avg_24
+
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
