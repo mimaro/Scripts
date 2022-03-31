@@ -218,20 +218,19 @@ def main():
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
     sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time)
+    time_now = now.time()
 
-    logging.info("sunset time: {}".format(sunset_time_UTC))
     logging.info("sunset time CH: {}".format(sunset_time_CH))
-    
-    logging.info("Swiss time: {}".format(now_CH))
-    logging.info("UTC time: {}".format(now_UTC))
-    logging.info("delta time: {}".format(d_time))
+    logging.info("time now: {}".format(time_now))
+
     
     t_delta_sunset_freigabe = 5
        
-    time_now = now.time()
+   
+    
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
     
-    logging.info("time now: {}".format(time_now))
+    
     logging.info("time sunset freigabe: {}".format(t_sunset_freigabe))
     
     sunset_freigabe = 0
