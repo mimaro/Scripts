@@ -226,16 +226,10 @@ def main():
     logging.info("UTC time: {}".format(now_UTC))
     logging.info("delta time: {}".format(d_time))
     
-    t_delta_sunset_freigabe = 9
-    
-    
-    
+    t_delta_sunset_freigabe = 13
+       
     time_now = now.time()
-    
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time()
-    
-    print(type(time_now))
-    print(type(t_sunset_freigabe))
     
     logging.info("time now: {}".format(time_now))
     logging.info("time sunset freigabe: {}".format(t_sunset_freigabe))
