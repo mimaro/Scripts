@@ -217,7 +217,7 @@ def main():
     data = json.loads(r.content)
     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
     sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
-    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time)
+    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time).time()
     time_now = now.time()
 
     logging.info("sunset time CH: {}".format(sunset_time_CH))
