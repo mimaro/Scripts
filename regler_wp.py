@@ -243,7 +243,9 @@ def main():
     sunset_freigabe = 0
     if time_now > t_sunset_freigabe:
         sunset_freigabe = 1
-        
+    
+    logging.info("time sunset freigabe: {}".format(sunset_freigabe))
+    
  
     #t_roll_avg_24
     
