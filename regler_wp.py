@@ -278,7 +278,7 @@ def main():
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
-        logging.info(f"Bereitschaftsbetrieb Raumtemperatur") 
+        logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Puffertemperatur nicht zu hoch
