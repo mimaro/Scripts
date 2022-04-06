@@ -275,7 +275,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Puffertemperatur nicht zu hoch
-    elif (b_freigabe_normal & b_freigabe_wp & T_Freigabe_Puffer & sunset_freigabe):
+    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
