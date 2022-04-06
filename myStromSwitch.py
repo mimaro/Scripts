@@ -3,7 +3,7 @@ import json
 import logging
 
 UUID_P = "8cbbcb70-3c0d-11e9-87f9-9db68697df1d"
-IP_VENTI = "192.168.178.30"
+IP_VENTI = "192.168.178.41"
 URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
 
 
