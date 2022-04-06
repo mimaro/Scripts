@@ -62,7 +62,7 @@ T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
-AT_MAX = 15
+AT_MAX = 12
 T_FREIGABE_MIN = 4
 T_FREIGABE_MAX = 12
 
