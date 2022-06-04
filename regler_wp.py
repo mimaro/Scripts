@@ -202,9 +202,9 @@ def main():
     print(t_now)
     print(type(t_now))
   
-    test1 = HK2_Steigung*1.8317984
+    test1 = HK2_min-t_now
     print(test1)
-    test2 = (HK2_min-t_now)**0.8281902
+    test2 = test1**0.8281902
     print(test2)
     VL_Temp_Soll_min = HK2_Steigung*1.8317984*(HK2_min-t_now)**0.8281902 + HK2_min
    
