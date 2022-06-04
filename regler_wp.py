@@ -202,7 +202,7 @@ def main():
     print(t_now)
     print(type(t_now))
   
-    test1 = HK2_min-t_now
+    test1 = abs(HK2_min-t_now)
     print(test1)
     test2 = test1**0.8281902
     print(test2)
