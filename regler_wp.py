@@ -203,7 +203,10 @@ def main():
     print(type(t_now))
   
     VL_Temp_Soll_min = HK2_Steigung * 1.8317984*(HK2_min-t_now)**0.8281902 + HK2_min
+   
+    
     logging.info("SOLL min VL-Temp: {}".format(VL_Temp_Soll_min))
+    print(type(VL_Temp_Soll_min))
     
     T_Puffer_akt = get_vals(UUID["Puffer_Temp_oben"])["data"]["tuples"][0][1] 
     logging.info("Aktuelle Temp Puffer: {}".format(T_Puffer_akt))
