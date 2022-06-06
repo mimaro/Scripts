@@ -274,7 +274,7 @@ def main():
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
         logging.info(f"WW-Betrieb") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(5))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(4))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
