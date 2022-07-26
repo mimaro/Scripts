@@ -91,7 +91,7 @@ CLIENT = ModbusTcpClient(IP_ISG)
 
 #Zertifikat Sunset laden
 requests_session = requests.sessions.Session()
-requests_session.verify = "/etc/photon/cacerts.pem"
+requests_session.verify = "/Scripts/cacerts.pem"
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
