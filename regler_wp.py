@@ -1,5 +1,4 @@
 import requests
-import requests.sessions
 import json
 import pprint
 import datetime
@@ -89,9 +88,6 @@ IP_ISG = "192.168.178.36"
 
 CLIENT = ModbusTcpClient(IP_ISG)
 
-#Zertifikat Sunset laden
-requests_session = requests.sessions.Session()
-requests_session.verify = "/Scripts/cacerts.pem"
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -220,8 +216,8 @@ def main():
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
-    #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
-    r = requests_session.get(SUNSET_URL)
+    r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
+    
     
     now_CH = now.time().hour
     tz_UTC = pytz.utc
