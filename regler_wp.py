@@ -213,7 +213,7 @@ def main():
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
-    r = requests.get(SUNSET_URL) # Daten abfragen
+    r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
 
     now_CH = now.time().hour
     tz_UTC = pytz.utc
