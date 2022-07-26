@@ -221,7 +221,7 @@ def main():
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
-    r = photon_requests_session.get(SUNSET_URL)
+    r = requests_session.get(SUNSET_URL)
     
     now_CH = now.time().hour
     tz_UTC = pytz.utc
