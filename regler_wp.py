@@ -1,4 +1,5 @@
 import requests
+import requests.sessions
 import json
 import pprint
 import datetime
@@ -13,6 +14,8 @@ VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=ad
 SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
 
 ########################################################################################################
+
+
 
 #######################################################################################################
 # Configuration
@@ -85,6 +88,10 @@ REGISTER = {
 IP_ISG = "192.168.178.36"
 
 CLIENT = ModbusTcpClient(IP_ISG)
+
+#Zertifikat Sunset laden
+requests_session = requests.sessions.Session()
+requests_session.verify = "/etc/photon/cacerts.pem"
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -213,8 +220,9 @@ def main():
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
-    r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
-
+    #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
+    r = photon_requests_session.get(SUNSET_URL)
+    
     now_CH = now.time().hour
     tz_UTC = pytz.utc
     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
