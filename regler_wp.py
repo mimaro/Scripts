@@ -216,35 +216,35 @@ def main():
     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
-    r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
+#     r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
     
     
-    now_CH = now.time().hour
-    tz_UTC = pytz.utc
-    now_UTC = datetime.datetime.now(tz=tz_UTC).hour
-    d_time = now_CH - now_UTC
+#     now_CH = now.time().hour
+#     tz_UTC = pytz.utc
+#     now_UTC = datetime.datetime.now(tz=tz_UTC).hour
+#     d_time = now_CH - now_UTC
     
-    data = json.loads(r.content)
-    sunset = data['results']['sunset'] # Daten für Sonnenuntergang
-    sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
-    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
-    time_now = now.time() #Aktuelle Zeit
+#     data = json.loads(r.content)
+#     sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+#     sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+#     sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
+#     time_now = now.time() #Aktuelle Zeit
 
-    t_delta_sunset_freigabe = ((T_FREIGABE_MIN - T_FREIGABE_MAX) / (AT_MAX - AT_MIN)) *t_roll_avg_24 + T_FREIGABE_MIN
-    t_sunset_freigabe = (sunset_time_CH + datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
+#     t_delta_sunset_freigabe = ((T_FREIGABE_MIN - T_FREIGABE_MAX) / (AT_MAX - AT_MIN)) *t_roll_avg_24 + T_FREIGABE_MIN
+#     t_sunset_freigabe = (sunset_time_CH + datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
     
-    sunset_freigabe = 0
-    if time_now > t_sunset_freigabe:
-        sunset_freigabe = 1
+#     sunset_freigabe = 0
+#     if time_now > t_sunset_freigabe:
+#         sunset_freigabe = 1
     
-    write_vals(UUID["t_Sperrung_Sonnenuntergang"], sunset_freigabe) 
+#     write_vals(UUID["t_Sperrung_Sonnenuntergang"], sunset_freigabe) 
    
-    logging.info("sunset time CH: {}".format(sunset_time_CH))
-    logging.info("time now: {}".format(time_now))    
-    logging.info("24 h AT: {}".format(t_roll_avg_24))
-    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
-    logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
-    logging.info("time sunset freigabe: {}".format(sunset_freigabe))
+#     logging.info("sunset time CH: {}".format(sunset_time_CH))
+#     logging.info("time now: {}".format(time_now))    
+#     logging.info("24 h AT: {}".format(t_roll_avg_24))
+#     logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
+#     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
+#     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
