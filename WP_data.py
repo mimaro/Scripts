@@ -32,6 +32,9 @@ UUID = {
 
 REGISTER = {
     "Aussentemp" : 506,
+    "Volumenstrom" : 520,
+    "T_VL_WP_ist": 514,
+    "T_RL_WP_ist" : 515,
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
     "Steigung_HK1": 1503,
@@ -57,13 +60,16 @@ def write_vals(uuid, val):
     #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
-
-    
-
-    
+  
 #Vorlage read input registers
-#AT = CLIENT.read_input_registers("Aussentemp", count=1, unit=1).getRegister(0)
-#print(value_1)
+T_outdoor = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
+T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
+T_rl_wp_ost = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
+
+print(T_outdoor)
+print(T_vl_wp_ist)
+print(T_rl_wp_ist)
+
 
 #Vorlage read input registers
 value_1 = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
