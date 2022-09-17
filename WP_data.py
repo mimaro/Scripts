@@ -58,12 +58,15 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
+    
+
+    
 #Vorlage read input registers
 #AT = CLIENT.read_input_registers("Aussentemp", count=1, unit=1).getRegister(0)
 #print(value_1)
 
 #Vorlage read input registers
-value_1 = CLIENT.read_input_registers(UUID["Aussentemp"], count=1, unit=1).getRegister(0)
+value_1 = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
 print(value_1)
 
 #Vorlage read holding registers
