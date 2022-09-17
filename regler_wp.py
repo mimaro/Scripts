@@ -37,7 +37,7 @@ UUID = {
     "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
 }
 
-#, WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
+# WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
 # Parameter Freigabe Heizbetrieb
 FREIGABE_NORMAL_TEMP = 15
