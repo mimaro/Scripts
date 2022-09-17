@@ -36,7 +36,7 @@ REGISTER = {
     "T_VL_HK1_soll" : 509, 
     "T_VL_HK2_ist": 510, 
     "T_VL_HK2_soll" : 511,
-    "T_VL_WP_ist": 514,
+    "T_VL_WP_ist": 512,
     "T_RL_WP_ist" : 515,
     "Volumenstrom" : 520,
     "T_WW_ist": 521,
@@ -92,9 +92,6 @@ print(T_rl_wp_ist)
 
 
 
-#Vorlage read input registers
-value_1 = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
-print(value_1)
 
 #Vorlage read holding registers
 #value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
