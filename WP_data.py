@@ -64,7 +64,7 @@ def write_vals(uuid, val):
 #Vorlage read input registers
 T_outdoor = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
 T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
-T_rl_wp_ost = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
+T_rl_wp_ist = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
 
 print(T_outdoor)
 print(T_vl_wp_ist)
