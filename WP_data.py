@@ -59,7 +59,7 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
 
 #Vorlage read input registers
-value_1 = CLIENT.read_input_registers(507, count=1, unit=1).getRegister(0)
+value_1 = CLIENT.read_input_registers(506, count=1, unit=1).getRegister(0)
 print(value_1)
 
 
