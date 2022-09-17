@@ -60,7 +60,7 @@ def write_vals(uuid, val):
 
 #Vorlage read input registers
 value_1 = CLIENT.read_input_registers(507, count=1, unit=1).getRegister(0)
-print("Aussentemp = " + value_1)
+print(value_1)
 
 
 #Vorlage read holding registers
