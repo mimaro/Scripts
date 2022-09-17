@@ -33,7 +33,7 @@ UUID = {
 REGISTER = {
     "Aussentemp" : 506,
     "T_VL_HK1_ist" : 507, 
-    "T_VL_HK1_soll" : 508, 
+    "T_VL_HK1_soll" : 509, 
     "T_VL_HK2_ist": 510, 
     "T_VL_HK2_soll" : 511,
     "T_VL_WP_ist": 514,
