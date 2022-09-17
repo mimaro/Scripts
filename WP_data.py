@@ -39,6 +39,7 @@ REGISTER = {
     "T_VL_WP_ist": 514,
     "T_RL_WP_ist" : 515,
     "Volumenstrom" : 520,
+    "T_WW_ist": 521,
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
     "Steigung_HK1": 1503,
@@ -70,15 +71,17 @@ T_vl_hk1_ist = CLIENT.read_input_registers(REGISTER["T_VL_HK1_ist"], count=1, un
 T_vl_hk1_soll = CLIENT.read_input_registers(REGISTER["T_VL_HK1_soll"], count=1, unit=1).getRegister(0)
 T_vl_hk2_ist = CLIENT.read_input_registers(REGISTER["T_VL_HK2_ist"], count=1, unit=1).getRegister(0)
 T_vl_hk2_soll = CLIENT.read_input_registers(REGISTER["T_VL_HK2_soll"], count=1, unit=1).getRegister(0)
+T_ww_ist = CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).getRegister(0)
 
 T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
 T_rl_wp_ist = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
 
-print(T_outdoor)
+print("T_outdoor= " T_outdoor)
 print(T_vl_hk1_ist)
 print(T_vl_hk1_soll)
 print(T_vl_hk2_ist)
 print(T_vl_hk2_soll)
+print("T_WW_ist= " T_ww_ist)
 
 
 print(T_vl_wp_ist)
