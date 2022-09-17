@@ -40,12 +40,7 @@ REGISTER = {
     "T_RL_WP_ist" : 515,
     "Volumenstrom" : 520,
     "T_WW_ist": 521,
-    "Komfort_HK1": 1501,
-    "Eco_HK1": 1502,
-    "Steigung_HK1": 1503,
-    "Komfort_HK2": 1504,
-    "Eco_HK2": 1505,
-    "Steigung_HK2": 1506, 
+    "T_WW_soll": 522,
     "Betriebsart": 1500   
 }
 
@@ -72,11 +67,10 @@ T_vl_hk1_soll = (CLIENT.read_input_registers(REGISTER["T_VL_HK1_soll"], count=1,
 T_vl_hk2_ist = (CLIENT.read_input_registers(REGISTER["T_VL_HK2_ist"], count=1, unit=1).getRegister(0))/10
 T_vl_hk2_soll = (CLIENT.read_input_registers(REGISTER["T_VL_HK2_soll"], count=1, unit=1).getRegister(0))/10
 T_ww_ist = (CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).getRegister(0))/10
+T_ww_soll = (CLIENT.read_input_registers(REGISTER["T_WW_soll"], count=1, unit=1).getRegister(0))/10
+T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
+T_rl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0))/10
 Volumenstrom = (CLIENT.read_input_registers(REGISTER["Volumenstrom"], count=1, unit=1).getRegister(0))/1000*60
-
-
-T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
-T_rl_wp_ist = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
 
 print(f"T_outdoor= {T_outdoor} ")
 print(f"T_vl_hk1_ist = {T_vl_hk1_ist}")
@@ -84,16 +78,10 @@ print(f"T_vl_hk1_soll = {T_vl_hk1_soll}")
 print(f"T_vl_hk2_ist = {T_vl_hk2_ist}")
 print(f"T_vl_hk2_soll = {T_vl_hk2_soll}")
 print(f"T_WW_ist= {T_ww_ist}")
+print(f"T_WW_ist= {T_ww_soll}")
 print(f"Volumenstrom = {Volumenstrom}")
 print(f"T_vl_wp_ist = {T_vl_wp_ist}")
 print(f"T_rl_wp_ist = {T_rl_wp_ist}")
-
-
-print(T_vl_wp_ist)
-print(T_rl_wp_ist)
-
-
-
 
 #Vorlage read holding registers
 #value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
