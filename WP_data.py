@@ -76,12 +76,12 @@ T_ww_ist = CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).ge
 T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
 T_rl_wp_ist = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
 
-print("T_outdoor= " T_outdoor)
+print(f"T_outdoor= {T_outdoor} ")
 print(T_vl_hk1_ist)
 print(T_vl_hk1_soll)
 print(T_vl_hk2_ist)
 print(T_vl_hk2_soll)
-print("T_WW_ist= " T_ww_ist)
+print(f"T_WW_ist= {T_ww_ist}")
 
 
 print(T_vl_wp_ist)
