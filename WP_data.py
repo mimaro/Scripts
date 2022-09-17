@@ -72,16 +72,19 @@ T_vl_hk1_soll = (CLIENT.read_input_registers(REGISTER["T_VL_HK1_soll"], count=1,
 T_vl_hk2_ist = (CLIENT.read_input_registers(REGISTER["T_VL_HK2_ist"], count=1, unit=1).getRegister(0))/10
 T_vl_hk2_soll = (CLIENT.read_input_registers(REGISTER["T_VL_HK2_soll"], count=1, unit=1).getRegister(0))/10
 T_ww_ist = (CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).getRegister(0))/10
+Volumenstrom = (CLIENT.read_input_registers(REGISTER["Volumenstrom"], count=1, unit=1).getRegister(0))/1000*60
+
 
 T_vl_wp_ist = CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0)
 T_rl_wp_ist = CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0)
 
 print(f"T_outdoor= {T_outdoor} ")
-print(T_vl_hk1_ist)
-print(T_vl_hk1_soll)
-print(T_vl_hk2_ist)
-print(T_vl_hk2_soll)
+print(f"T_vl_hk1_ist = {T_vl_hk1_ist}")
+print(f"T_vl_hk1_soll = {T_vl_hk1_soll}")
+print(f"T_vl_hk2_ist = {T_vl_hk2_ist}")
+print(f"T_vl_hk2_soll = {T_vl_hk2_soll}")
 print(f"T_WW_ist= {T_ww_ist}")
+print(f"Volumenstrom = {Volumenstrom}")
 
 
 print(T_vl_wp_ist)
