@@ -31,7 +31,7 @@ UUID = {
 }
 
 REGISTER = {
-    "Aussentemp" : 507,
+    "Aussentemp" : 506,
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
     "Steigung_HK1": 1503,
