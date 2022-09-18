@@ -36,7 +36,7 @@ REGISTER = {
     "T_VL_HK1_soll" : 509, 
     "T_VL_HK2_ist": 510, 
     "T_VL_HK2_soll" : 511,
-    "T_VL_WP_ist": 512,
+    "T_VL_WP_ist": 542,
     "T_RL_WP_ist" : 541,
     "Volumenstrom" : 520,
     "T_WW_ist": 521,
