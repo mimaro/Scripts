@@ -81,7 +81,7 @@ print(f"T_vl_hk1_soll = {T_vl_hk1_soll}")
 print(f"T_vl_hk2_ist = {T_vl_hk2_ist}")
 print(f"T_vl_hk2_soll = {T_vl_hk2_soll}")
 print(f"T_WW_ist= {T_ww_ist}")
-print(f"T_WW_ist= {T_ww_soll}")
+print(f"T_WW_soll= {T_ww_soll}")
 print(f"Volumenstrom = {Volumenstrom}")
 print(f"P_WP_therm = {P_WP_therm}")
 
