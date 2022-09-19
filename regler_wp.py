@@ -52,7 +52,7 @@ SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
 HK2_min = 20 # Tempvorgabe für Absenkbetrieb Heizgruppe
-HK1_max = 32 # Tempvorgabe für Komfortbetrieb Pufferspeicher
+HK1_max = 30 # Tempvorgabe für Komfortbetrieb Pufferspeicher
 HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
@@ -286,7 +286,7 @@ def main():
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
-    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Puffertemperatur nicht zu hoch
+    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigaeb vor Sonnenuntergang erreicht
     elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
