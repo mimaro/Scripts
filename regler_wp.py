@@ -246,32 +246,32 @@ def main():
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
-    logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
-    ww_time = 0
-    Ww_aus = 0
-    Ww_ein = 0
+#     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
+#     ww_time = 0
+#     Ww_aus = 0
+#     Ww_ein = 0
     
-    #Formatierung Freigabezeiten Warmwasser
-    Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
-    Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
+#     #Formatierung Freigabezeiten Warmwasser
+#     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
+#     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
         
-    ww_temp = get_vals(
-        UUID["WW_Temp_unten"], duration="-1min")["data"]["average"]
+#     ww_temp = get_vals(
+#         UUID["WW_Temp_unten"], duration="-1min")["data"]["average"]
     
-    logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
+#     logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
     
-    if ww_temp >= ww_aus:
-        Ww_aus = 1
+#     if ww_temp >= ww_aus:
+#         Ww_aus = 1
     
-    if ww_aus - ww_temp > ww_hyst:
-        Ww_ein = 1
+#     if ww_aus - ww_temp > ww_hyst:
+#         Ww_ein = 1
     
-    if now.time() > Ww_start and now.time() < Ww_stop:
-        ww_time = 1
+#     if now.time() > Ww_start and now.time() < Ww_stop:
+#         ww_time = 1
     
-    logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
-    logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
-    logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
+#     logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
+#     logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
+#     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
