@@ -25,7 +25,7 @@ UUID = {
     "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
     "t_Sperrung_Sonnenuntergang": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
     "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
-    "WP_Freigabe": "232bec80-7a2a-11ea-b704-0de0b4780fba",
+    "T_Absenk": "232bec80-7a2a-11ea-b704-0de0b4780fba",
     "Freigabe_WP": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_WP": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
@@ -59,6 +59,7 @@ HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag = 22 # Maximaltemp OG für Sperrung WP
 T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
+T_Absenk = 21.5 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
@@ -166,6 +167,7 @@ def main():
     #T_Freigabe_Nacht = 0
     T_Freigabe_max = 0
     T_Freigabe_min = 0
+    T_Freigabe_Absenk = 0
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
@@ -182,16 +184,16 @@ def main():
         T_Freigabe_min = 1
     if RT_akt_OG > T_max_Tag: #Sperrung WP wenn Raumtemp OG zu hoch
         T_Freigabe_max = 1
-    #if RT_akt_EG > T_min_Nacht: #Sperren WP Nacht wenn Raumtemp im EG zu hoch
-    #    T_Freigabe_Nacht = 1
+    if RT_akt_EG < T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
+        T_Freigabe_Absenk = 1   
         
-    write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21.5°C 
+    write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    #write_vals(UUID["t_Sperrung_Nacht"], T_Freigabe_Nacht) # 1 wenn RT EG > 21°C
+    write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21.5°C
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
-    #logging.info("Temp EG zu hoch {}°C: {}".format(T_min_Nacht,T_Freigabe_Nacht))
+    logging.info("Temp EG zu hoch für Absenkbetrieb {}°C: {}".format(RT_akt_EG,T_Absenk))
     
 
 #     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
