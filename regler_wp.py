@@ -193,7 +193,8 @@ def main():
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
-    logging.info("Temp EG zu hoch für Absenkbetrieb {}°C: {}".format(RT_akt_EG,T_Absenk))
+    logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
+
     
 
 #     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
