@@ -193,7 +193,7 @@ def main():
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
-    logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
+    logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
 
     
 
@@ -297,7 +297,7 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv 
-    elif (b_freigabe_normal): #b_sperrung_wp
+    elif (b_freigabe_normal & T_Freigabe_Absenk ): #b_sperrung_wp
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
