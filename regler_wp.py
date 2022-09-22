@@ -303,6 +303,9 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         
+    else:
+        logging.info(f"Beibehalten aktuelle Betriebsart") 
+        
     logging.info("********************************")
     
 if __name__ == "__main__":
