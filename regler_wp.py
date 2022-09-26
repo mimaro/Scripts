@@ -66,7 +66,7 @@ T_Absenk = 21.5 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
 AT_MAX = 15
-T_FREIGABE_MIN = 4
+T_FREIGABE_MIN = 6
 T_FREIGABE_MAX = 12
 
 #Parameter WW-Ladung
@@ -168,6 +168,7 @@ def main():
     T_Freigabe_max = 0
     T_Freigabe_min = 0
     T_Freigabe_Absenk = 0
+    T_Freigabe_Betr = 0
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
@@ -186,15 +187,19 @@ def main():
         T_Freigabe_max = 1
     if RT_akt_EG < T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
         T_Freigabe_Absenk = 1   
+    if RT_akt_OG <= T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
+        T_Freigabe_Absenk = 1       
+        
         
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
     write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21.5°C
    
+   
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag,T_Freigabe_max))
     logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
-
+    logging.info("Raumtemp OG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_OG,T_Absenk,T_Freigabe_Betr))
     
 
 #     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
