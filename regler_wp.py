@@ -72,7 +72,7 @@ T_FREIGABE_MAX = 12
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
-ww_aus = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+ww_aus = 44 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
 
 REGISTER = {
@@ -254,7 +254,7 @@ def main():
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
-#     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
+    logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
     Ww_aus = 0
     Ww_ein = 0
