@@ -33,7 +33,7 @@ UUID = {
     "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
     "T_Raum_EG": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
     "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677",
-    "WW_Temp_unten": "b27589b0-1cab-11e9-a06d-43024133319c",
+    "WW_Temp_mitte": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
     "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
 }
 
@@ -70,7 +70,7 @@ T_FREIGABE_MIN = 6
 T_FREIGABE_MAX = 12
 
 #Parameter WW-Ladung
-ww_start = datetime.time(8, 0)
+ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
 ww_aus = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
@@ -255,39 +255,39 @@ def main():
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
 #     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
-#     ww_time = 0
-#     Ww_aus = 0
-#     Ww_ein = 0
+    ww_time = 0
+    Ww_aus = 0
+    Ww_ein = 0
     
-#     #Formatierung Freigabezeiten Warmwasser
-#     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
-#     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
+    #Formatierung Freigabezeiten Warmwasser
+    Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
+    Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
         
-#     ww_temp = get_vals(
-#         UUID["WW_Temp_unten"], duration="-1min")["data"]["average"]
+    ww_temp = get_vals(
+        UUID["WW_Temp_mitte"], duration="-1min")["data"]["average"]
     
-#     logging.info("Aktuelle WW-Speichertemp unten: {}".format(ww_temp))
+    logging.info("Aktuelle WW-Speichertemp mitte: {}".format(ww_temp))
     
-#     if ww_temp >= ww_aus:
-#         Ww_aus = 1
+    if ww_temp >= ww_aus:
+        Ww_aus = 1
     
-#     if ww_aus - ww_temp > ww_hyst:
-#         Ww_ein = 1
+    if ww_aus - ww_temp > ww_hyst:
+        Ww_ein = 1
     
-#     if now.time() > Ww_start and now.time() < Ww_stop:
-#         ww_time = 1
+    if now.time() > Ww_start and now.time() < Ww_stop:
+        ww_time = 1
     
-#     logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
-#     logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
-#     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
+    logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
+    logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
+    logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
    
      
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
-    #if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
-    #    logging.info(f"WW-Betrieb") 
-    #    CLIENT.write_register(REGISTER["Betriebsart"], int(5))
+    if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
+        logging.info(f"WW-Betrieb") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(5))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     if (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
