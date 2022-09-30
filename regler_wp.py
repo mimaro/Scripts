@@ -290,7 +290,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
-    if (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
+    elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
     
