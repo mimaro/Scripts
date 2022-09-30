@@ -256,7 +256,7 @@ def main():
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
-    Ww_time = 0
+    ww_time = 0
     Ww_aus = 0
     Ww_ein = 0
     
@@ -276,7 +276,7 @@ def main():
         Ww_ein = 1
     
     if now.time() > Ww_start and now.time() < Ww_stop:
-        Ww_time = 1
+        ww_time = 1
     
     logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
     logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
