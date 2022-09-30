@@ -72,7 +72,7 @@ T_FREIGABE_MAX = 12
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
-ww_aus = 43 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+ww_aus = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
 
 REGISTER = {
@@ -82,7 +82,8 @@ REGISTER = {
     "Komfort_HK2": 1504,
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
-    "Betriebsart": 1500
+    "Betriebsart": 1500,
+    "WW_Eco": 1510
 }
 
 IP_ISG = "192.168.178.36"
@@ -285,10 +286,15 @@ def main():
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
+    
+    CLIENT.write_register(REGISTER["WW_Eco"], 10)
+    
     if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
-    
+        CLIENT.write_register(REGISTER["WW_Eco"], ww_aus + ww_hyst)
+        
+           
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
         logging.info(f"Bereitschaftsbetrieb") 
