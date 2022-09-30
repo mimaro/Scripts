@@ -256,7 +256,7 @@ def main():
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
-    ww_time = 0
+    Ww_time = 0
     Ww_aus = 0
     Ww_ein = 0
     
@@ -272,11 +272,11 @@ def main():
     if ww_temp >= ww_aus:
         Ww_aus = 1
     
-    if ww_aus - ww_temp > ww_hyst:
+    if (ww_aus - ww_temp) > ww_hyst:
         Ww_ein = 1
     
     if now.time() > Ww_start and now.time() < Ww_stop:
-        ww_time = 1
+        Ww_time = 1
     
     logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
     logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
@@ -291,7 +291,7 @@ def main():
     
     if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
         logging.info(f"WW-Betrieb") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(5))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
         CLIENT.write_register(REGISTER["WW_Eco"], ww_aus + ww_hyst)
         
            
