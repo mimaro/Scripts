@@ -72,6 +72,7 @@ T_FREIGABE_MAX = 12
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
+ww_soll = 45
 ww_aus = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
 
@@ -292,7 +293,7 @@ def main():
     if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
-        CLIENT.write_register(REGISTER["WW_Eco"], 45)
+        CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)
         
            
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
