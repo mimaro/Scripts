@@ -238,7 +238,7 @@ def main():
     sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
     time_now = now.time() #Aktuelle Zeit
 
-    t_delta_sunset_freigabe = ((T_FREIGABE_MIN - T_FREIGABE_MAX) / (AT_MAX - AT_MIN)) *t_roll_avg_24 + T_FREIGABE_MIN
+    t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX-t_roll_avg_24) + T_FREIGABE_MIN
     t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
     
     sunset_freigabe = 0
