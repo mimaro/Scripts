@@ -292,7 +292,7 @@ def main():
     if (ww_time and Ww_ein or ww_time and Ww_aus == 0):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
-        CLIENT.write_register(REGISTER["WW_Eco"], ww_aus + ww_hyst)
+        CLIENT.write_register(REGISTER["WW_Eco"], 45)
         
            
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
