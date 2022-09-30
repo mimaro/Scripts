@@ -71,9 +71,9 @@ T_FREIGABE_MAX = 12
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(14, 0)
-ww_soll = 45
-ww_aus = 45 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+ww_stop = datetime.time(15, 0)
+ww_soll = 46
+ww_aus = 46 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
 
 REGISTER = {
@@ -273,7 +273,7 @@ def main():
     if ww_temp >= ww_aus:
         Ww_aus = 1
     
-    if (ww_aus - ww_temp) > ww_hyst:
+    if (ww_aus - ww_temp) > ww_hyst:  
         Ww_ein = 1
     
     if now.time() > Ww_start and now.time() < Ww_stop:
