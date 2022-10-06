@@ -258,7 +258,7 @@ def main():
     
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
-    Ww_aus = 0
+    Ww_aus = 1
     Ww_ein = 0
     
     #Formatierung Freigabezeiten Warmwasser
@@ -271,7 +271,7 @@ def main():
     logging.info("Aktuelle WW-Speichertemp mitte: {}".format(ww_temp))
     
     if ww_temp >= ww_aus:
-        Ww_aus = 1
+        Ww_aus = 0
     
     if (ww_aus - ww_temp) > ww_hyst:  
         Ww_ein = 1
@@ -290,10 +290,9 @@ def main():
     
     CLIENT.write_register(REGISTER["WW_Eco"], 100)
     
-    if (ww_time and Ww_aus == 0 or ww_time and Ww_ein):
+    if (ww_time and Ww_aus) or (ww_time and Ww_ein):
         logging.info(f"WW-Betrieb") 
-        CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)
-        #CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)       
            
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
