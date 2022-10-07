@@ -4,6 +4,7 @@ import pprint
 import datetime
 import logging
 import pytz
+import time
 from pymodbus.client.sync import ModbusTcpClient
 
 #######################################################################################################
@@ -287,18 +288,18 @@ def main():
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
-    
-    #CLIENT.write_register(REGISTER["WW_Eco"], 100)
-    
+         
     if (ww_time and Ww_aus == 0) or (ww_time and Ww_ein):
         logging.info(f"WW-Betrieb") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        time.sleep(5)
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)      
-        #CLIENT.write_register(REGISTER["Betriebsart"], int(2))
            
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
     elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
@@ -306,6 +307,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv 
     elif (b_freigabe_normal & T_Freigabe_Absenk ): #b_sperrung_wp
@@ -313,6 +315,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
         
     else:
         logging.info(f"Beibehalten aktuelle Betriebsart") 
