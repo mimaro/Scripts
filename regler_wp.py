@@ -288,7 +288,7 @@ def main():
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
     
-    CLIENT.write_register(REGISTER["WW_Eco"], 100)
+    #CLIENT.write_register(REGISTER["WW_Eco"], 100)
     
     if (ww_time and Ww_aus == 0) or (ww_time and Ww_ein):
         logging.info(f"WW-Betrieb") 
