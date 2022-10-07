@@ -290,7 +290,7 @@ def main():
     
     CLIENT.write_register(REGISTER["WW_Eco"], 100)
     
-    if (ww_time and Ww_aus) or (ww_time and Ww_ein):
+    if (ww_time and Ww_aus or ww_time and Ww_ein):
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)      
         CLIENT.write_register(REGISTER["Betriebsart"], int(2))
