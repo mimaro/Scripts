@@ -26,7 +26,6 @@ UUID = {
     "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
     "t_Sperrung_Sonnenuntergang": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
     "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
-    "T_Absenk": "232bec80-7a2a-11ea-b704-0de0b4780fba",
     "Freigabe_WP": "90212900-d972-11e9-910d-078a5d14d2c9",
     "Sperrung_WP": "dd2e3400-d973-11e9-b9c6-038d9113070b",
     "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
@@ -37,6 +36,8 @@ UUID = {
     "WW_Temp_mitte": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
     "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
 }
+
+#"T_Absenk": "232bec80-7a2a-11ea-b704-0de0b4780fba",
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
@@ -196,7 +197,7 @@ def main():
         
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21.5°C
+    #write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21.5°C
    
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
