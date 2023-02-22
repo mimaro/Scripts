@@ -69,7 +69,7 @@ T_Absenk = 21 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
 AT_MAX = 15
-T_FREIGABE_MIN = 6
+T_FREIGABE_MIN = 4
 T_FREIGABE_MAX = 12
 
 #Parameter WW-Ladung
