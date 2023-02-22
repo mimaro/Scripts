@@ -59,7 +59,8 @@ HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
-T_max_Tag = 21.5 # Maximaltemp OG für Sperrung WP
+T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
+T_max_Tag_EG = 24 # Maximaltemp OG für Sperrung WP
 T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
@@ -187,7 +188,7 @@ def main():
     # Definition Betriebsfreigaben
     if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Raumtemp EG zu hoch
         T_Freigabe_min = 1
-    if RT_akt_OG > T_max_Tag: #Sperrung WP wenn Raumtemp OG zu hoch
+    if RT_akt_OG > T_max_Tag_EG or RT_akt_EG > T_max_Tag_OG: #Sperrung WP wenn Raumtemp EG oder OG zu hoch
         T_Freigabe_max = 1
     if RT_akt_EG < T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
         T_Freigabe_Absenk = 1   
