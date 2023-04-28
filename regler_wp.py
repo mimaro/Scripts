@@ -74,7 +74,7 @@ T_FREIGABE_MAX = 10
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(16, 0)
+ww_stop = datetime.time(14, 0)
 ww_soll = 53
 ww_aus = 52 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
