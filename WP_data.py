@@ -11,14 +11,14 @@ from pymodbus.client.sync import ModbusTcpClient
 
 #######################################################################################################
 # Format URLs
-VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+VZ_GET_URL = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
+VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 ########################################################################################################
 
 #######################################################################################################
 # Configuration
 UUID = {
-    "Aussentemp": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
+    "Aussentemp": "308e0d90-6521-11ee-8b08-a34757253caf",
     "Volumenstrom": "e4179ff0-1e25-11e9-a9d1-7bc1d2c119b6",
     "RL_WP": "05a40bc0-1e26-11e9-aebb-51a6700848c1",
     "VL_WP": "a9d47be0-2ec6-11e9-8ccd-33ffc3253237",
@@ -104,6 +104,7 @@ elif betriebszustand == 5:
     print("Betriebszustand:", "Warmwasserbetrieb")    
     
 write_vals(UUID["Betriebszustand"], betriebszustand)
+write_vals(UUID["Aussentemp"], T_outdoor)
 
     
 
