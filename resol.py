@@ -30,7 +30,7 @@ UUID = {
 }
 
 
-URL_VZ = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+URL_VZ = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 
 def main():
