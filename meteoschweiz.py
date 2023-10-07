@@ -11,7 +11,7 @@ URL_VZ = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value=
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
 def main():
-    BUS, SMA = {}, {}
+    BUS, ZER = {}, {}
     req=requests.get(CSV_URL)
     data = req.content.split("\n")[:]
     reader = csv.DictReader(data, delimiter = ';')
