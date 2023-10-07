@@ -21,7 +21,6 @@ def main():
             BUS=row
 
     requests.post(URL_VZ.format(UUID_BUS_GS, BUS[GS]))
-   
 
 if __name__ == "__main__":
     main()
