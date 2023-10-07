@@ -8,7 +8,7 @@ import logging
 #UUID_P = "ad5c809"
 UUID_T = "78afd3c0-6523-11ee-980e-9fe998eb4bc6"
 IP_VENTI = "192.168.178.37"
-URL_VZ = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+URL_VZ = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 Offset = -2.1
 
