@@ -6,8 +6,8 @@ import logging
 
 #######################################################################################################
 # Format URLs
-VZ_GET_URL = "http://http://192.168.178.49/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+VZ_GET_URL = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
+VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 ########################################################################################################
 
 #######################################################################################################
