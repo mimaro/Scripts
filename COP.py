@@ -6,16 +6,16 @@ import logging
 
 #######################################################################################################
 # Format URLs
-VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+VZ_GET_URL = "http://http://192.168.178.49/middleware.php/data/{}.json?from={}"
+VZ_POST_URL = "http://http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 ########################################################################################################
 
 #######################################################################################################
 # Configuration
 UUID = {
-    "COP_o_venti": "312ec8e0-52e7-11e9-ac6d-4f4dd87fd97b",
-    "WP_th": "9399ca80-910c-11e9-ac0f-31ff5bbdf885",
-    "WP_el": "92096720-35ae-11e9-a74c-534de753ada9",
+    "COP_o_venti": "0891e8f0-6522-11ee-96f8-f776965c186c",
+    "WP_th": "69630320-6522-11ee-9e09-ebb553e47b70",
+    "WP_el": "562f5060-6522-11ee-86e4-598c3ac93efb",
 }
 
 ###########################################################################################################
