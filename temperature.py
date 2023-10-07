@@ -13,17 +13,17 @@ import sys
 
 ##############################################################
 
-VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+VZ_POST_URL = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 UUID = {
-    "Puffer_mitte": "63917860-3542-11ea-adc8-b388fcd48c7a",
-    "Puffer_unten": "68026710-3542-11ea-8d35-bdb641e3ce2b",
-    "BWW_mitte": "e207c010-3630-11ea-8ccb-fdd7c2918630",
-    "BWW_oben": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
-    "HG_VL": "cd28ac80-3630-11ea-b83a-3dc3acc4c33d",
-    "HG_RL": "d06db0f0-3630-11ea-8cc1-9bd4441efb71",
-    "P_therm": "1d74a950-36ce-11ea-9c6e-3536550a6365",
-    "T_Raum": "d8320a80-5314-11ea-8deb-5944d31b0b3c"
+    "Puffer_mitte": "6832c0e0-6523-11ee-9722-2d954a0be504",
+    "Puffer_unten": "50dfa7a0-6523-11ee-abd2-81d57ce6290d",
+    "BWW_mitte": "b6206620-6522-11ee-a462-53c502141b13",
+    "BWW_oben": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
+    "HG_VL": "37f6a120-6523-11ee-94a0-554d4aba0692",
+    "HG_RL": "44562980-6523-11ee-96bc-7b0affe66da4",
+    "P_therm": "1d74a950-36ce-11ea-9",
+    "T_Raum": "716e8d00-6523-11ee-a6d5-958aeed3d121"
 }
 
 sensor1 = '/sys/bus/w1/devices/28-021492459fbf/w1_slave'
