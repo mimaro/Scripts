@@ -13,7 +13,7 @@ import sys
 
 ##############################################################
 
-VZ_POST_URL = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 UUID = {
     "Puffer_mitte": "6832c0e0-6523-11ee-9722-2d954a0be504",
