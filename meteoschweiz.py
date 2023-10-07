@@ -6,7 +6,7 @@ UUID_BUS_GS = "159392d0-6521-11ee-9c72-dd2421c1d835"
 GS = "gre000z0"
 WS = "fu3010z0"
 
-URL_VZ = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+URL_VZ = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 CSV_URL = "https://data.geo.admin.ch/ch.meteoschweiz.messwerte-aktuell/VQHA80.csv"
 
