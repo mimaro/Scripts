@@ -9,8 +9,8 @@ from pymodbus.client.sync import ModbusTcpClient
 
 #######################################################################################################
 # Format URLs
-VZ_GET_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+VZ_GET_URL = "192.168.178.49/middleware.php/data/{}.json?from={}"
+VZ_POST_URL = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
 
 ########################################################################################################
@@ -20,21 +20,21 @@ SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&for
 #######################################################################################################
 # Configuration
 UUID = {
-    "T_outdoor": "8f471ab0-1cab-11e9-8fa4-3b374d3c10ca",
+    "T_outdoor": "308e0d90-6521-11ee-8b08-a34757253caf",
     "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
     "Charge_station": "8270f520-6690-11e9-9272-4dde30159c8f",
-    "t_Sperrung_Tag": "e7e6d7e0-d973-11e9-841d-0597e49a80a1",
-    "t_Sperrung_Sonnenuntergang": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
-    "t_Verzoegerung_Tag": "f60ca430-4a61-11e9-8fa1-47cb405220bd",
-    "Freigabe_WP": "90212900-d972-11e9-910d-078a5d14d2c9",
-    "Sperrung_WP": "dd2e3400-d973-11e9-b9c6-038d9113070b",
-    "Freigabe_normalbetrieb": "fc610770-d9fb-11e9-8d49-5d7c9d433358",
-    "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd", 
-    "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
-    "T_Raum_EG": "d8320a80-5314-11ea-8deb-5944d31b0b3c",
-    "T_Raum_OG": "70d65570-4a61-11e9-b638-fb0f3e7a4677",
-    "WW_Temp_mitte": "ddf322e0-3630-11ea-94fa-7fc84491c6e5",
-    "Puffer_Temp_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4"
+    "t_Sperrung_Tag": "3ee81940-6525-11ee-ab8d-95d8fe8c84c1",
+    "t_Sperrung_Sonnenuntergang": "48d326e0-6525-11ee-bb62-d9a673cf575c",
+    "t_Verzoegerung_Tag": "525c79d0-6525-11ee-a4de-35b9b54b853f",
+    "Freigabe_WP": "2dd47740-6525-11ee-8430-33ffcdf1f22e",
+    "Sperrung_WP": "35a4c530-6525-11ee-9aab-7be80c763665",
+    "Freigabe_normalbetrieb": "1f9b1a00-6525-11ee-a1c0-218fa15dedcf",
+    "PV_Produktion": "101ca060-50a3-1", 
+    "WP_Verbrauch": "92096720-35ae-11e9",
+    "T_Raum_EG": "716e8d00-6523-11ee-a6d5-958aeed3d121",
+    "T_Raum_OG": "78afd3c0-6523-11ee-980e-9fe998eb4bc6",
+    "WW_Temp_mitte": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
+    "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361"
 }
 
 #"T_Absenk": "232bec80-7a2a-11ea-b704-0de0b4780fba",
