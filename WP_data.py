@@ -19,15 +19,16 @@ VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&v
 # Configuration
 UUID = {
     "Aussentemp": "308e0d90-6521-11ee-8b08-a34757253caf",
-    "Volumenstrom": "e4179ff0-1e25-11e9-a9d1-7bc1d2c119b6",
-    "RL_WP": "05a40bc0-1e26-11e9-aebb-51a6700848c1",
-    "VL_WP": "a9d47be0-2ec6-11e9-8ccd-33ffc3253237",
-    "BWW_unten": "b27589b0-1cab-11e9-a06d-43024133319c",
-    "Puffer_oben": "88b7c280-1cab-11e9-938e-fb5dc04c61d4",
-    "T_SOLL_BWW": "48cfb7f0-2ec7-11e9-8cb6-d3fb38afd2fe",
-    "T_SOLL_HK2": "5bb70670-2ec6-11e9-9ef5-b1cdc3699fde",
-    "T_SOLL_HK1": "dc9651b0-2ec5-11e9-8946-93157542391a",
-    "Betriebszustand": "a15ab220-1d5a-11e9-9dd4-57fe91d5c03b"
+    "Volumenstrom": "41084bd0-6522-11ee-920f-d32bfefe5b1f",
+    "RL_WP": "7c634270-6522-11ee-b368-f7dd1ec956fb",
+    "VL_WP": "a2b81400-6522-11ee-bd47-039fc6f8c20c",
+    "BWW_unten": "c19c6e00-6522-11ee-9a6c-b7d9e43c93c8",
+    "T_ist_Heizgruppe": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b",
+    "Puffer_oben": "59bd6680-6523-11ee-b354-998ee384c361",
+    "T_SOLL_BWW": "82392af0-6523-11ee-876f-d3acf6a8c4a0",
+    "T_SOLL_HK2": "911a3ea0-6523-11ee-8114-1fa309bb814a",
+    "T_SOLL_HK1": "a2197880-6523-11ee-88a3-950f5e8f1efc",
+    "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887"
 }
 
 REGISTER = {
@@ -105,8 +106,17 @@ elif betriebszustand == 5:
     
 write_vals(UUID["Betriebszustand"], betriebszustand)
 write_vals(UUID["Aussentemp"], T_outdoor)
+write_vals(UUID["VL_WP"], T_vl_wp_ist)
+write_vals(UUID["RL_WP"], T_rl_wp_ist)
+write_vals(UUID["Volumenstrom"], Volumenstrom)
+write_vals(UUID["BWW_unten"], T_ww_ist)
+write_vals(UUID["T_ist_Heizgruppe"], T_vl_hk2_ist)
+write_vals(UUID["Puffer_oben"], T_vl_hk1_ist)
+write_vals(UUID["T_SOLL_BWW"], T_ww_soll)
+write_vals(UUID["T_SOLL_HK2"], T_vl_hk2_soll)
+write_vals(UUID["T_SOLL_HK1"], T_vl_hk1_soll)
 
-    
+  
 
 
 
