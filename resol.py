@@ -20,17 +20,17 @@ RESOL_DATA = {
 
 
 UUID = {
-    "Sensor 1": "8bf3cdf0-4a61-11e9-b9c2-8d5600e42614",
-    "Sensor 2": "2f4ed570-4a62-11e9-843a-1d83a8f181f3",
-    "Sensor 3": "9cfe4750-4a61-11e9-9ac9-6b9cc7f23517",
-    "Sensor 4": "70d65570-4a61-11e9-b638-fb0f3e7a4677",
-    "Sensor 5": "84d8d720-a657-11e9-8c76-3f13823c5e95",
-    "PWM_A": "e2bc2ee0-52de-11e9-a86c-1d6437911028",
-    "PWM_B": "f60ca430-4a61-11e9-8fa1-47cb405220bd"
+    "Sensor 1": "5ffdcda0-6525-11ee-a47b-ab0862f52c7a",
+    "Sensor 2": "6856a280-6525-11ee-bfdf-b1cfbbd0a9c1",
+    "Sensor 3": "7135fcc0-6525-11ee-a009-f733eeddb1d9",
+    "Sensor 4": "70d65570-4a61-11e9-b638",
+    "Sensor 5": "84d8d720-a657-11e9-8c7",
+    "PWM_A": "e2bc2ee0-52de-11e9-a86",
+    "PWM_B": "f60ca430-4a61-11e9-8f"
 }
 
 
-URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+URL_VZ = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 
 def main():
