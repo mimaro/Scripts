@@ -2,9 +2,9 @@ import requests
 import json
 import logging
 
-UUID_P = "8cbbcb70-3c0d-11e9-87f9-9db68697df1d"
+UUID_P = "7f07bdc0-6525-11ee-97bc-bd186bf2b3bf"
 IP_VENTI = "192.168.178.41"
-URL_VZ = "http://vz.wiuhelmtell.ch/middleware.php/data/{}.json?operation=add&value={}"
+URL_VZ = "192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
 
 
