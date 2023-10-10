@@ -21,7 +21,7 @@ UUID = {
 }
 
 REGISTER = {
-    "P_PV_Anlage": 0,
+    "P_PV_Anlage": 10,
     "E_PV_Anlage": 1502,
     "P_Wagenrain_8a": 1503,
     "E_Wagenrain_8a": 1504,
@@ -50,8 +50,8 @@ def write_vals(uuid, val):
    
   
 #Vorlage read input registers
-p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"]).getRegister(0)
-#p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
+#p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"]).getRegister(0)
+p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
 print(p_pv_anlage)
 
 #print(f"T_outdoor= {T_outdoor} ")
