@@ -31,7 +31,7 @@ REGISTER = {
 
 SEL_TCP = "192.168.178.40"
 
-CLIENT = ModbusTcpClient(IP_ISG)
+CLIENT = ModbusTcpClient(SEL_TCP)
 CLIENT.connect()
 ###########################################################################################################
 
