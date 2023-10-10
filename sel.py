@@ -50,15 +50,15 @@ def write_vals(uuid, val):
    
   
 #Vorlage read input registers
-p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
-
+p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"]).getRegister(0)
+#p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
 print(p_pv_anlage)
 
 #print(f"T_outdoor= {T_outdoor} ")
 
 #Vorlage read holding registers
-p_pv_anlage_2 = CLIENT.read_holding_registers(0, count=1, unit= 1).getRegister(0)
-print(p_pv_anlage_2)
+#p_pv_anlage_2 = CLIENT.read_holding_registers(0, count=1, unit= 1).getRegister(0)
+#print(p_pv_anlage_2)
 
 #Auslesen Betriebszustand aus ISG und Schreiben auf vz
 #betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
