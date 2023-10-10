@@ -21,12 +21,9 @@ UUID = {
 }
 
 REGISTER = {
-    "P_PV_Anlage": 10,
-    "E_PV_Anlage": 1502,
-    "P_Wagenrain_8a": 1503,
-    "E_Wagenrain_8a": 1504,
-    "P_Wärmepumpe": 1505,
-    "E_Wärmepumpe": 1506
+    "P_PV_Anlage": 0,
+    "P_Wagenrain_8a": 10,
+    "P_Wärmepumpe": 20
 }
 
 SEL_IP = "192.168.178.40"
@@ -49,8 +46,7 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
    
   
-#Vorlage read input registers
-#p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"]).getRegister(0)
+#read input registers
 p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=3, unit=1).getRegister(0)
 print(p_pv_anlage)
 
