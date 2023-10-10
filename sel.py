@@ -29,7 +29,7 @@ REGISTER = {
     "E_Wärmepumpe": 1506
 }
 
-SEL_TCP = "192.168.178.40:1502"
+SEL_TCP = "192.168.178.40,1502"
 
 CLIENT = ModbusTcpClient(SEL_TCP)
 CLIENT.connect()
