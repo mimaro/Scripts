@@ -21,7 +21,7 @@ UUID = {
 }
 
 REGISTER = {
-    "P_PV_Anlage": 1502,
+    "P_PV_Anlage": 0,
     "E_PV_Anlage": 1502,
     "P_Wagenrain_8a": 1503,
     "E_Wagenrain_8a": 1504,
@@ -29,7 +29,7 @@ REGISTER = {
     "E_Wärmepumpe": 1506
 }
 
-SEL_TCP = "192.168.178.40"
+SEL_TCP = "192.168.178.40:1502"
 
 CLIENT = ModbusTcpClient(SEL_TCP)
 CLIENT.connect()
@@ -49,15 +49,15 @@ def write_vals(uuid, val):
    
   
 #Vorlage read input registers
-#p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
+p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1).getRegister(0)
 
-#print(p_pv_anlage)
+print(p_pv_anlage)
 
 #print(f"T_outdoor= {T_outdoor} ")
 
 #Vorlage read holding registers
-p_pv_anlage = CLIENT.read_holding_registers(1502, count=1, unit= 1).getRegister(0)
-print(p_pv_anlage)
+p_pv_anlage_2 = CLIENT.read_holding_registers(0, count=1, unit= 1).getRegister(0)
+print(p_pv_anlage_2)
 
 #Auslesen Betriebszustand aus ISG und Schreiben auf vz
 #betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
