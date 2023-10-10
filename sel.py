@@ -45,20 +45,20 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
    
-  
-#read input registers
-p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=3, unit=1).getRegister(0)
-print(p_pv_anlage)
+def main():  
+    #read input registers
+    p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=3, unit=1).getRegister(0)
+    print(p_pv_anlage)
 
-#print(f"T_outdoor= {T_outdoor} ")
+    #Vorlage read holding registers
+    p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=3, unit= 1).getRegister(0)
+    print(p_pv_anlage_2)
 
-#Vorlage read holding registers
-p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=3, unit= 1).getRegister(0)
-print(p_pv_anlage_2)
-
-#Auslesen Betriebszustand aus ISG und Schreiben auf vz
-#betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
+    #Auslesen Betriebszustand aus ISG und Schreiben auf vz
+    #betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
  
+if __name__ == "__main__":
+    main()
     
-#write_vals(UUID["Betriebszustand"], betriebszustand)
+    #write_vals(UUID["Betriebszustand"], betriebszustand)
 
