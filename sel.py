@@ -48,7 +48,7 @@ def write_vals(uuid, val):
 def main():  
     #read input registers
     #p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1, slave=1).getRegister(0)
-    p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=22, unit=1, slave=1)   #.getRegister(0)
+    p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=6, unit=1, slave=1)   #.getRegister(0)
     print(p_pv_anlage)
 
     #Vorlage read holding registers
