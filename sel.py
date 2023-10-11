@@ -31,6 +31,11 @@ SEL_PORT = 1502
 
 CLIENT = ModbusTcpClient(SEL_IP,SEL_PORT)
 CLIENT.connect()
+
+modbus_host = "192.168.178.40"
+modbus_port = 1502
+unit_id = 1
+register_address = 20
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -46,14 +51,47 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
    
 def main():  
+    
+    # Create a Modbus TCP client
+    client = ModbusTcpClient(modbus_host, port=modbus_port)
+
+    # Connect to the Modbus device
+    client.connect()
+
+    try:
+        # Read the register
+        response = client.read_input_registers(register_address, count=2, unit=unit_id)
+
+        # Check if the response is valid
+        if response.isError():
+            print(f"Modbus Error: {response.get_exception_code()}")
+        else:
+            # Extract the values from the response
+            values = response.registers
+
+            # Print the values
+            print(f"Register {register_address}: {values}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        # Close the Modbus connection
+        client.close()
+    
+    
+    
+    
+    
+    
     #read input registers
     #p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=1, unit=1, slave=1).getRegister(0)
-    p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=22, unit=1, slave=1).getRegister(6)
-    print(p_pv_anlage)
+    #p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=22, unit=1, slave=1).getRegister(6)
+    #print(p_pv_anlage)
 
     #Vorlage read holding registers
-    p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=22, unit= 1, slave=1).getRegister(6)
-    print(p_pv_anlage_2)
+    #p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=22, unit= 1, slave=1).getRegister(6)
+    #print(p_pv_anlage_2)
 
     #Auslesen Betriebszustand aus ISG und Schreiben auf vz
     #betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
