@@ -21,18 +21,6 @@ UUID = {
     "P_Wärmepumpe": "1b029800-6732-11ee-ae2e-9715cbeba615"
 }
 
-REGISTER = {
-    "P_PV_Anlage": 0,
-    "P_Wagenrain_8a": 10,
-    "P_Wärmepumpe": 20
-}
-
-SEL_IP = "192.168.178.40"
-SEL_PORT = 1502
-
-CLIENT = ModbusTcpClient(SEL_IP,SEL_PORT)
-CLIENT.connect()
-
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
@@ -67,9 +55,8 @@ def main():
         res_home = client.read_input_registers(reg_home, count=2, unit=unit_id)
         res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
 
-       
         # Extract the values from the response
-        val_pv = res_wp.registers
+        val_pv = res_pv.registers
         val_home = res_home.registers
         val_wp = res_wp.registers
 
