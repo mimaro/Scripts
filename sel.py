@@ -35,7 +35,9 @@ CLIENT.connect()
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
-register_address = 20
+reg_pv= 0
+reg_wagenrain = 10
+reg_wp = 20
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -52,16 +54,36 @@ def write_vals(uuid, val):
    
 def main():  
     
-  
+    # Create a Modbus TCP client
+    client = ModbusTcpClient(modbus_host, port=modbus_port)
+
+    # Connect to the Modbus device
+    client.connect()
+
+   
+    response_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id).registers
+    response_wagenrain = client.read_input_registers(reg_wagenrain, count=2, unit=unit_id).registers
+    response_wp = client.read_input_registers(register_wp, count=2, unit=unit_id).registers
+        
+        
+    # Print the values
+    print(f"Register {reg_pv}: {response_pv}")
+    print(f"Register {reg_wagenrain}: {response_wagenrain}")
+    print(f"Register {reg_wp}: {response_wp}")
+    
+
+   
+    # Close the Modbus connection    
+    client.close()
     
     
     
     
     
     #read input registers
-    p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=2, unit=1,).getRegister(1)
+    #p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=2, unit=1,).getRegister(1)
     #p_pv_anlage = CLIENT.read_input_registers(REGISTER["P_PV_Anlage"], count=22, unit=1, slave=1).getRegister(6)
-    print(p_pv_anlage)
+    #print(p_pv_anlage)
 
     #Vorlage read holding registers
     #p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=22, unit= 1, slave=1).getRegister(6)
