@@ -36,7 +36,7 @@ CLIENT.connect()
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
-register_address= 10
+register_address= 20
 reg_wagenrain = 10
 reg_wp = 20
 ###########################################################################################################
