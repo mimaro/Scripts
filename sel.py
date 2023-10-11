@@ -63,7 +63,7 @@ def main():
    
     response_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id).registers
     response_wagenrain = client.read_input_registers(reg_wagenrain, count=2, unit=unit_id).registers
-    response_wp = client.read_input_registers(register_wp, count=2, unit=unit_id).registers
+    response_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id).registers
         
         
     # Print the values
