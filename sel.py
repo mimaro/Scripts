@@ -62,7 +62,7 @@ def main():
 
     try:
         # Read the register
-        response = client.read_input_registers(register_address, count=2, unit=unit_id)
+        response = client.read_input_registers(register_address, count=4, unit=unit_id)
 
     # Check if the response is valid
         if response.isError():
