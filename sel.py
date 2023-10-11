@@ -72,7 +72,7 @@ def main():
         parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
         parsed_val_wp = int((struct.unpack('>i', byte_string_wp)[0])/100)
         val_home = parsed_val_bil+parsed_val_pv
-        if parsed_val_pv <= 0
+        if parsed_val_pv =< 0
             val_eiv = 0
         elif parsed_val_bil > 0:
             val_eiv = parsed_val_pv
