@@ -68,9 +68,9 @@ def main():
         byte_string_wp = struct.pack('>HH', val_wp[0], val_wp[1])
         
         # Unpack the byte string as a signed integer (big-endian)
-        parsed_val_pv = (struct.unpack('>i', byte_string_pv)[0])/100*-1
-        parsed_val_bil = (struct.unpack('>i', byte_string_bil)[0])/100
-        parsed_val_wp = (struct.unpack('>i', byte_string_wp)[0])/100
+        parsed_val_pv = int((struct.unpack('>i', byte_string_pv)[0])/100*-1)
+        parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
+        parsed_val_wp = int((struct.unpack('>i', byte_string_wp)[0])/100)
         val_home = parsed_val_bil+parsed_val_pv
         if parsed_val_bil > 0:
             val_eiv = parsed_val_pv
