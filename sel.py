@@ -35,7 +35,7 @@ CLIENT.connect()
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
-reg_pv= 0
+register_adress= 0
 reg_wagenrain = 10
 reg_wp = 20
 ###########################################################################################################
@@ -60,16 +60,45 @@ def main():
     # Connect to the Modbus device
     client.connect()
 
-   
-    response_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id).registers
-    response_wagenrain = client.read_input_registers(reg_wagenrain, count=2, unit=unit_id).registers
-    response_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id).registers
+    try:
+        # Read the register
+        response = client.read_input_registers(register_address, count=2, unit=unit_id)
+
+        # Check if the response is valid
+        if response.isError():
+        print(f"Modbus Error: {response.get_exception_code()}")
+        else:
+            # Extract the values from the response
+            values = response.registers
+
+            # Check if there are at least two values in the response
+            if len(values) >= 2:
+                # Get the second integer value (index 1)
+                second_integer = values[1]
+
+                # Print the second integer value
+                print(f"Second Integer from Register {register_address}: {second_integer}")
+            else:
+                print("Insufficient values in the response to extract the second integer.")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    finally:
+        # Close the Modbus connection
+        client.close()
+
+
+    
+    #response_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id).registers
+    #response_wagenrain = client.read_input_registers(reg_wagenrain, count=2, unit=unit_id).registers
+    #response_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id).registers
         
         
     # Print the values
-    print(f"Register {reg_pv}: {response_pv}")
-    print(f"Register {reg_wagenrain}: {response_wagenrain}")
-    print(f"Register {reg_wp}: {response_wp}")
+    #print(f"Register {reg_pv}: {response_pv}")
+    #print(f"Register {reg_wagenrain}: {response_wagenrain}")
+    #print(f"Register {reg_wp}: {response_wp}")
     
 
    
