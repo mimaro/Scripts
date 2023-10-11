@@ -65,14 +65,11 @@ def main():
         response = client.read_input_registers(register_address, count=26, unit=unit_id)
 
     # Check if the response is valid
-        if response.isError():
-            print(f"Modbus Error: {response.get_exception_code()}")
-        else:
-            # Extract the values from the response
-            values = response.registers
+        # Extract the values from the response
+        values = response.registers
 
-            # Print the values
-            print(f"Register {register_address}: {values}")
+        # Print the values
+        print(f"Register {register_address}: {values}")
     
     
 
