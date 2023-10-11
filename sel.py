@@ -64,23 +64,16 @@ def main():
         # Read the register
         response = client.read_input_registers(register_address, count=2, unit=unit_id)
 
-        # Check if the response is valid
+    # Check if the response is valid
         if response.isError():
             print(f"Modbus Error: {response.get_exception_code()}")
         else:
             # Extract the values from the response
             values = response.registers
 
-            # Check if there are at least two values in the response
-            if len(values) >= 2:
-                # Get the second integer value (index 1)
-                second_integer = values[1]
-
-                # Print the second integer value
-                print(f"Second Integer from Register {register_address}: {second_integer}")
-            else:
-                print("Insufficient values in the response to extract the second integer.")
-
+            # Print the values
+            print(f"Register {register_address}: {values}")
+    
     except Exception as e:
         print(f"An error occurred: {e}")
 
