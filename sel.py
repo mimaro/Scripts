@@ -76,7 +76,7 @@ def main():
             byte_string = struct.pack('>HH', values[0], values[1])
 
             # Unpack the byte string as a signed integer (big-endian)
-            parsed_value = struct.unpack('>i', byte_string)[0]
+            parsed_value = (struct.unpack('>i', byte_string)[0])/100
 
             # Print the parsed integer
             print(f"Parsed Integer: {parsed_value}")
