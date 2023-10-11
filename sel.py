@@ -35,7 +35,7 @@ CLIENT.connect()
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
-register_address= 20
+register_address= 0
 reg_wagenrain = 10
 reg_wp = 20
 ###########################################################################################################
@@ -61,22 +61,34 @@ def main():
     client.connect()
 
     try:
-        # Read the register
-        response = client.read_input_registers(register_address, count=4, unit=unit_id)
+        # Read the registers as a block
+        response = client.read_input_registers(register_address, count=2, unit=unit_id)
 
-    # Check if the response is valid
-        # Extract the values from the response
-        values = response.registers
+        # Check if the response is valid
+        if response.isError():
+            print(f"Modbus Error: {response.get_exception_code()}")
+        else:
+            # Extract the values from the response
+            values = response.registers
 
-        # Print the values
-        print(f"Register {register_address}: {values}")
-    
-    
+            # Combine the two registers into a single byte string
+            byte_string = struct.pack('>HH', values[0], values[1])
+
+            # Unpack the byte string as a signed integer (big-endian)
+            parsed_value = struct.unpack('>i', byte_string)[0]
+
+            # Print the parsed integer
+            print(f"Parsed Integer: {parsed_value}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
     finally:
         # Close the Modbus connection
         client.close()
 
+
+    
 
     
     #response_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id).registers
@@ -90,10 +102,6 @@ def main():
     #print(f"Register {reg_wp}: {response_wp}")
     
 
-   
-    # Close the Modbus connection    
-    client.close()
-    
     
     
     
