@@ -74,8 +74,7 @@ def main():
             # Print the values
             print(f"Register {register_address}: {values}")
     
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    
 
     finally:
         # Close the Modbus connection
