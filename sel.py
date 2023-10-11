@@ -5,6 +5,7 @@ import datetime
 import logging
 import pytz
 import time
+import struct
 from pymodbus.client.sync import ModbusTcpClient
 
 #######################################################################################################
