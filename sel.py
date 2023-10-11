@@ -66,7 +66,7 @@ def main():
 
         # Check if the response is valid
         if response.isError():
-        print(f"Modbus Error: {response.get_exception_code()}")
+            print(f"Modbus Error: {response.get_exception_code()}")
         else:
             # Extract the values from the response
             values = response.registers
