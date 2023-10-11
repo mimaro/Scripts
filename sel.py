@@ -36,8 +36,8 @@ CLIENT.connect()
 modbus_host = "192.168.178.40"
 modbus_port = 1502
 unit_id = 1
-register_address= 0
-reg_wagenrain = 10
+reg_pv= 0
+reg_home = 10
 reg_wp = 20
 ###########################################################################################################
 
@@ -63,26 +63,31 @@ def main():
 
     try:
         # Read the registers as a block
-        response = client.read_input_registers(register_address, count=2, unit=unit_id)
+        res_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id)
+        res_home = client.read_input_registers(reg_home, count=2, unit=unit_id)
+        res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
 
-        # Check if the response is valid
-        if response.isError():
-            print(f"Modbus Error: {response.get_exception_code()}")
-        else:
-            # Extract the values from the response
-            values = response.registers
+       
+        # Extract the values from the response
+        val_pv = res_wp.registers
+        val_home = res_home.registers
+        val_wp = res_wp.registers
 
-            # Combine the two registers into a single byte string
-            byte_string = struct.pack('>HH', values[0], values[1])
-
-            # Unpack the byte string as a signed integer (big-endian)
-            parsed_value = (struct.unpack('>i', byte_string)[0])/100
-
-            # Print the parsed integer
-            print(f"Parsed Integer: {parsed_value}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        # Combine the two registers into a single byte string
+        byte_string_pv = struct.pack('>HH', val_pv[0], val_pv[1])
+        byte_string_home = struct.pack('>HH', val_home[0], val_home[1])
+        byte_string_wp = struct.pack('>HH', val_wp[0], val_wp[1])
+        
+        # Unpack the byte string as a signed integer (big-endian)
+        parsed_val_pv = (struct.unpack('>i', byte_string_pv)[0])/100*-1
+        parsed_val_home = (struct.unpack('>i', byte_string_home)[0])/100
+        parsed_val_wp = (struct.unpack('>i', byte_string_wp)[0])/100
+        
+        # Print the parsed integer
+        print(f"Parsed Integer PV: {parsed_val_pv}")
+        print(f"Parsed Integer Home: {parsed_val_home}")
+        print(f"Parsed Integer WP: {parsed_val_wp}")
+   
 
     finally:
         # Close the Modbus connection
