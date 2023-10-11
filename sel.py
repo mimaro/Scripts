@@ -52,7 +52,7 @@ def main():
     print(p_pv_anlage)
 
     #Vorlage read holding registers
-    p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=1, unit= 1, slave=1).getRegister(6)
+    p_pv_anlage_2 = CLIENT.read_holding_registers(REGISTER["P_PV_Anlage"], count=22, unit= 1, slave=1).getRegister(6)
     print(p_pv_anlage_2)
 
     #Auslesen Betriebszustand aus ISG und Schreiben auf vz
