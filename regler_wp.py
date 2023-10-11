@@ -21,7 +21,7 @@ SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&for
 # Configuration
 UUID = {
     "T_outdoor": "308e0d90-6521-11ee-8b08-a34757253caf",
-    "Power_balance": "9b251460-35ae-11e9-ba29-959207ffefe4",
+    "Power_balance": "e3fc7a80-6731-11ee-8571-5bf96a498b43",
     "Charge_station": "8270f520-6690-11e9-9272-4dde30159c8f",
     "t_Sperrung_Tag": "3ee81940-6525-11ee-ab8d-95d8fe8c84c1",
     "t_Sperrung_Sonnenuntergang": "48d326e0-6525-11ee-bb62-d9a673cf575c",
@@ -29,8 +29,8 @@ UUID = {
     "Freigabe_WP": "2dd47740-6525-11ee-8430-33ffcdf1f22e",
     "Sperrung_WP": "35a4c530-6525-11ee-9aab-7be80c763665",
     "Freigabe_normalbetrieb": "1f9b1a00-6525-11ee-a1c0-218fa15dedcf",
-    "PV_Produktion": "101ca060-50a3-11e9-a591-cf9db01e4ddd", 
-    "WP_Verbrauch": "92096720-35ae-11e9-a74c-534de753ada9",
+    "PV_Produktion": "0ece9080-6732-11ee-92bb-d5c31bcb9442", 
+    "WP_Verbrauch": "1b029800-6732-11ee-ae2e-9715cbeba615",
     "T_Raum_EG": "716e8d00-6523-11ee-a6d5-958aeed3d121",
     "T_Raum_OG": "78afd3c0-6523-11ee-980e-9fe998eb4bc6",
     "WW_Temp_mitte": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
