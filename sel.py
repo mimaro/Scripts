@@ -69,6 +69,10 @@ def main():
         
         # Unpack the byte string as a signed integer (big-endian)
         parsed_val_pv = int((struct.unpack('>i', byte_string_pv)[0])/100*-1)
+        if parsed_val_pv <= 0:
+            parsed_val_pv = 0
+        else:
+            parsed_val_pv = parsed_val_pv        
         parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
         parsed_val_wp = int((struct.unpack('>i', byte_string_wp)[0])/100)
         val_home = parsed_val_bil+parsed_val_pv
