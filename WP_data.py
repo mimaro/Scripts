@@ -28,7 +28,8 @@ UUID = {
     "T_SOLL_BWW": "82392af0-6523-11ee-876f-d3acf6a8c4a0",
     "T_SOLL_HK2": "911a3ea0-6523-11ee-8114-1fa309bb814a",
     "T_SOLL_HK1": "a2197880-6523-11ee-88a3-950f5e8f1efc",
-    "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887"
+    "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887",
+    "P_WP_Therm": "69630320-6522-11ee-9e09-ebb553e47b70"
 }
 
 REGISTER = {
@@ -115,6 +116,7 @@ write_vals(UUID["Puffer_oben"], T_vl_hk1_ist)
 write_vals(UUID["T_SOLL_BWW"], T_ww_soll)
 write_vals(UUID["T_SOLL_HK2"], T_vl_hk2_soll)
 write_vals(UUID["T_SOLL_HK1"], T_vl_hk1_soll)
+write_vals(UUID["P_WP_Therm"], P_WP_therm)
 
   
 
