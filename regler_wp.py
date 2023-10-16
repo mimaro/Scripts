@@ -49,7 +49,7 @@ FREIGABE_WARM_P = -400
 FREIGABE_KALT_P = -800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
+SPERRUNG_HYST = 500 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -165,7 +165,7 @@ def main():
     
     write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
     write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
-    logging.info("15 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
+    logging.info("30 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
     logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
@@ -192,7 +192,7 @@ def main():
         T_Freigabe_max = 1
     if RT_akt_EG < T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
         T_Freigabe_Absenk = 1   
-    if RT_akt_OG <= T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
+    if RT_akt_OG <= T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp OG zu hoch
         T_Freigabe_Absenk = 1       
         
         
