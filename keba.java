@@ -235,7 +235,7 @@ public class KebaController {
 		if(reqToKEBA<minLadeStrom){ //Der gewünschte Ladestrom ist zu gering
 			controllerStrom = minLadeStrom;
 			try {
-				vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", controllerStrom.toString());
+				vz.sendData("f0c4d0d0-6c55-11ee-98da-934802c138a3", controllerStrom.toString());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -246,7 +246,7 @@ public class KebaController {
 		else if(reqToKEBA>maxLadeStrom){ //Der gewünschte Ladestrom ist zu hoch
 			controllerStrom = maxLadeStrom;
 			try {
-				vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", controllerStrom.toString());
+				vz.sendData("f0c4d0d0-6c55-11ee-98da-934802c138a3", controllerStrom.toString());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -256,7 +256,7 @@ public class KebaController {
 		}
 		else{
 			try {
-				vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", controllerStrom.toString());
+				vz.sendData("f0c4d0d0-6c55-11ee-98da-934802c138a3", controllerStrom.toString());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -311,7 +311,7 @@ public class KebaController {
 		case 0:
 			sendRequesttoKEBA("ena 1");
 			try {
-				vz.sendData("440ea890-6741-11e9-83d4-69e4af40dfb6", "0");
+				vz.sendData("a4d3f3f0-6c55-11ee-b0f1-5f5a7e9cf2dc", "0");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -320,7 +320,7 @@ public class KebaController {
 		case 1:
 			sendRequesttoKEBA("ena 1");
 			try {
-				vz.sendData("440ea890-6741-11e9-83d4-69e4af40dfb6", "100");
+				vz.sendData("a4d3f3f0-6c55-11ee-b0f1-5f5a7e9cf2dc", "100");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
