@@ -58,8 +58,9 @@ def main():
         #res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
         #res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
 
+        print(res_pv)
         # Extract the values from the response
-        val_pv = res_pv.registers
+        #val_pv = res_pv.registers
         #val_bil = res_bil.registers
         #val_wp = res_wp.registers
 
