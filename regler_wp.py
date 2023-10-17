@@ -199,7 +199,7 @@ def main():
         
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    #write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
+    write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
    
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
