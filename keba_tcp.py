@@ -54,7 +54,7 @@ def main():
 
     try:
         # Read the registers as a block
-        res_pv = client.read_input_registers(ser_num, count=2, unit=unit_id)
+        res_pv = client.read_input_registers(ser_num, count=8, unit=unit_id)
         #res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
         #res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
 
