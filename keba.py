@@ -200,7 +200,7 @@ class Services:
 #        pass
 
 keba = KebaController()
-keba1 = keba.actualInput()
+keba1 = keba.actualInput
 
 
 print(keba1)
