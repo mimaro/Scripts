@@ -2,6 +2,33 @@ import socket
 import json
 import time
 
+
+class UdpServer:
+    def __init__(self, port):
+        self.port = port
+        self.listeners = []
+
+    def addUdpServerListener(self, listener):
+        self.listeners.append(listener)
+
+    def start(self):
+        # Start the UDP server
+        pass
+
+    def send(self, data, address):
+        # Send data over UDP
+        pass
+
+    def packetReceived(self, evt):
+        for listener in self.listeners:
+            listener.packetReceived(evt)
+
+class Services:
+    def waitxmilis(self, millis):
+        time.sleep(millis / 1000)
+
+
+
 class KebaController:
     def __init__(self):
         # Allgemeine Parameter
@@ -56,6 +83,8 @@ class KebaController:
         self.enableSys = 0
         self.enableUser = 0
 
+
+    
     def initKEBA(self):
         # UDP communication configuration
         self.us = UdpServer(self.portKEBA)
@@ -405,29 +434,6 @@ class TimeWatch:
     def elapsed_time(self):
         return time.time() - self.start_time
 
-class UdpServer:
-    def __init__(self, port):
-        self.port = port
-        self.listeners = []
-
-    def addUdpServerListener(self, listener):
-        self.listeners.append(listener)
-
-    def start(self):
-        # Start the UDP server
-        pass
-
-    def send(self, data, address):
-        # Send data over UDP
-        pass
-
-    def packetReceived(self, evt):
-        for listener in self.listeners:
-            listener.packetReceived(evt)
-
-class Services:
-    def waitxmilis(self, millis):
-        time.sleep(millis / 1000)
 
 #class Volkszaehler:
 #    def sendData(self, id, value):
