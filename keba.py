@@ -63,7 +63,7 @@ class KebaController:
         self.us.start()
 
     
-    def ladeFunktion():
+    def ladeFunktion(self):
         #global actualPlug, actualState, controllerStatus, controllerStrom, minLadeStrom, actualInput
 
         # Debug print statements (you can uncomment these if needed)
@@ -114,47 +114,229 @@ class KebaController:
 
 
     def aendereLadeStrom(self):
-        # Adjust charging current based on aenderungLadeLeistung
-        pass
+        #global aenderungLadeLeistung, ladeOffSet, controllerStrom
 
-    def sendCurrRequesttoKEBA(self, reqToKEBA):
-        # Send current request to KEBA station
-        pass
+        if aenderungLadeLeistung > 0:  # Positive Ladestromänderung
+            aenderungLadestrom = ((aenderungLadeLeistung - ladeOffSet) * 1000 / 230) // 5
+            controllerStrom += aenderungLadestrom
+        else:  # Negative Ladestromänderung
+            aenderungLadestrom = ((aenderungLadeLeistung - ladeOffSet) * 1000 / 230) // 2
+            controllerStrom += aenderungLadestrom
+
+    def sendCurrRequesttoKEBA(reqToKEBA):
+        global controllerStrom, minLadeStrom, maxLadeStrom
+
+        # TODO: Define an absolute minimum for the Ladestrom
+        if reqToKEBA < minLadeStrom:  # The desired charging current is too low
+            controllerStrom = minLadeStrom
+            try:
+                vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", str(controllerStrom))
+            except Exception as e:
+                # Handle the exception here
+                print("Error:", e)
+            sendRequesttoKEBA("curr " + str(minLadeStrom))
+
+        elif reqToKEBA > maxLadeStrom:  # The desired charging current is too high
+            controllerStrom = maxLadeStrom
+            try:
+                vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", str(controllerStrom))
+            except Exception as e:
+                # Handle the exception here
+                print("Error:", e)
+            sendRequesttoKEBA("curr " + str(maxLadeStrom))
+
+    else:
+        try:
+            vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", str(controllerStrom))
+        except Exception as e:
+            # Handle the exception here
+            print("Error:", e)
+        sendRequesttoKEBA("curr " + str(reqToKEBA))
+
 
     def stateChanged(self):
-        # Handle state change events
-        pass
+        global actualState, ladenSeit
+
+        if actualState == 0:  # KEBA is starting
+            ladenSeit.setEnabled(False)
+        elif actualState == 1:  # KEBA is not ready (not plugged in, x1 or "ena" not set, RFID not enabled...)
+            ladenSeit.setEnabled(False)
+        elif actualState == 2:  # KEBA is ready for charging and waiting for EV charging request
+            ladenSeit.setEnabled(False)
+        elif actualState == 3:  # KEBA is charging
+            ladenSeit.reset()
+            # TODO: Start the "Laden seit" timer here
+        elif actualState == 4:  # KEBA has an error (See getError)
+            pass  # Handle the error here
+        elif actualState == 5:  # KEBA has rejected authorization
+            pass  # Handle the rejection here
+        else:
+            pass  # Handle other cases here
+
 
     def inputChanged(self):
-        # Handle input change events
-        pass
+        global actualInput
+
+        if actualInput == 0:
+            sendRequesttoKEBA("ena 1")
+            try:
+                vz.sendData("440ea890-6741-11e9-83d4-69e4af40dfb6", "0")
+            except IOError as e:
+                # Handle the IO error here
+                pass  # You can replace this with appropriate error handling
+
+        elif actualInput == 1:
+            sendRequesttoKEBA("ena 1")
+            try:
+                vz.sendData("440ea890-6741-11e9-83d4-69e4af40dfb6", "100")
+            except IOError as e:
+                # Handle the IO error here
+                pass  # You can replace this with appropriate error handling
+
 
     def plugChanged(self):
-        # Handle plug change events
-        pass
+        global actualPlug, controllerStatus
 
-    def evaluateDatafromKEBA(self, receivedFromKEBA):
-        # Process data received from KEBA station
-        pass
+        if actualPlug == 0 or actualPlug == 1 or actualPlug == 3 or actualPlug == 5:
+            controllerStatus = 0
+            sendRequesttoKEBA("ena 1")
 
-    def sendRequesttoKEBA(self, anfrage):
-        # Send a request to KEBA station
-        pass
+        elif actualPlug == 7:
+            sendRequesttoKEBA("ena 1")
+            sendCurrRequesttoKEBA(10000)
+            controllerStatus = 2
+            minLadeStrom = 10000
 
-    def setKEBAFailsafeTime(self, timeoutZeit, ladestromimFailsafe, speichern):
-        # Set failsafe parameters on KEBA station
-        pass
 
-    def setKEBAoutputRelais(self, relaisstatus):
-        # Set output relais status on KEBA station
-        pass
+    import json
+
+    def evaluateDatafromKEBA(receivedFromKEBA):
+        global actualState, actualInput, oldInput, actualPlug, enableSys, enableUser, actualTmoFS, actualMaxCurr, actualMaxCurrHW, actualCurrUser, actualCurrFS
+        global actualU1, actualU2, actualU3, actualI1, actualI2, actualI3, actualP, actualPF, actualE
+
+        if receivedFromKEBA == "TCH-OK :done\n":
+            # Empfang wurde bestätigt
+            # TODO Empfangsbestätigung verarbeiten, ggfl. catch wenn zu lange keine TCH-OK kam.
+            # print(receivedFromKEBA)
+            pass
+        else:
+            try:
+                objrecfrmKEBA = json.loads(receivedFromKEBA)
+                if "ID" in objrecfrmKEBA:
+                    # Das empfangene ist eine Antwort auf eine Report Anfrage
+                    if objrecfrmKEBA["ID"] == "1":
+                        # Das empfangene Objekt ist eine Antwort auf eine Report 1 Anfrage
+                        pass
+                    elif objrecfrmKEBA["ID"] == "2":
+                        # Das empfangene Objekt ist eine Antwort auf eine Report 2 Anfrage
+                        actualState = objrecfrmKEBA["State"]
+                        actualInput = objrecfrmKEBA["Input"]
+                        oldInput = actualInput
+                        if oldInput != actualInput:
+                            inputChanged()
+                        actualPlug = objrecrecfrmKEBA["Plug"]
+                        enableSys = objrecfrmKEBA["Enable sys"]
+                        enableUser = objrecfrmKEBA["Enable user"]
+                        actualTmoFS = objrecfrmKEBA["Tmo FS"]
+                        actualMaxCurr = objrecfrmKEBA["Max curr"]
+                        actualMaxCurrHW = objrecfrmKEBA["Curr HW"]
+                        actualCurrUser = objrecfrmKEBA["Curr user"]
+                        actualCurrFS = objrecfrmKEBA["Curr FS"]
+                    elif objrecfrmKEBA["ID"] == "3":
+                        # Das empfangene Objekt ist eine Antwort auf eine Report 3 Anfrage
+                        actualU1 = objrecfrmKEBA["U1"]
+                        actualU2 = objrecfrmKEBA["U2"]
+                        actualU3 = objrecfrmKEBA["U3"]
+                        actualI1 = objrecfrmKEBA["I1"]
+                        actualI2 = objrecfrmKEBA["I2"]
+                        actualI3 = objrecfrmKEBA["I3"]
+                        actualP = objrecfrmKEBA["P"]
+                        actualPF = objrecfrmKEBA["PF"]
+                        actualE = objrecfrmKEBA["E pres"] * 10
+                elif "State" in objrecfrmKEBA:
+                    # Das empfangene Objekt ist ein "State"- Broadcast
+                    oldState = actualState
+                    actualState = objrecfrmKEBA["State"]
+                    stateChanged()
+                elif "Plug" in objrecfrmKEBA:
+                    # Das empfangene Objekt ist ein "Plug"- Broadcast
+                    oldPlug = actualPlug
+                    actualPlug = objrecfrmKEBA["Plug"]
+                    plugChanged()
+                elif "Input" in objrecfrmKEBA:
+                    # TODO Input bearbeiten
+                    # Das empfangene Objekt ist ein "Input"- Broadcast
+                    oldInput = actualInput
+                    actualInput = objrecfrmKEBA["Input"]
+                    inputChanged()
+                elif "Enable sys" in objrecfrmKEBA:
+                    # Das empfangene Objekt ist ein "Enable sys"- Broadcast
+                    enableSys = objrecfrmKEBA["Enable sys"]
+                elif "Max curr" in objrecfrmKEBA:
+                    # Das empfangene Objekt ist ein "Max curr"- Broadcast
+                    actualMaxCurr = objrecfrmKEBA["Max curr"]
+                elif "E pres" in objrecfrmKEBA:
+                    # Das empfangene Objekt ist ein "E pres"- Broadcast
+                    actualE = objrecfrmKEBA["E pres"]
+                else:
+                    # Das empfangene Objekt hat eine andere ID
+                    pass
+            except Exception as e:
+                print(e)
+
+
+    import socket
+
+    def sendRequesttoKEBA(anfrage):
+        # Daten Senden
+        service.waitxmilis(100)
+        send_data = anfrage.encode('utf-8')  # Converts a string to bytes using UTF-8 encoding
+        host_address = ipKEBA  # Use the IP address or hostname here
+        port = portKEBA
+
+        try:
+            host_address = socket.gethostbyname(ipKEBA)  # Resolve the hostname to an IP address
+        except socket.error as e:
+            host_address = None
+            print(e)
+
+        send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        send_packet = (send_data, (host_address, port))
+        try:
+            send_socket.sendto(*send_packet)
+        except socket.error as e:
+            print(e)
+        finally:
+            send_socket.close()
+
+
+    def setKEBAFailsafeTime(timeoutZeit, ladestromimFailsafe, speichern):
+        sendRequesttoKEBA(f"failsafe {timeoutZeit} {ladestromimFailsafe} {speichern}")
+
+
+    def setKEBAoutputRelais(relaisstatus):
+        sendRequesttoKEBA(f"output {relaisstatus}")
+
 
     def getcontrollerCurrent(self):
         return self.controllerStrom
 
-    def getactualState(self):
-        return self.actualState
+    def get_actual_state(self):
+        """
+        Returns the current state of the KEBA.
 
+        Returns:
+        0: KEBA is starting
+        1: KEBA is not ready (not plugged in, x1 or "ena" not set, RFID not enabled...)
+        2: KEBA is ready to charge and waiting for an EV charging request
+        3: KEBA is charging
+        4: KEBA has an error (See get_error)
+        5: KEBA has rejected the authorization
+        """
+        return self.actual_state  # Assuming actual_state is a variable defined elsewhere
+
+       
     def getactualPlug(self):
         return self.actualPlug
 
@@ -206,6 +388,12 @@ class KebaController:
     def getInput(self):
         return self.actualInput
 
+
+    def set_aenderung_lade_leistung(self, aenderung_lade_leistung):
+        self.aenderung_lade_leistung = round(aenderung_lade_leistung)
+
+
+
 class TimeWatch:
     def __init__(self):
         self.start_time = time.time()
@@ -247,8 +435,9 @@ class Services:
 #        pass
 
 keba = KebaController()
-keba1 = keba.getactualPlug()
+keba.initKEBA():
 
+keba1 = keba.sendRequesttoKEBA("report 1")
 
 print(keba1)
 
