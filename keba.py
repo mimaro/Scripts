@@ -435,7 +435,7 @@ class Services:
 #        pass
 
 keba = KebaController()
-keba.initKEBA():
+keba.initKEBA()
 
 keba1 = keba.sendRequesttoKEBA("report 1")
 
