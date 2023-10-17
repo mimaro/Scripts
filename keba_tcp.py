@@ -24,7 +24,7 @@ UUID = {
 }
 
 modbus_host = "192.168.178.59"
-modbus_port = 1502
+modbus_port = 502
 unit_id = 1
 charge_state= 1000
 char_curr_1 = 1008
@@ -54,12 +54,12 @@ def main():
 
     try:
         # Read the registers as a block
-        res_pv = client.read_input_registers(reg_pv, count=2, unit=unit_id)
-        res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
-        res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
+        res_pv = client.read_input_registers(ser_num, count=2, unit=unit_id)
+        #res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
+        #res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
 
         # Extract the values from the response
-        #val_pv = res_pv.registers
+        val_pv = res_pv.registers
         #val_bil = res_bil.registers
         #val_wp = res_wp.registers
 
