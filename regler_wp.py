@@ -188,7 +188,7 @@ def main():
     # Definition Betriebsfreigaben
     if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Raumtemp EG zu hoch
         T_Freigabe_min = 1    
-    if RT_akt_OG > T_max_Tag_OG or RT_akt_EG > T_max_Tag_EG: #Sperrung WP wenn Raumtemp EG oder OG zu hoch
+    if RT_akt_EG > T_max_Tag_EG: #Sperrung WP wenn Raumtemp EG zu hoch
         T_Freigabe_max = 1
     if RT_akt_EG < T_Absenk: #Freigabe Absenkbetrieb wenn Raumtemp EG zu tief
         T_Freigabe_Absenk = 1   
@@ -202,7 +202,7 @@ def main():
    
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
-    logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag_OG,T_Freigabe_max))
+    #logging.info("Raumtemp OG ({}°C) > Ausschaltschwelle ({}°C): {}".format(RT_akt_OG,T_max_Tag_OG,T_Freigabe_max))
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
     logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
     logging.info("Raumtemp OG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_OG,T_Absenk,T_Freigabe_Betr))
