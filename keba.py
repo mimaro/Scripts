@@ -200,13 +200,11 @@ class Services:
 #        pass
 
 keba = KebaController()
-keba1 = keba.sendRequesttoKEBA("report 1")
-keba2 = keba.sendRequesttoKEBA("report 2")
-keba3 = keba.sendRequesttoKEBA("report 3")
+keba1 = keba.actualStateString()
+
 
 print(keba1)
-print(keba2)
-print(keba3)
+
 
 #if __name__ == "__main__":
 #    controller = KebaController()
