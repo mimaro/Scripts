@@ -422,7 +422,6 @@ class KebaController:
         self.aenderung_lade_leistung = round(aenderung_lade_leistung)
 
 
-
 class TimeWatch:
     def __init__(self):
         self.start_time = time.time()
@@ -443,9 +442,9 @@ class TimeWatch:
 keba = KebaController()
 #keba.initKEBA()
 
-keba1 = keba.sendRequesttoKEBA("report 1")
+keba.sendRequesttoKEBA("report 1")
 
-print(keba1)
+#print(keba1)
 
 
 #if __name__ == "__main__":
