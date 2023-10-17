@@ -35,7 +35,7 @@ UUID = {
     "T_Raum_OG": "78afd3c0-6523-11ee-980e-9fe998eb4bc6",
     "WW_Temp_mitte": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
     "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361",
-    "T_Absenk": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77"
+    "T_Absenk_F": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -198,7 +198,7 @@ def main():
         
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
+    write_vals(UUID["T_Absenk_F"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
    
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
