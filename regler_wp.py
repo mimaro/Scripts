@@ -38,8 +38,6 @@ UUID = {
     "T_Absenk": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77"
 }
 
-
-
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
 # Parameter Freigabe Heizbetrieb
@@ -129,6 +127,7 @@ def main():
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
         b_freigabe_normal = 1
+    
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
     #logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
