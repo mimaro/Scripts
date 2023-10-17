@@ -200,7 +200,7 @@ class Services:
 #        pass
 
 keba = KebaController()
-keba1 = keba.getActualU2(self)
+keba1 = keba.getActualU2()
 
 
 print(keba1)
