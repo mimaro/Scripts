@@ -34,10 +34,11 @@ UUID = {
     "T_Raum_EG": "716e8d00-6523-11ee-a6d5-958aeed3d121",
     "T_Raum_OG": "78afd3c0-6523-11ee-980e-9fe998eb4bc6",
     "WW_Temp_mitte": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
-    "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361"
+    "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361",
+    "T_Absenk": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77"
 }
 
-#"T_Absenk": "232bec80-7a2a-11ea-b704-0de0b4780fba",
+
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
@@ -61,7 +62,7 @@ HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 26.0 # Maximaltemp OG für Sperrung WP
-T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
+T_min_Tag = 21.2 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
@@ -187,18 +188,18 @@ def main():
     
     # Definition Betriebsfreigaben
     if RT_akt_EG > T_min_Tag: #Sperrung WP wenn Raumtemp EG zu hoch
-        T_Freigabe_min = 1
+        T_Freigabe_min = 1    
     if RT_akt_OG > T_max_Tag_OG or RT_akt_EG > T_max_Tag_EG: #Sperrung WP wenn Raumtemp EG oder OG zu hoch
         T_Freigabe_max = 1
-    if RT_akt_EG < T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp EG zu hoch
+    if RT_akt_EG < T_Absenk: #Freigabe Absenkbetrieb wenn Raumtemp EG zu tief
         T_Freigabe_Absenk = 1   
-    if RT_akt_OG <= T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp OG zu hoch
-        T_Freigabe_Absenk = 1       
+    #if RT_akt_OG <= T_Absenk: #Sperrung Absenkbetrieb wenn Raumtemp OG zu hoch
+    #    T_Freigabe_Absenk = 1       
         
         
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    #write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21.5°C
+    #write_vals(UUID["T_Absenk"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
    
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
@@ -298,7 +299,7 @@ def main():
         time.sleep(5)
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)      
            
-    #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
+    #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
@@ -312,7 +313,7 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
-    #Freigabe Absenkbetrieb wenn Heizperiode aktiv 
+    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
     elif (b_freigabe_normal & T_Freigabe_Absenk ): #b_sperrung_wp
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
