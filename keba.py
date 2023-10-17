@@ -64,53 +64,53 @@ class KebaController:
 
     
     def ladeFunktion():
-    global actualPlug, actualState, controllerStatus, controllerStrom, minLadeStrom, actualInput
+        #global actualPlug, actualState, controllerStatus, controllerStrom, minLadeStrom, actualInput
 
-    # Debug print statements (you can uncomment these if needed)
-    # print("State KEBA: " + actualStateString[actualState])
-    # print("State Steuerung: " + controllerStatusString[controllerStatus])
+        # Debug print statements (you can uncomment these if needed)
+        # print("State KEBA: " + actualStateString[actualState])
+        # print("State Steuerung: " + controllerStatusString[controllerStatus])
 
-    # Handle charging based on actualPlug
-    if actualPlug == 0:
-        pass  # Kein Stecker eingesteckt
-    elif actualPlug == 1:
-        pass  # Stecker eingesteckt an Wallbox
-    elif actualPlug == 3:
-        pass  # Stecker eingesteckt an Wallbox und verriegelt, Standard, wenn kein EV eingesteckt ist.
-    elif actualPlug == 5:
-        pass  # Stecker eingesteckt an Wallbox und EV
-    elif actualPlug == 7:
-        # Stecker eingesteckt an Wallbox und EV und verriegelt
-        if controllerStatus == 0:  # EV nicht verbunden
+        # Handle charging based on actualPlug
+        if actualPlug == 0:
+            pass  # Kein Stecker eingesteckt
+        elif actualPlug == 1:
+            pass  # Stecker eingesteckt an Wallbox
+        elif actualPlug == 3:
+            pass  # Stecker eingesteckt an Wallbox und verriegelt, Standard, wenn kein EV eingesteckt ist.
+        elif actualPlug == 5:
+           pass  # Stecker eingesteckt an Wallbox und EV
+        elif actualPlug == 7:
+            # Stecker eingesteckt an Wallbox und EV und verriegelt
+            if controllerStatus == 0:  # EV nicht verbunden
+                pass
+            elif controllerStatus == 1:  # Warten auf genügend PV- Überschuss
+                controllerStatus = 2  # Der Controller wechselt in den Status "optimierte Ladung"
+                sendRequesttoKEBA("ena 1")
+            elif controllerStatus == 2:  # Laden optimiert
+                aendereLadeStrom()
+                if actualInput == 1:  # maximalladung
+                    minLadeStrom = 32000
+                sendCurrRequesttoKEBA(controllerStrom)
+            elif controllerStatus == 3:  # Laden definiert
+                aendereLadeStrom()
+                minLadeStrom = 16000
+                sendCurrRequesttoKEBA(controllerStrom)
+            elif controllerStatus == 4:  # Laden optimiert 1-phasig
+                pass
+
+        # Handle charging based on actualState
+        if actualState == 0:  # KEBA ist am starten
             pass
-        elif controllerStatus == 1:  # Warten auf genügend PV- Überschuss
-            controllerStatus = 2  # Der Controller wechselt in den Status "optimierte Ladung"
-            sendRequesttoKEBA("ena 1")
-        elif controllerStatus == 2:  # Laden optimiert
-            aendereLadeStrom()
-            if actualInput == 1:  # maximalladung
-                minLadeStrom = 32000
-            sendCurrRequesttoKEBA(controllerStrom)
-        elif controllerStatus == 3:  # Laden definiert
-            aendereLadeStrom()
-            minLadeStrom = 16000
-            sendCurrRequesttoKEBA(controllerStrom)
-        elif controllerStatus == 4:  # Laden optimiert 1-phasig
+        elif actualState == 1:  # KEBA ist nicht bereit
+            controllerStrom = minLadeStrom + 3000
+        elif actualState == 2:  # KEBA ist bereit zum laden und wartet auf EV charging request
+            controllerStrom = minLadeStrom + 3000
+        elif actualState == 3:  # KEBA ist am laden
             pass
-
-    # Handle charging based on actualState
-    if actualState == 0:  # KEBA ist am starten
-        pass
-    elif actualState == 1:  # KEBA ist nicht bereit
-        controllerStrom = minLadeStrom + 3000
-    elif actualState == 2:  # KEBA ist bereit zum laden und wartet auf EV charging request
-        controllerStrom = minLadeStrom + 3000
-    elif actualState == 3:  # KEBA ist am laden
-        pass
-    elif actualState == 4:  # KEBA hat einen Fehler
-        pass  # Siehe getError
-    elif actualState == 5:  # KEBA hat die Autorisierung zurückgewiesen
-        pass
+        elif actualState == 4:  # KEBA hat einen Fehler
+            pass  # Siehe getError
+        elif actualState == 5:  # KEBA hat die Autorisierung zurückgewiesen
+            pass
 
 
     def aendereLadeStrom(self):
