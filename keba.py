@@ -316,7 +316,7 @@ class KebaController:
 
     import socket
 
-    def sendRequesttoKEBA(anfrage):
+    def sendRequesttoKEBA(self):
         # Daten Senden
         service.waitxmilis(100)
         send_data = anfrage.encode('utf-8')  # Converts a string to bytes using UTF-8 encoding
