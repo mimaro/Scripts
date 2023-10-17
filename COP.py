@@ -34,11 +34,13 @@ def write_vals(uuid, val):
 def main():
     logging.info("********************************")
     logging.info("COP")
-    wp_therm = get_vals(UUID["WP_th"],duration="-5min")["data"]["average"]
-    wp_el = get_vals(UUID["WP_el"], duration = "-5min")["data"]["average"]
+    wp_therm = get_vals(UUID["WP_th"],duration="-0min")["data"]["average"]
+    wp_el = get_vals(UUID["WP_el"], duration = "-0min")["data"]["average"]
     cop_o_venti = wp_therm / wp_el
     if cop_o_venti >= 0:
         write_vals(UUID["COP_o_venti"], cop_o_venti)
+    elif cop_o_venti > 10:
+        write_vals(UUID["COP_o_venti"], "0")
     else:
         write_vals(UUID["COP_o_venti"], "0")
     print(cop_o_venti)
