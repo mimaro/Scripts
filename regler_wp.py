@@ -140,13 +140,13 @@ def main():
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
     power_balance = get_vals(
-        UUID["PV_Produktion"], duration="-30min")["data"]["average"]
+        UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
     power_balance2 = get_vals(
-        UUID["PV_Produktion"], duration="-45min")["data"]["average"]
+        UUID["PV_Produktion"], duration="-60min")["data"]["average"]
     p_net2 = power_balance2 
     #logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
     
