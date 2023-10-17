@@ -145,13 +145,13 @@ class KebaController:
                 print("Error:", e)
             sendRequesttoKEBA("curr " + str(maxLadeStrom))
 
-    else:
-        try:
-            vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", str(controllerStrom))
-        except Exception as e:
-            # Handle the exception here
-            print("Error:", e)
-        sendRequesttoKEBA("curr " + str(reqToKEBA))
+        else:
+            try:
+                vz.sendData("e32099e0-6c1f-11e9-adfe-b7877ec8d38d", str(controllerStrom))
+            except Exception as e:
+                # Handle the exception here
+                print("Error:", e)
+            sendRequesttoKEBA("curr " + str(reqToKEBA))
 
 
     def stateChanged(self):
