@@ -26,6 +26,7 @@ UUID = {
     "I_Lade": "6e768290-6e5e-11ee-bd91-fd7700aa25ee",
     "Switch": "d9d09d00-6e5e-11ee-8a40-53ee17720f6a",
     "Power_F": "ac06a530-6e5f-11ee-b968-65b0d8af2151",
+    "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w"
     
 }
 
@@ -60,21 +61,39 @@ def main():
     # Connect to the Modbus device
     client.connect()
    
-    # Read a single register (function code 3 - Read Holding Registers)
+    # Read Charge State
     char_state_unpars = client.read_holding_registers(charge_state, 2, unit=1)
     char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     char_state_val = char_state_pars.decode_32bit_uint()
 
+    # Read current phase 1
+    curr_i_unpars = client.read_holding_registers(char_curr_1, 2, unit=1)
+    curr_i_pars = BinaryPayloadDecoder.fromRegisters(curr_i_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    curr_i_val = curr_p_pars.decode_32bit_uint()
 
-    switch_unpars = client.read_holding_registers(switch, 4, unit=1)
-    print(switch_unpars)
+    # Read active power
+    act_p_unpars = client.read_holding_registers(active_p, 2, unit=1)
+    act_p_pars = BinaryPayloadDecoder.fromRegisters(act_p_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    act_p_val = act_p_pars.decode_32bit_uint()
+
+
+    
+    #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
+    #print(switch_unpars)
     #switch_pars = BinaryPayloadDecoder.fromRegisters(switch_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     #switch_val = char_state_pars.decode_32bit_uint()
     
     print(f"Charge State: {char_state_val}")
+    print(f"Actual Charging Current 1: {curr_i_val}")
+    print(f"Actual Charging Power: {act_p_val}")
+
+
+
     #print(f"Switch State: {switch_val}")
        
-    #write_vals(UUID["F_Schnell"], val_home)
+    write_vals(UUID["Charge_State"], char_state_val)
+    write_vals(UUID["I_Lade"], curr_i_val)
+    write_vals(UUID["P_Aktiv"], act_p_val)
 
       
 
