@@ -18,26 +18,28 @@ VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&v
 #######################################################################################################
 # Configuration
 UUID = {
-    "P_Home_Bilanz": "e3fc7a80-6731-11ee-8571-5bf96a498b43",
-    "P_Home_Verbrauch": "85ffa8d0-683e-11ee-9486-113294e4804d",
-    "P_PV_Anlage": "0ece9080-6732-11ee-92bb-d5c31bcb9442",
-    "P_Warmepumpe": "1b029800-6732-11ee-ae2e-9715cbeba615",
     "P_Aktiv": "6cb255a0-6e5f-11ee-b899-c791d8058d25",
     "I_Lade": "6e768290-6e5e-11ee-bd91-fd7700aa25ee",
     "Switch": "d9d09d00-6e5e-11ee-8a40-53ee17720f6a",
     "Power_F": "ac06a530-6e5f-11ee-b968-65b0d8af2151",
-    "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w"
-    
+    "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w",
+    "I_Lade_max": "5d090380-6e79-11ee-80be-0b05d0846b56",
+    "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa"
 }
 
 server_ip = "192.168.178.59"
 server_port = 502
 unit_id = 255
+
+#Register
 charge_state= 1000
 char_curr_1 = 1008
 active_p = 1020
 vol_ph = 1040
 switch = 1550
+power_f = 1046
+i_max = 1100
+char_curr_v = 1040
 
 
 ###########################################################################################################
@@ -76,7 +78,20 @@ def main():
     act_p_pars = BinaryPayloadDecoder.fromRegisters(act_p_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     act_p_val = act_p_pars.decode_32bit_uint()
 
+    # Read active power factor
+    power_f_unpars = client.read_holding_registers(power_f, 2, unit=1)
+    power_f_pars = BinaryPayloadDecoder.fromRegisters(power_f_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    power_f_val = power_f_pars.decode_32bit_uint()
 
+     # Read active current max
+    curr_i_max_unpars = client.read_holding_registers(i_max, 2, unit=1)
+    curr_i_max_pars = BinaryPayloadDecoder.fromRegisters(curr_i_max_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    curr_i_max_val = curr_i_max_pars.decode_32bit_uint()
+
+     # Read active voltage phase 1
+    curr_v_unpars = client.read_holding_registers(charr_curr_v, 2, unit=1)
+    curr_v__pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    curr_v_val = curr_v_pars.decode_32bit_uint()
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
@@ -85,16 +100,20 @@ def main():
     
     print(f"Charge State: {char_state_val}")
     print(f"Actual Charging Current 1: {curr_i_val}")
+    print(f"Actual max. Charging Current: {curr_i_max_val}")
     print(f"Actual Charging Power: {act_p_val}")
-
-
+    print(f"Actual Power Factor: {power_f_val}")
+    print(f"Actual Voltage: {curr_v_val}")
+    
 
     #print(f"Switch State: {switch_val}")
        
     write_vals(UUID["Charge_State"], char_state_val)
     write_vals(UUID["I_Lade"], curr_i_val)
     write_vals(UUID["P_Aktiv"], act_p_val)
-
+    write_vals(UUID["Power_F"], power_f_val)
+    write_vals(UUID["I_Lade_max"], power_f_val)
+    write_vals(UUID["V_act"], curr_v_val)
       
 
 
