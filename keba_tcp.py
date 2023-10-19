@@ -80,12 +80,12 @@ def main():
     # Read current phase 1
     curr_i_unpars = client_keba.read_holding_registers(char_curr_1, 2, unit=1)
     curr_i_pars = BinaryPayloadDecoder.fromRegisters(curr_i_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    curr_i_val = curr_i_pars.decode_32bit_uint()
+    curr_i_val = curr_i_pars.decode_32bit_uint()/1000
 
     # Read active power
     act_p_unpars = client_keba.read_holding_registers(active_p, 2, unit=1)
     act_p_pars = BinaryPayloadDecoder.fromRegisters(act_p_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    act_p_val = act_p_pars.decode_32bit_uint()
+    act_p_val = act_p_pars.decode_32bit_uint()/1000
 
     # Read active power factor
     power_f_unpars = client_keba.read_holding_registers(power_f, 2, unit=1)
@@ -95,7 +95,7 @@ def main():
      # Read active current max
     curr_i_max_unpars = client_keba.read_holding_registers(i_max, 2, unit=1)
     curr_i_max_pars = BinaryPayloadDecoder.fromRegisters(curr_i_max_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    curr_i_max_val = curr_i_max_pars.decode_32bit_uint()
+    curr_i_max_val = curr_i_max_pars.decode_32bit_uint()/1000
 
      # Read active voltage phase 1
     curr_v_unpars = client_keba.read_holding_registers(char_curr_v, 2, unit=1)
