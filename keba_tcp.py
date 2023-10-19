@@ -119,7 +119,7 @@ def main():
     print(f"Actual Charging Power: {act_p_val}")
     print(f"Actual Power Factor: {power_f_val}")
     print(f"Actual Voltage: {curr_v_val}")
-    print(f"Actual Bilance: {pares_val_bil}")
+    print(f"Actual Bilance: {parsed_val_bil}")
 
     #print(f"Switch State: {switch_val}")
        
