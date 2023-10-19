@@ -33,9 +33,8 @@ server_port_keba = 502
 unit_id_keba = 255
 
 #Network SEL
-server_ip_sel = "192.168.178.59"
-server_port_sel = 502
-unit_id_sel = 255
+server_ip_sel = "192.168.178.40"
+server_port_sel = 1502
 
 #Register KEBA
 charge_state= 1000
@@ -48,8 +47,7 @@ i_max = 1100
 char_curr_v = 1040
 
 #Register SEL
-
-
+reg_bil = 10
 
 ###########################################################################################################
 
