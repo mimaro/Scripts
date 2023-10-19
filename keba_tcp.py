@@ -54,7 +54,7 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response1 = client.read_holding_registers(ser_num, count=2, unit=255).getRegister(1)
+        response1 = client.read_holding_registers(ser_num, unit=255).getRegister(0)
         
         print(response1)
        
