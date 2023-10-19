@@ -25,7 +25,8 @@ UUID = {
     "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w",
     "I_Lade_max": "5d090380-6e79-11ee-80be-0b05d0846b56",
     "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa",
-    "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c"
+    "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c",
+    "I_bil": "b95b68e0-6e8e-11ee-b0f1-f53999b676d0"
 }
 
 #Network KEBA
@@ -157,7 +158,7 @@ def main():
     write_vals(UUID["I_Lade_max"], power_f_val)
     write_vals(UUID["V_act"], curr_v_val)
     write_vals(UUID["I_opt"], i_opt)
-      
+    write_vals(UUID["I_bil"], val_bil_i)
 
 
     client_keba.close()
