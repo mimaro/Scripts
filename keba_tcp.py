@@ -57,7 +57,7 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response = client.read_holding_registers(charge_state, 1, unit=1)
+        response = client.read_holding_registers(ser_num, 1, unit=1)
     
         if not response.isError():
             # Extract the value from the response
