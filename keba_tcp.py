@@ -79,7 +79,7 @@ def main():
 
 
 
---------------
+#--------------
     
     # Create a Modbus TCP client
     #client = ModbusTcpClient(modbus_host, port=modbus_port)
