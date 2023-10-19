@@ -22,16 +22,23 @@ UUID = {
     "P_Home_Verbrauch": "85ffa8d0-683e-11ee-9486-113294e4804d",
     "P_PV_Anlage": "0ece9080-6732-11ee-92bb-d5c31bcb9442",
     "P_Warmepumpe": "1b029800-6732-11ee-ae2e-9715cbeba615",
-    "P_EIV": "96d53fc0-683f-11ee-bd3d-c5441b8ec095"
+    "P_Aktiv": "6cb255a0-6e5f-11ee-b899-c791d8058d25",
+    "I_Lade": "6e768290-6e5e-11ee-bd91-fd7700aa25ee",
+    "Switch": "d9d09d00-6e5e-11ee-8a40-53ee17720f6a",
+    "Power_F": "ac06a530-6e5f-11ee-b968-65b0d8af2151",
+    
 }
 
 server_ip = "192.168.178.59"
 server_port = 502
 unit_id = 255
-charge_state= 1036
+charge_state= 1000
 char_curr_1 = 1008
-char_curr_2 = 1010
-ser_num = 1014
+active_p = 1020
+vol_ph = 1040
+switch = 1550
+
+
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -53,16 +60,20 @@ def main():
     # Connect to the Modbus device
     client.connect()
    
-    try:
-        # Read a single register (function code 3 - Read Holding Registers)
-        char_state_unpars = client.read_holding_registers(charge_state, 2, unit=1)
-        char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-        char_state_val = char_state_pars.decode_32bit_uint()
-        print(char_state_val)
+    # Read a single register (function code 3 - Read Holding Registers)
+    char_state_unpars = client.read_holding_registers(charge_state, 2, unit=1)
+    char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    char_state_val = char_state_pars.decode_32bit_uint()
 
 
+    switch_unpars = client.read_holding_registers(switch, 2, unit=1)
+    switch_pars = BinaryPayloadDecoder.fromRegisters(switch_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    switch_val = char_state_pars.decode_32bit_uint()
+    
+    print(f"Charge State: {switch_val}")
+    
        
-
+    write_vals(UUID["F_Schnell"], val_home)
 
       
     finally:
@@ -127,9 +138,7 @@ def main():
         #print(f"Value Home: {val_home}")
         #print(f"Value EIV: {val_eiv}")
         
-    #finally:
-        # Close the Modbus connection
-        #client.close()
+   
 
     #write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
     #write_vals(UUID["P_Home_Verbrauch"], val_home)
