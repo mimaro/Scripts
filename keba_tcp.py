@@ -101,6 +101,12 @@ def main():
     curr_v_unpars = client_keba.read_holding_registers(char_curr_v, 2, unit=1)
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
+
+    # Read Wagenrain Bilanz
+    res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
+    val_bil = res_bil.registers
+    byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
+    parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
@@ -113,7 +119,7 @@ def main():
     print(f"Actual Charging Power: {act_p_val}")
     print(f"Actual Power Factor: {power_f_val}")
     print(f"Actual Voltage: {curr_v_val}")
-    
+    print(f"Actual Bilance: {pares_val_bil}")
 
     #print(f"Switch State: {switch_val}")
        
