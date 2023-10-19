@@ -76,9 +76,6 @@ def main():
     #write_vals(UUID["F_Schnell"], val_home)
 
       
-    finally:
-        # Close the connection
-        client.close()
 
 
 
