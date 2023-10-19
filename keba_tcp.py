@@ -50,6 +50,8 @@ power_f = 1046
 i_max = 1100
 char_curr_v = 1040
 set_curr = 5004
+failsafe_curr = 1600
+failsafe_timeout = 1602
 
 #Register SEL
 reg_bil = 10
@@ -111,11 +113,21 @@ def main():
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
 
-     # Read error Code
+    # Read error Code
     error_unpars = client_keba.read_holding_registers(error_code, 2, unit=1)
     error_pars = BinaryPayloadDecoder.fromRegisters(error_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     error_val = error_pars.decode_32bit_uint()
 
+    # Read Failsafe Current
+    fail_c_unpars = client_keba.read_holding_registers(failsafe_curr, 2, unit=1)
+    fail_c_pars = BinaryPayloadDecoder.fromRegisters(fail_c_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    fail_c_val = fail_c_pars.decode_32bit_uint()
+
+    # Read Failsafe Timeout
+    fail_t_unpars = client_keba.read_holding_registers(failsafe_timeout, 2, unit=1)
+    fail_t_pars = BinaryPayloadDecoder.fromRegisters(fail_t_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    fail_t_val = fail_t_pars.decode_32bit_uint()
+    
     # Read Wagenrain Bilanz
     res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
     val_bil = res_bil.registers
@@ -162,6 +174,8 @@ def main():
     print(f"Actual Bilance Ampere: {val_bil_i}")
     print(f"Actual Set Ampere: {i_opt}")
     print(f"Actual Error Code: {error_val}")
+    print(f"Failsafe Current: {fail_c_val}")
+    print(f"Failsafe timeout: {fail_t_val}")
 
     #print(f"Switch State: {switch_val}")
        
