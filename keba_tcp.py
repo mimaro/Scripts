@@ -70,10 +70,10 @@ def main():
     switch_pars = BinaryPayloadDecoder.fromRegisters(switch_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     switch_val = char_state_pars.decode_32bit_uint()
     
-    print(f"Charge State: {switch_val}")
-    
+    print(f"Charge State: {charge_state_val}")
+    print(f"Switch State: {switch_val}")
        
-    write_vals(UUID["F_Schnell"], val_home)
+    #write_vals(UUID["F_Schnell"], val_home)
 
       
     finally:
