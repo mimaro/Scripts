@@ -113,7 +113,7 @@ def main():
 
      # Read error Code
     error_unpars = client_keba.read_holding_registers(error_code, 2, unit=1)
-    error_pars = BinaryPayloadDecoder.fromRegisters(error_pars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    error_pars = BinaryPayloadDecoder.fromRegisters(error_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     error_val = error_pars.decode_32bit_uint()
 
     # Read Wagenrain Bilanz
