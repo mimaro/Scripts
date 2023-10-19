@@ -24,7 +24,8 @@ UUID = {
     "Power_F": "ac06a530-6e5f-11ee-b968-65b0d8af2151",
     "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w",
     "I_Lade_max": "5d090380-6e79-11ee-80be-0b05d0846b56",
-    "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa"
+    "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa",
+    "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c"
 }
 
 #Network KEBA
@@ -119,7 +120,18 @@ def main():
     else:
         val_bil_i = val_bil_i
 
-    keba_opt = 
+    # Berechne optimaler Ladestrom
+    if val_bil_i <= 0:
+        if keba_min_i + val_bil_i < keba_min_i:
+            i_opt = keba_min_i 
+        else:
+            i_opt = keba_min_i + val_bil_i
+    else:
+        if keba_min_i + val_bil_i > keba_max_i:
+            i_opt = keba_max_i
+        else:
+            i_opt = keba_min_i + val_bil_i
+        
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
@@ -134,6 +146,7 @@ def main():
     print(f"Actual Voltage: {curr_v_val}")
     print(f"Actual Bilance Watt: {parsed_val_bil}")
     print(f"Actual Bilance Ampere: {val_bil_i}")
+    print(f"Actual Set Ampere: {i_opt}")
 
     #print(f"Switch State: {switch_val}")
        
@@ -143,6 +156,7 @@ def main():
     write_vals(UUID["Power_F"], power_f_val)
     write_vals(UUID["I_Lade_max"], power_f_val)
     write_vals(UUID["V_act"], curr_v_val)
+    write_vals(UUID["I_opt"], i_opt)
       
 
 
