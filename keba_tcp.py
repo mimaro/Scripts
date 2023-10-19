@@ -53,8 +53,7 @@ def main():
     # Connect to the Modbus device
     client.connect()
     
-    # Connect to the server
-    client.connect()
+   
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
