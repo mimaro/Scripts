@@ -55,10 +55,10 @@ def main():
    
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        char_state = client.read_holding_registers(charge_state, 2, unit=1)
-        decoder = (BinaryPayloadDecoder.fromRegisters(char_state.registers, byteorder=Endian.Big, wordorder=Endian.Big)).decode_32bis_uint()
-        #value = decoder.decode_32bit_uint()
-        print(value)
+        char_state_upars = client.read_holding_registers(charge_state, 2, unit=1)
+        char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+        char_state_val = char_state_pars.decode_32bit_uint()
+        print(char_state_val)
 
 
        
