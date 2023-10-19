@@ -110,6 +110,10 @@ def main():
 
     # Berechne Bilanz Wagenrain in A
     val_bil_i = (parsed_val_bil / (curr_v_val+0.0001))*-1
+    if val_bil_i > 100:
+        val_bil_i = 0
+    else:
+        val_bil_i = val_bil_i
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
