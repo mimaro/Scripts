@@ -49,6 +49,10 @@ char_curr_v = 1040
 #Register SEL
 reg_bil = 10
 
+# Max / Min Values
+keba_max_i = 32
+keba_min_i = 10
+
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -114,6 +118,8 @@ def main():
         val_bil_i = 0
     else:
         val_bil_i = val_bil_i
+
+    keba_opt = 
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
