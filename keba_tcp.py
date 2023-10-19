@@ -47,6 +47,12 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
    
 def main():  
+    # Create a Modbus TCP client
+    client = ModbusTcpClient(modbus_host, port=modbus_port)
+
+    # Connect to the Modbus device
+    client.connect()
+    
     # Connect to the server
     client.connect()
 
