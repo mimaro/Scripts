@@ -29,7 +29,7 @@ unit_id = 1
 charge_state= 1000
 char_curr_1 = 1008
 char_curr_2 = 1010
-ser_num = 1014
+ser_num = 1016
 ###########################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -52,9 +52,6 @@ def main():
     # Connect to the server
     client.connect()
 
-    # Define the Modbus register address you want to read (e.g., register 1000)
-    register_address = 1000
-
     try:
         # Read a single register (function code 3 - Read Holding Registers)
         response = client.read_holding_registers(ser_num, 1, unit=1)
@@ -62,7 +59,7 @@ def main():
         if not response.isError():
             # Extract the value from the response
             value = response.registers[0]
-            print(f'Read register {register_address}: {value}')
+            print(f'Read register {ser_num}: {value}')
         else:
             print(f'Error reading register {register_address}: {response}')
     except Exception as e:
