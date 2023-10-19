@@ -52,15 +52,13 @@ def main():
 
     # Connect to the Modbus device
     client.connect()
-    
    
-
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response = client.read_holding_registers(1014, 2, unit=1)
-        decoder = BinaryPayloadDecoder.fromRegisters(response.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-        value = decoder.decode_32bit_uint()
-        print(f'Read register 1000: {value}')
+        char_state = client.read_holding_registers(charge_state, 2, unit=1)
+        decoder = (BinaryPayloadDecoder.fromRegisters(char_state.registers, byteorder=Endian.Big, wordorder=Endian.Big)).decode_32bis_uint()
+        #value = decoder.decode_32bit_uint()
+        print(value)
 
 
        
