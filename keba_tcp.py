@@ -96,7 +96,7 @@ def main():
     # Read active power factor
     power_f_unpars = client_keba.read_holding_registers(power_f, 2, unit=1)
     power_f_pars = BinaryPayloadDecoder.fromRegisters(power_f_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    power_f_val = power_f_pars.decode_32bit_uint()
+    power_f_val = power_f_pars.decode_32bit_uint()/1000
 
      # Read active current max
     curr_i_max_unpars = client_keba.read_holding_registers(i_max, 2, unit=1)
