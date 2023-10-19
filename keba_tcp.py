@@ -52,20 +52,11 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-       response = client.read_holding_registers(1000, 2, unit=1)
-    
-        if not response.isError():
-            # Extract the value from the response
-            decoder = BinaryPayloadDecoder.fromRegisters(response.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-            value = decoder.decode_32bit_uint()
-            print(f'Read register 1000: {value}')
-        else:
-            print(f'Error reading register 1000: {response}')
-    except Exception as e:
-        print(f'Error: {e}')
-    finally:
-        # Close the connection
-       client.close()
+        response = client.read_holding_registers(1000, 2, unit=1)
+        decoder = BinaryPayloadDecoder.fromRegisters(response.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+        value = decoder.decode_32bit_uint()
+        print(f'Read register 1000: {value}')
+
 
        
 
