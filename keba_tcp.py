@@ -47,6 +47,7 @@ switch = 1550
 power_f = 1046
 i_max = 1100
 char_curr_v = 1040
+set_curr = 5004
 
 #Register SEL
 reg_bil = 10
@@ -98,12 +99,12 @@ def main():
     power_f_pars = BinaryPayloadDecoder.fromRegisters(power_f_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     power_f_val = power_f_pars.decode_32bit_uint()/1000
 
-     # Read active current max
+    # Read active current max
     curr_i_max_unpars = client_keba.read_holding_registers(i_max, 2, unit=1)
     curr_i_max_pars = BinaryPayloadDecoder.fromRegisters(curr_i_max_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_i_max_val = curr_i_max_pars.decode_32bit_uint()/1000
 
-     # Read active voltage phase 1
+    # Read active voltage phase 1
     curr_v_unpars = client_keba.read_holding_registers(char_curr_v, 2, unit=1)
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
@@ -132,7 +133,12 @@ def main():
             i_opt = keba_max_i
         else:
             i_opt = keba_min_i + val_bil_i
-        
+
+    # Prüfe Position Wahlschalter Schnellladung / Optimierung
+
+    
+    # Kommunziere Ladestrom
+    client_keba.write_register(set_curr, 30000, unit=1)
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
