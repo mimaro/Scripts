@@ -138,7 +138,7 @@ def main():
 
     
     # Kommunziere Ladestrom
-    client_keba.write_register(set_curr, 30000, unit=1)
+    client_keba.write_register(set_curr, 32000, unit=1)
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
