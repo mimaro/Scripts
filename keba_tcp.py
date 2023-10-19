@@ -69,7 +69,7 @@ def main():
     # Read current phase 1
     curr_i_unpars = client.read_holding_registers(char_curr_1, 2, unit=1)
     curr_i_pars = BinaryPayloadDecoder.fromRegisters(curr_i_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    curr_i_val = curr_p_pars.decode_32bit_uint()
+    curr_i_val = curr_i_pars.decode_32bit_uint()
 
     # Read active power
     act_p_unpars = client.read_holding_registers(active_p, 2, unit=1)
