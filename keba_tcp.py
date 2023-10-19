@@ -22,7 +22,7 @@ UUID = {
     "I_Lade": "6e768290-6e5e-11ee-bd91-fd7700aa25ee",
     "Switch": "d9d09d00-6e5e-11ee-8a40-53ee17720f6a",
     "Power_F": "ac06a530-6e5f-11ee-b968-65b0d8af2151",
-    "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33w",
+    "Charge_State": "84d69ec0-6e76-11ee-9931-11a6e3c1cc33",
     "I_Lade_max": "5d090380-6e79-11ee-80be-0b05d0846b56",
     "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa",
     "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c",
