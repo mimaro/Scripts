@@ -58,38 +58,38 @@ def write_vals(uuid, val):
    
 def main():  
     # Create a Modbus TCP client
-    client = ModbusTcpClient(server_ip, port=server_port)
+    client_keba = ModbusTcpClient(server_ip, port=server_port)
 
     # Connect to the Modbus device
-    client.connect()
+    client_keba.connect()
    
     # Read Charge State
-    char_state_unpars = client.read_holding_registers(charge_state, 2, unit=1)
+    char_state_unpars = client_keba.read_holding_registers(charge_state, 2, unit=1)
     char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     char_state_val = char_state_pars.decode_32bit_uint()
 
     # Read current phase 1
-    curr_i_unpars = client.read_holding_registers(char_curr_1, 2, unit=1)
+    curr_i_unpars = client_keba.read_holding_registers(char_curr_1, 2, unit=1)
     curr_i_pars = BinaryPayloadDecoder.fromRegisters(curr_i_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_i_val = curr_i_pars.decode_32bit_uint()
 
     # Read active power
-    act_p_unpars = client.read_holding_registers(active_p, 2, unit=1)
+    act_p_unpars = client_keba.read_holding_registers(active_p, 2, unit=1)
     act_p_pars = BinaryPayloadDecoder.fromRegisters(act_p_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     act_p_val = act_p_pars.decode_32bit_uint()
 
     # Read active power factor
-    power_f_unpars = client.read_holding_registers(power_f, 2, unit=1)
+    power_f_unpars = client_keba.read_holding_registers(power_f, 2, unit=1)
     power_f_pars = BinaryPayloadDecoder.fromRegisters(power_f_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     power_f_val = power_f_pars.decode_32bit_uint()
 
      # Read active current max
-    curr_i_max_unpars = client.read_holding_registers(i_max, 2, unit=1)
+    curr_i_max_unpars = client_keba.read_holding_registers(i_max, 2, unit=1)
     curr_i_max_pars = BinaryPayloadDecoder.fromRegisters(curr_i_max_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_i_max_val = curr_i_max_pars.decode_32bit_uint()
 
      # Read active voltage phase 1
-    curr_v_unpars = client.read_holding_registers(char_curr_v, 2, unit=1)
+    curr_v_unpars = client_keba.read_holding_registers(char_curr_v, 2, unit=1)
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
     
