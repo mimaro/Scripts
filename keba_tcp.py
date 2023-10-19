@@ -54,8 +54,14 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response = client.read_holding_registers(ser_num, count = 4, unit_id)
-    
+        response1 = client.read_holding_registers(ser_num, count = 4, unit_id)
+        response2 = client.read_input_register(ser_num, count=1, unit=1).getRegister(0)
+
+        print(response1)
+        print(response2)
+
+
+        
         if not response.isError():
             # Extract the value from the response
             value = response.registers[0]
