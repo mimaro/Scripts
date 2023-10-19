@@ -89,8 +89,8 @@ def main():
     curr_i_max_val = curr_i_max_pars.decode_32bit_uint()
 
      # Read active voltage phase 1
-    curr_v_unpars = client.read_holding_registers(charr_curr_v, 2, unit=1)
-    curr_v__pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    curr_v_unpars = client.read_holding_registers(char_curr_v, 2, unit=1)
+    curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
