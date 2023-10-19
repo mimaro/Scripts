@@ -27,11 +27,17 @@ UUID = {
     "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa"
 }
 
-server_ip = "192.168.178.59"
-server_port = 502
-unit_id = 255
+#Network KEBA
+server_ip_keba = "192.168.178.59"
+server_port_keba = 502
+unit_id_keba = 255
 
-#Register
+#Network SEL
+server_ip_sel = "192.168.178.59"
+server_port_sel = 502
+unit_id_sel = 255
+
+#Register KEBA
 charge_state= 1000
 char_curr_1 = 1008
 active_p = 1020
@@ -58,10 +64,12 @@ def write_vals(uuid, val):
    
 def main():  
     # Create a Modbus TCP client
-    client_keba = ModbusTcpClient(server_ip, port=server_port)
+    client_keba = ModbusTcpClient(server_ip_keba, port=server_port_keba)
+    client_sel = ModbusTcpClient(server_ip_sel, port=server_port_sel)
 
     # Connect to the Modbus device
     client_keba.connect()
+    client_sel.connect()
    
     # Read Charge State
     char_state_unpars = client_keba.read_holding_registers(charge_state, 2, unit=1)
@@ -117,7 +125,8 @@ def main():
       
 
 
-
+    client_keba.close()
+    client_sel.close()
 
 
 
