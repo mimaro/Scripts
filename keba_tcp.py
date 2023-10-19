@@ -61,15 +61,7 @@ def main():
         #print(response2)
 
 
-        
-        if not response.isError():
-            # Extract the value from the response
-            value = response.registers[0]
-            print(f'Read register {ser_num}: {value}')
-        else:
-            print(f'Error reading register {register_address}: {response}')
-    except Exception as e:
-        print(f'Error: {e}')
+      
     finally:
         # Close the connection
         client.close()
