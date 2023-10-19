@@ -26,7 +26,8 @@ UUID = {
     "I_Lade_max": "5d090380-6e79-11ee-80be-0b05d0846b56",
     "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa",
     "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c",
-    "I_bil": "b95b68e0-6e8e-11ee-b0f1-f53999b676d0"
+    "I_bil": "b95b68e0-6e8e-11ee-b0f1-f53999b676d0",
+    "Error": "a23a3510-6ea6-11ee-a52a-650ae6b78585"
 }
 
 #Network KEBA
@@ -40,6 +41,7 @@ server_port_sel = 1502
 
 #Register KEBA
 charge_state= 1000
+error_code = 1006
 char_curr_1 = 1008
 active_p = 1020
 vol_ph = 1040
@@ -109,6 +111,11 @@ def main():
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
 
+     # Read error Code
+    error_unpars = client_keba.read_holding_registers(error_code, 2, unit=1)
+    error_pars = BinaryPayloadDecoder.fromRegisters(error_pars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    error_val = error_pars.decode_32bit_uint()
+
     # Read Wagenrain Bilanz
     res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
     val_bil = res_bil.registers
@@ -165,6 +172,7 @@ def main():
     write_vals(UUID["V_act"], curr_v_val)
     write_vals(UUID["I_opt"], i_opt)
     write_vals(UUID["I_bil"], val_bil_i)
+    write_vals(UUID["Error"], error_val)
 
 
     client_keba.close()
