@@ -57,7 +57,7 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response = client.read_holding_registers(1000, 2, unit=1)
+        response = client.read_holding_registers(1014, 2, unit=1)
         decoder = BinaryPayloadDecoder.fromRegisters(response.registers, byteorder=Endian.Big, wordorder=Endian.Big)
         value = decoder.decode_32bit_uint()
         print(f'Read register 1000: {value}')
