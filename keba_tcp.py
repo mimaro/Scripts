@@ -161,6 +161,7 @@ def main():
     print(f"Actual Bilance Watt: {parsed_val_bil}")
     print(f"Actual Bilance Ampere: {val_bil_i}")
     print(f"Actual Set Ampere: {i_opt}")
+    print(f"Actual Error Code: {error_val}")
 
     #print(f"Switch State: {switch_val}")
        
