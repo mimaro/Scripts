@@ -103,7 +103,7 @@ def main():
     curr_v_val = curr_v_pars.decode_32bit_uint()
 
     # Read Wagenrain Bilanz
-    res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
+    res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=unit_id)
     val_bil = res_bil.registers
     byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
     parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
