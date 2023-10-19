@@ -25,7 +25,7 @@ UUID = {
 
 server_ip = "192.168.178.59"
 server_port = 502
-unit_id = 1
+unit_id = 255
 charge_state= 1000
 char_curr_1 = 1008
 char_curr_2 = 1010
@@ -54,7 +54,7 @@ def main():
 
     try:
         # Read a single register (function code 3 - Read Holding Registers)
-        response1 = client.read_holding_registers(ser_num, 1, unit=255).registers[0]
+        response1 = client.read_holding_registers(ser_num, count=1, unit=255).getRegister(0)
         
         print(response1)
        
