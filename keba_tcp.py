@@ -196,73 +196,11 @@ def main():
     write_vals(UUID["I_bil"], val_bil_i)
     write_vals(UUID["Error"], error_val)
 
-
     client_keba.close()
     client_sel.close()
 
 
-
-
-
-
-#--------------
     
-    # Create a Modbus TCP client
-    #client = ModbusTcpClient(modbus_host, port=modbus_port)
-
-    # Connect to the Modbus device
-    #client.connect()
-
-
-    
-    #try:
-        # Read the registers as a block
-        #res_pv = client.read_input_registers(ser_num, count=8, unit=unit_id)
-        #res_bil = client.read_input_registers(reg_bil, count=2, unit=unit_id)
-        #res_wp = client.read_input_registers(reg_wp, count=2, unit=unit_id)
-
-        #print(res_pv)
-        # Extract the values from the response
-        #val_pv = res_pv.registers
-        #val_bil = res_bil.registers
-        #val_wp = res_wp.registers
-
-        # Combine the two registers into a single byte string
-        #byte_string_pv = struct.pack('>HH', val_pv[0], val_pv[1])
-        #byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])
-        #byte_string_wp = struct.pack('>HH', val_wp[0], val_wp[1])
-        
-        # Unpack the byte string as a signed integer (big-endian)
-        #parsed_val_pv = int((struct.unpack('>i', byte_string_pv)[0])/100*-1)
-        #if parsed_val_pv <= 0:
-        #    parsed_val_pv = 0
-        #else:
-        #    parsed_val_pv = parsed_val_pv        
-        #parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
-        #parsed_val_wp = int((struct.unpack('>i', byte_string_wp)[0])/100)
-        #val_home = parsed_val_bil+parsed_val_pv
-        #if parsed_val_pv <= 0:
-        #    val_eiv = 0
-        #elif parsed_val_bil > 0:
-        #    val_eiv = parsed_val_pv
-        #else:
-        #    val_eiv = val_home
-            
-        # Print the parsed integer
-        #print(f"Parsed Integer PV: {parsed_val_pv}")
-        #print(f"Parsed Integer Bil: {parsed_val_bil}")
-        #print(f"Parsed Integer WP: {parsed_val_wp}")
-        #print(f"Value Home: {val_home}")
-        #print(f"Value EIV: {val_eiv}")
-        
-   
-
-    #write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
-    #write_vals(UUID["P_Home_Verbrauch"], val_home)
-    #write_vals(UUID["P_PV_Anlage"], parsed_val_pv)
-    #write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
-    #write_vals(UUID["P_EIV"], val_eiv) 
-     
 if __name__ == "__main__":
     main()
     
