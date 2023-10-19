@@ -161,7 +161,7 @@ def main():
     write_vals(UUID["I_Lade"], curr_i_val)
     write_vals(UUID["P_Aktiv"], act_p_val)
     write_vals(UUID["Power_F"], power_f_val)
-    write_vals(UUID["I_Lade_max"], power_f_val)
+    write_vals(UUID["I_Lade_max"], curr_i_max_val)
     write_vals(UUID["V_act"], curr_v_val)
     write_vals(UUID["I_opt"], i_opt)
     write_vals(UUID["I_bil"], val_bil_i)
