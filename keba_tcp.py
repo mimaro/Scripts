@@ -52,6 +52,9 @@ char_curr_v = 1040
 set_curr = 5004
 failsafe_curr = 1600
 failsafe_timeout = 1602
+set_fail_curr = 5016
+set_fail_time = 5018
+set_fail = 5020
 
 #Register SEL
 reg_bil = 10
@@ -156,8 +159,12 @@ def main():
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
 
     
-    # Kommunziere Ladestrom
+    # Schreibe auf KEBA
     client_keba.write_register(set_curr, 32000, unit=1)
+    client_keba.write_register(set_fail_curr, 10000, unit=1)
+    client_keba.write_register(set_fail_time, 300, unit=1)
+    client_keba.write_register(set_fail, 1, unit=1)
+
     
     #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
     #print(switch_unpars)
