@@ -48,7 +48,7 @@ def write_vals(uuid, val):
    
 def main():  
     # Create a Modbus TCP client
-    client = ModbusTcpClient(modbus_host, port=modbus_port)
+    client = ModbusTcpClient(server_ip, port=server_port)
 
     # Connect to the Modbus device
     client.connect()
