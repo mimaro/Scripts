@@ -166,7 +166,7 @@ def main():
     switch = Button(2)
     switch_state = 0
 
-    if switch.when_pressed = True
+    if switch.when_pressed == True
         switch_state = 1
     else:
         switch_state = 0
