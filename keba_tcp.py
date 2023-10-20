@@ -168,7 +168,7 @@ def main():
 
     if switch.is_pressed:
         switch_state = 1
-    else.
+    else:
         switch_state = 0
     
    
