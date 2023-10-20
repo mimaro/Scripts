@@ -174,19 +174,15 @@ def main():
     # Schreibe auf KEBA
     if switch_state == 1:
         client_keba.write_register(set_curr, 32000, unit=1)
+        write_vals(UUID["I_opt"], 32)
     else:
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
+        write_vals(UUID["I_opt"], i_opt)
     
     client_keba.write_register(set_fail_curr, 10000, unit=1)
     client_keba.write_register(set_fail_time, 300, unit=1)
     client_keba.write_register(set_fail, 1, unit=1)
-
-    
-    #switch_unpars = client.read_holding_registers(switch, 4, unit=1)
-    #print(switch_unpars)
-    #switch_pars = BinaryPayloadDecoder.fromRegisters(switch_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
-    #switch_val = char_state_pars.decode_32bit_uint()
-    
+   
     print(f"Charge State: {char_state_val}")
     print(f"Switch State: {switch_state}")
     print(f"Actual Charging Current 1: {curr_i_val}")
@@ -200,9 +196,6 @@ def main():
     print(f"Actual Error Code: {error_val}")
     print(f"Failsafe Current: {fail_c_val}")
     print(f"Failsafe timeout: {fail_t_val}")
-   
-
-    #print(f"Switch State: {switch_val}")
        
     write_vals(UUID["Charge_State"], char_state_val)
     write_vals(UUID["I_Lade"], curr_i_val)
@@ -210,7 +203,6 @@ def main():
     write_vals(UUID["Power_F"], power_f_val)
     write_vals(UUID["I_Lade_max"], curr_i_max_val)
     write_vals(UUID["V_act"], curr_v_val)
-    write_vals(UUID["I_opt"], i_opt)
     write_vals(UUID["I_bil"], val_bil_i)
     write_vals(UUID["Error"], error_val)
     write_vals(UUID["Switch"], switch_state)
