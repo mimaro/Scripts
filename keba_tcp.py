@@ -175,9 +175,11 @@ def main():
     if switch_state == 1:
         client_keba.write_register(set_curr, 32000, unit=1)
         write_vals(UUID["I_opt"], 32)
+        print(f"Actual Set Ampere: 32 ")
     else:
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
         write_vals(UUID["I_opt"], i_opt)
+        print(f"Actual Set Ampere: {i_opt}")
     
     client_keba.write_register(set_fail_curr, 10000, unit=1)
     client_keba.write_register(set_fail_time, 300, unit=1)
@@ -192,7 +194,6 @@ def main():
     print(f"Actual Voltage: {curr_v_val}")
     print(f"Actual Bilance Watt: {parsed_val_bil}")
     print(f"Actual Bilance Ampere: {val_bil_i}")
-    print(f"Actual Set Ampere: {i_opt}")
     print(f"Actual Error Code: {error_val}")
     print(f"Failsafe Current: {fail_c_val}")
     print(f"Failsafe timeout: {fail_t_val}")
