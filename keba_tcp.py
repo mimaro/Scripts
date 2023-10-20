@@ -156,7 +156,7 @@ def main():
     print(f"New I opt: {i_balance_new}")
 
     if i_balance_new < keba_min_i:
-        i_opt = keba_min_i
+        i_opt = keba_min_i 
     elif i_balance_new > keba_max_i:
         i_opt = keba_max_i
     else:
@@ -171,13 +171,12 @@ def main():
     else:
         switch_state = 0
     
-   
-    print(switch_state)
-
- 
-    
     # Schreibe auf KEBA
-    client_keba.write_register(set_curr, 32000, unit=1)
+    if switch_state == 1:
+        client_keba.write_register(set_curr, 32000, unit=1)
+    else:
+        client_keba.write_register(set_curr, i_opt*1000, unit=1)
+    
     client_keba.write_register(set_fail_curr, 10000, unit=1)
     client_keba.write_register(set_fail_time, 300, unit=1)
     client_keba.write_register(set_fail, 1, unit=1)
