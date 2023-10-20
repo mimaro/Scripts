@@ -167,9 +167,11 @@ def main():
     switch_state = 0
 
     def switch_on():
+        global switch_state
         switch_state = 1
 
     def switch_off():
+        global switch_state
         switch_state = 0
     
     switch.when_pressed = switch_on()
