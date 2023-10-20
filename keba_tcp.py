@@ -9,6 +9,7 @@ import struct
 from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
+from gpiozero import Button
 
 #######################################################################################################
 # Format URLs
@@ -162,7 +163,18 @@ def main():
         i_opt = i_balance_new
 
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
+    switch = Button(2)
 
+    def switch_on:
+        switch = 1
+
+    def switch_off:
+        switch = 0
+    
+    switch.when_pressed = switch_on()
+    switch.when_released = switch_off()
+
+    print(switch)
     
     # Schreibe auf KEBA
     client_keba.write_register(set_curr, 32000, unit=1)
