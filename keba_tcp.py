@@ -164,6 +164,7 @@ def main():
 
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
     switch = Button(2)
+    switch_state = 0
 
     def switch_on():
         switch_state = 1
