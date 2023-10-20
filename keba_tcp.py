@@ -165,10 +165,10 @@ def main():
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
     switch = Button(2)
 
-    def switch_on:
+    def switch_on():
         switch = 1
 
-    def switch_off:
+    def switch_off():
         switch = 0
     
     switch.when_pressed = switch_on()
