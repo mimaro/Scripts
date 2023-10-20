@@ -152,7 +152,7 @@ def main():
 
     if i_balance_new < keba_min_i:
         i_opt = keba_min_i
-    elif balance_new > keba_max_i:
+    elif i_balance_new > keba_max_i:
         i_opt = keba_max_i
     else:
         i_opt = i_balance_new
