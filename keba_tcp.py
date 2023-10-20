@@ -146,10 +146,6 @@ def main():
     else:
         val_bil_i = val_bil_i
 
-    ==> positiver Wert wenn überschuss
-    ==> negativer wert wenn netzbezug
-
-
     # Berechne optimaler Ladestrom
     i_balance = get_vals(UUID["I_opt"], duration="-1min")["data"]["average"]
     i_balance_new = i_balance + val_bil_i
