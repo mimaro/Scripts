@@ -138,7 +138,7 @@ def main():
     parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
 
     # Berechne Bilanz Wagenrain in A
-    val_bil_i = ((parsed_val_bil) / (230))
+    val_bil_i = ((parsed_val_bil) / (230))*-1
     if val_bil_i > 100:
         val_bil_i = 0
     elif val_bil_i < -100:
@@ -146,25 +146,20 @@ def main():
     else:
         val_bil_i = val_bil_i
 
-    ==> negativer Wert wenn überschuss
-    ==> positiber wert wenn netzbezug
+    ==> positiver Wert wenn überschuss
+    ==> negativer wert wenn netzbezug
 
 
-    
     # Berechne optimaler Ladestrom
-    if val_bil_i <= 0: # Situation bei Überschuss
-        if val_bil_i > -10
-            i_opt = keba_min_i
-        
-        keba_min_i + val_bil_i < keba_min_i:
-            i_opt = keba_min_i 
-        else:
-            i_opt = keba_min_i + val_bil_i
+    i_balance = get_vals(UUID["I_opt"], duration="-1min")["data"]["average"]
+    i_balance_new = i_balance + val_bil_i
+
+    if i_balance_new < keba_min_i:
+        i_opt = keba_min_i
+    elif balance_new > keba_max_i:
+        i_opt = keba_max_i
     else:
-        if keba_min_i + val_bil_i > keba_max_i:
-            i_opt = keba_max_i
-        else:
-            i_opt = keba_min_i + val_bil_i
+        i_opt = i_balance_new
 
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
 
