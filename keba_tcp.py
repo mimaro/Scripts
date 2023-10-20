@@ -148,7 +148,11 @@ def main():
 
     # Berechne optimaler Ladestrom
     i_balance = get_vals(UUID["I_opt"], duration="-1min")["data"]["average"]
+    print(f"Old I opt: {i_balance}")
+    print(f"actual bilance: {val_bil_i}")
+    
     i_balance_new = i_balance + val_bil_i
+    print(f"New I opt: {i_balance_new}")
 
     if i_balance_new < keba_min_i:
         i_opt = keba_min_i
