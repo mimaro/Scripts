@@ -166,12 +166,20 @@ def main():
     switch = Button(2)
     switch_state = 0
 
-    if switch.when_pressed == True
+    
+    def switch_on():
+        global switch_state
         switch_state = 1
-    else:
-        switch_state = 0
+        print("Switch is ON")
 
-    print(switch_state)
+    def switch_off():
+        global switch_state
+        switch_state = 0
+        print("Switch is OFF")
+
+    switch.when_pressed = switch_on
+    switch.when_released = switch_off
+
     
     # Schreibe auf KEBA
     client_keba.write_register(set_curr, 32000, unit=1)
