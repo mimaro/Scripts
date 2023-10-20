@@ -188,6 +188,7 @@ def main():
     #switch_val = char_state_pars.decode_32bit_uint()
     
     print(f"Charge State: {char_state_val}")
+    print(f"Switch State: {switch_state}")
     print(f"Actual Charging Current 1: {curr_i_val}")
     print(f"Actual max. Charging Current: {curr_i_max_val}")
     print(f"Actual Charging Power: {act_p_val}")
@@ -199,6 +200,7 @@ def main():
     print(f"Actual Error Code: {error_val}")
     print(f"Failsafe Current: {fail_c_val}")
     print(f"Failsafe timeout: {fail_t_val}")
+   
 
     #print(f"Switch State: {switch_val}")
        
@@ -211,6 +213,7 @@ def main():
     write_vals(UUID["I_opt"], i_opt)
     write_vals(UUID["I_bil"], val_bil_i)
     write_vals(UUID["Error"], error_val)
+    write_vals(UUID["Switch"], switch_state)
 
     client_keba.close()
     client_sel.close()
