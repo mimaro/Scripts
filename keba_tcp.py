@@ -166,16 +166,10 @@ def main():
     switch = Button(2)
     switch_state = 0
 
-    def switch_on():
-        global switch_state
+    if switch.when_pressed == true
         switch_state = 1
-
-    def switch_off():
-        global switch_state
+    else:
         switch_state = 0
-    
-    switch.when_pressed = switch_on()
-    switch.when_released = switch_off()
 
     print(switch_state)
     
