@@ -180,11 +180,24 @@ def main():
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
         write_vals(UUID["I_opt"], i_opt)
         print(f"Actual Set Ampere: {i_opt}")
-    
+
+    # Schreibe Failsafe Register KEBA
     client_keba.write_register(set_fail_curr, 10000, unit=1)
     client_keba.write_register(set_fail_time, 300, unit=1)
     client_keba.write_register(set_fail, 1, unit=1)
-   
+
+    # Schreibe UUID's vz
+    write_vals(UUID["Charge_State"], char_state_val)
+    write_vals(UUID["I_Lade"], curr_i_val)
+    write_vals(UUID["P_Aktiv"], act_p_val)
+    write_vals(UUID["Power_F"], power_f_val)
+    write_vals(UUID["I_Lade_max"], curr_i_max_val)
+    write_vals(UUID["V_act"], curr_v_val)
+    write_vals(UUID["I_bil"], val_bil_i)
+    write_vals(UUID["Error"], error_val)
+    write_vals(UUID["Switch"], switch_state)
+
+    # Schreibe Rückmeldung Terminal
     print(f"Charge State: {char_state_val}")
     print(f"Switch State: {switch_state}")
     print(f"Actual Charging Current 1: {curr_i_val}")
@@ -198,21 +211,9 @@ def main():
     print(f"Failsafe Current: {fail_c_val}")
     print(f"Failsafe timeout: {fail_t_val}")
        
-    write_vals(UUID["Charge_State"], char_state_val)
-    write_vals(UUID["I_Lade"], curr_i_val)
-    write_vals(UUID["P_Aktiv"], act_p_val)
-    write_vals(UUID["Power_F"], power_f_val)
-    write_vals(UUID["I_Lade_max"], curr_i_max_val)
-    write_vals(UUID["V_act"], curr_v_val)
-    write_vals(UUID["I_bil"], val_bil_i)
-    write_vals(UUID["Error"], error_val)
-    write_vals(UUID["Switch"], switch_state)
-
     client_keba.close()
     client_sel.close()
 
-
-    
 if __name__ == "__main__":
     main()
     
