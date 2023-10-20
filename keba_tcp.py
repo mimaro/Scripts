@@ -166,15 +166,15 @@ def main():
     switch = Button(2)
 
     def switch_on():
-        switch = 1
+        switch_state = 1
 
     def switch_off():
-        switch = 0
+        switch_state = 0
     
     switch.when_pressed = switch_on()
     switch.when_released = switch_off()
 
-    print(switch)
+    print(switch_state)
     
     # Schreibe auf KEBA
     client_keba.write_register(set_curr, 32000, unit=1)
