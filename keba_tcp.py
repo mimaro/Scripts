@@ -138,7 +138,7 @@ def main():
     parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
 
     # Berechne Bilanz Wagenrain in A
-    val_bil_i = (parsed_val_bil / (curr_v_val+0.0000001))*-1
+    val_bil_i = ((parsed_val_bil/1000) / (curr_v_val+0.0000001))*-1
     if val_bil_i > 100:
         val_bil_i = 0
     else:
