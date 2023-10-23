@@ -32,7 +32,7 @@ UUID = {
 }
 
 #Network KEBA
-server_ip_keba = "192.168.178.59"
+server_ip_keba = "192.168.178.61"
 server_port_keba = 502
 unit_id_keba = 255
 
