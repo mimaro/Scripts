@@ -145,30 +145,17 @@ def main():
     parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)
 
     # Berechne Bilanz Wagenrain in A
-    val_bil_i = ((parsed_val_bil-bil_offset) / (230))*-1
-    if val_bil_i > 100:
-        val_bil_i = 0
-    elif val_bil_i < -100:
-        val_bil_i = 0
-    else:
-        val_bil_i = val_bil_i
-
-    val_bil_i_max = val_bil_i
+    val_bil_i = ((parsed_val_bil-bil_offset) / (curr_v_val))*-1
     
-    if val_bil_i_max > 0.5:  # Begrenzung der Änderung der Ladeleistung
-        val_bil_i_max = 0.5
-    if val_bil_i_max < -0.5:
-        val_bil_i_max = -0.5
-    else:
-        val_bil_i_max = val_bil_i_max
-
     # Berechne optimaler Ladestrom
     i_balance = get_vals(UUID["I_opt"], duration="-0min")["data"]["average"]
     print(f"Old I opt: {i_balance}")
     print(f"actual bilance: {val_bil_i}")
-    print(f"actual bilance max. {val_bil_i_max}")
-    
-    i_balance_new = i_balance + val_bil_i_max
+
+    if val_bil_i > 0  # Bezug von Netz:
+        i_balance_new = i_balance + val_bil_i/3
+    else: # Überschuss ins Netz
+        i_balance_new = i_balance + val_bil_i/5
     print(f"New I opt: {i_balance_new}")
 
     if i_balance_new < keba_min_i:
