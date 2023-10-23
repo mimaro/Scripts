@@ -152,7 +152,7 @@ def main():
     print(f"Old I opt: {i_balance}")
     print(f"actual bilance: {val_bil_i}")
 
-    if val_bil_i > 0  # Bezug von Netz:
+    if val_bil_i > 0:  # Bezug von Netz
         i_balance_new = i_balance + val_bil_i/3
     else: # Überschuss ins Netz
         i_balance_new = i_balance + val_bil_i/5
