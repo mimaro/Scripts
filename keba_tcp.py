@@ -121,7 +121,7 @@ def main():
     if curr_v_val == 0:
         curr_v_val = 230
     else:
-        curr_v_val = cur_v_val
+        curr_v_val = curr_v_val
     
     # Read error Code
     error_unpars = client_keba.read_holding_registers(error_code, 2, unit=1)
