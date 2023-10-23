@@ -133,7 +133,7 @@ def main():
     fail_t_pars = BinaryPayloadDecoder.fromRegisters(fail_t_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     fail_t_val = fail_t_pars.decode_32bit_uint()
     
-    # Read Wagenrain Bilanz
+    # Read Wagenrain SEL Bilanz
     res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
     val_bil = res_bil.registers
     byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
@@ -158,7 +158,7 @@ def main():
         val_bil_i_max = val_bil_i_max
 
     # Berechne optimaler Ladestrom
-    i_balance = get_vals(UUID["I_opt"], duration="-5min")["data"]["average"]
+    i_balance = get_vals(UUID["I_opt"], duration="-0min")["data"]["average"]
     print(f"Old I opt: {i_balance}")
     print(f"actual bilance: {val_bil_i}")
     print(f"actual bilance max. {val_bil_i_max}")
