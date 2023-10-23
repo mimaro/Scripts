@@ -187,14 +187,14 @@ def main():
         i_opt = 10
     
     # Schreibe auf KEBA
-    if switch_state == 1:
-        client_keba.write_register(set_curr, 32000, unit=1)
-        write_vals(UUID["I_opt"], 32)
-        print(f"Actual Set Ampere: 32 ")
-    else:
+    if switch_state == 0:
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
         write_vals(UUID["I_opt"], i_opt)
         print(f"Actual Set Ampere: {i_opt}")
+    else:
+        client_keba.write_register(set_curr, 32000, unit=1)
+        write_vals(UUID["I_opt"], 32)
+        print(f"Actual Set Ampere: 32 ")
 
     # Schreibe Failsafe Register KEBA
     client_keba.write_register(set_fail_curr, 10000, unit=1)
