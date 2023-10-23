@@ -63,7 +63,7 @@ reg_bil = 10
 # Max / Min Values
 keba_max_i = 32
 keba_min_i = 10
-bil_offset = 200 
+bil_offset = 0 
 
 ###########################################################################################################
 
@@ -118,6 +118,11 @@ def main():
     curr_v_pars = BinaryPayloadDecoder.fromRegisters(curr_v_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     curr_v_val = curr_v_pars.decode_32bit_uint()
 
+    if curr_v_val == 0:
+        curr_v_val = 230
+    else:
+        curr_v_val = cur_v_val
+    
     # Read error Code
     error_unpars = client_keba.read_holding_registers(error_code, 2, unit=1)
     error_pars = BinaryPayloadDecoder.fromRegisters(error_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
