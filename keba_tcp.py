@@ -178,6 +178,10 @@ def main():
         switch_state = 1
     else:
         switch_state = 0
+
+    # Prüfe ob Anlage in Betrieb 
+    if char_state_val < 2:
+        i_opt = 10
     
     # Schreibe auf KEBA
     if switch_state == 1:
