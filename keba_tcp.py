@@ -147,12 +147,20 @@ def main():
     else:
         val_bil_i = val_bil_i
 
+    val_bil_i_max = val_bil_i
+    
+    if val_bil_i_max > 2:  # Begrenzung der Änderung der Ladeleistung
+        val_bil_i_max = 2
+    else:
+        val_bil_i_max = val_bil_i_max
+
     # Berechne optimaler Ladestrom
     i_balance = get_vals(UUID["I_opt"], duration="-1min")["data"]["average"]
     print(f"Old I opt: {i_balance}")
     print(f"actual bilance: {val_bil_i}")
+    print(f"actual bilance max. {val_bil_i_max}")
     
-    i_balance_new = i_balance + val_bil_i
+    i_balance_new = i_balance + val_bil_i_max
     print(f"New I opt: {i_balance_new}")
 
     if i_balance_new < keba_min_i:
