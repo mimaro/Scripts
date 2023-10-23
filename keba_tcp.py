@@ -150,8 +150,8 @@ def main():
 
     val_bil_i_max = val_bil_i
     
-    if val_bil_i_max > 2:  # Begrenzung der Änderung der Ladeleistung
-        val_bil_i_max = 2
+    if val_bil_i_max > 5:  # Begrenzung der Änderung der Ladeleistung
+        val_bil_i_max = 5
     else:
         val_bil_i_max = val_bil_i_max
 
