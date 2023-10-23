@@ -168,7 +168,7 @@ def main():
     elif i_balance_new > keba_max_i:
         i_opt = keba_max_i
     else:
-        i_opt = i_balance_new
+        i_opt = int(i_balance_new)
 
     # Prüfe Position Wahlschalter Schnellladung / Optimierung
     switch = Button(2)
