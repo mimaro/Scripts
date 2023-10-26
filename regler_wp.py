@@ -149,18 +149,17 @@ def main():
      
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonderbetrieb ----------") 
     b_freigabe_wp = 0
-    b_sperrung_wp = 0
+    #b_sperrung_wp = 0
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
-    power_balance = get_vals(
-        UUID["PV_Produktion"], duration="-45min")["data"]["average"]
+    power_balance = get_vals(UUID["PV_Produktion"], duration="-45min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
-    power_balance2 = get_vals(
-        UUID["PV_Produktion"], duration="-60min")["data"]["average"]
-    p_net2 = power_balance2 
+    #power_balance2 = get_vals(
+    #    UUID["PV_Produktion"], duration="-60min")["data"]["average"]
+    #p_net2 = power_balance2 
     #logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
     
     # Aktuelle Einschaltschwelle Sonderbetrieb    
@@ -169,18 +168,30 @@ def main():
     #logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
     
     # Aktuelle Ausschaltschwelle Sonderbetrieb
-    p_sperrung_now = p_freigabe_now-SPERRUNG_HYST
+    #p_sperrung_now = p_freigabe_now-SPERRUNG_HYST
     #logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
+
+    #Abfragen aktuelle Freigabe auf Grund Solarüberschuss
+    akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
+
+    if akt_freigabe_wp == 1:
+        if p_net > (p_freigabe_now - 500): #Freigabe WP auf Grund von PV-Leistung
+            b_freigabe_wp = 1
+        else:
+            b_freigabe_wp = 0
+    else:
+        if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
+            b_freigabe_wp = 1
+        else:
+            b_freigabe_wp = 0
     
-    if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
-        b_freigabe_wp = 1
-    if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
-        b_sperrung_wp = 1
+    #if p_net2 < p_sperrung_now: #Sperrung WP auf Grund von PV-Leistung
+    #    b_sperrung_wp = 1
     
     write_vals(UUID["Freigabe_WP"], b_freigabe_wp) # Aktiv wenn ausreichend PV Leistung vorhanden
-    write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
+    #write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
     logging.info("30 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
-    logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
+    #logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
     T_Freigabe_max = 0
