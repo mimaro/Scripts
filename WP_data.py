@@ -120,7 +120,7 @@ write_vals(UUID["T_SOLL_HK2"], T_vl_hk2_soll)
 write_vals(UUID["T_SOLL_HK1"], T_vl_hk1_soll)
 write_vals(UUID["P_WP_Therm"], P_WP_therm)
 
-if T_vl_wp_ist >= 40:
+if betriebszustand == 5:
     write_vals(UUID["P_WP_Therm_WW"], P_WP_therm)
 else:
     write_vals(UUID["P_WP_Therm_RW"], P_WP_therm)
