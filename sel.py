@@ -98,20 +98,20 @@ def main():
         # Close the Modbus connection
         client.close()
 
-    akt_betriebszustand = get_vals(UUID["Betriebszustand"], duration="-0min")["data"]["average"]
+akt_betriebszustand = get_vals(UUID["Betriebszustand"], duration="-0min")["data"]["average"]
 
-    if akt_betriebszustand == 5:
-        write_vals(UUID["P_Warmepumpe_WW"], parsed_val_wp)
-        write_vals(UUID["P_Warmepumpe_RW"], 0)
-    else:
-        write_vals(UUID["P_Warmepumpe_RW"], parsed_val_wp)
-        write_vals(UUID["P_Warmepumpe_WW"], 0)
+if akt_betriebszustand == 5:
+    write_vals(UUID["P_Warmepumpe_WW"], parsed_val_wp)
+    write_vals(UUID["P_Warmepumpe_RW"], 0)
+else:
+    write_vals(UUID["P_Warmepumpe_RW"], parsed_val_wp)
+    write_vals(UUID["P_Warmepumpe_WW"], 0)
     
-    write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
-    write_vals(UUID["P_Home_Verbrauch"], val_home)
-    write_vals(UUID["P_PV_Anlage"], parsed_val_pv)
-    write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
-    write_vals(UUID["P_EIV"], val_eiv) 
+write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
+write_vals(UUID["P_Home_Verbrauch"], val_home)
+write_vals(UUID["P_PV_Anlage"], parsed_val_pv)
+write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
+write_vals(UUID["P_EIV"], val_eiv) 
 
      
 if __name__ == "__main__":
