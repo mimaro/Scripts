@@ -200,11 +200,7 @@ def main():
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-      
-  
     
-      
-        -----------
     akt_freigabe_verz_Tag = get_vals(
         UUID["t_Verzoegerung_Tag"], duration="-0min")["data"]["average"]
     akt_sperrung_Tag = get_vals(
