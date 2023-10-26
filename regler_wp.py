@@ -66,6 +66,7 @@ T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 26.0 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
+T_Tag_hyst = 0.2
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
@@ -219,24 +220,24 @@ def main():
 
     # Aktuelle Sperrung Absenkbetrien Temp zu hoch
     if akt_freigabe_verz_Tag == 1:  
-        if RT_akt_EG > (T_min_Tag - 0.2): #Sperrung WP wenn Raumtemp EG zu hoch
+        if RT_akt_EG > (T_min_Tag - T_Tag_hyst): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_min = 1  
         else:
             T_Freigabe_min = 0  
     else:
-        if RT_akt_EG > (T_min_Tag + 0.2): #Sperrung WP wenn Raumtemp EG zu hoch
+        if RT_akt_EG > (T_min_Tag + T_Tag_hyst): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_min = 1  
         else:
             T_Freigabe_min = 0  
 
     # Aktuelle Sperrung Sonderbetrieb wegen Temp zu hoch
     if akt_sperrung_Tag == 1:  
-        if RT_akt_EG > (max_Tag_EG - 0.5): #Sperrung WP wenn Raumtemp EG zu hoch
+        if RT_akt_EG > (max_Tag_EG - T_Tag_hyst): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_max = 1
         else:
             T_Freigabe_max = 0
     else:
-        if RT_akt_EG > T_max_Tag_EG: #Freigabe WP Sperrung wenn Raumtemp max -0.5°C
+        if RT_akt_EG > (T_max_Tag_EG + T_Tag_hyst: #Freigabe WP Sperrung wenn Raumtemp max -0.5°C
             T_Freigabe_max = 1
         else:
             T_Freigabe_max = 0
@@ -307,7 +308,7 @@ def main():
         else:
             Ww_ein = 0
     else:
-        if ww_temp < (ww_soll-5):
+        if ww_temp < (ww_soll-ww_hyst):
             Ww_ein = 1
         else:
             Ww_ein = 0
