@@ -301,7 +301,7 @@ def main():
 
     logging.info("Aktuelle WW-Speichertemp mitte: {}".format(ww_temp))
 
-    if betriebszustand == 5
+    if betriebszustand == 5:
         if ww_temp < ww_soll:
             Ww_ein = 1
         else:
