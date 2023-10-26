@@ -20,7 +20,9 @@ UUID = {
     "P_Home_Verbrauch": "85ffa8d0-683e-11ee-9486-113294e4804d",
     "P_PV_Anlage": "0ece9080-6732-11ee-92bb-d5c31bcb9442",
     "P_Warmepumpe": "1b029800-6732-11ee-ae2e-9715cbeba615",
-    "P_EIV": "96d53fc0-683f-11ee-bd3d-c5441b8ec095"
+    "P_EIV": "96d53fc0-683f-11ee-bd3d-c5441b8ec095",
+    "P_Warmepumpe_WW": "a5ba4740-73dc-11ee-a50c-e5d033b0048f",
+    "P_Warmepumpe_RW": "a9017680-73dc-11ee-9767-9f1216ff8467"
 }
 
 modbus_host = "192.168.178.40"
@@ -99,6 +101,7 @@ def main():
     write_vals(UUID["P_PV_Anlage"], parsed_val_pv)
     write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
     write_vals(UUID["P_EIV"], val_eiv) 
+
      
 if __name__ == "__main__":
     main()
