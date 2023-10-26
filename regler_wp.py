@@ -78,7 +78,7 @@ T_FREIGABE_MAX = 10
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
-ww_soll = 53
+ww_soll = 52
 ww_aus = 52 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
 ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
 
@@ -297,19 +297,27 @@ def main():
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
         
     ww_temp = get_vals(UUID["WW_Temp_mitte"], duration="-1min")["data"]["average"]
-    akt_betriebsart = get_vals(UUID["T_Absenk_F"], duration="-0min")["data"]["average"]
+    betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
 
-    
     logging.info("Aktuelle WW-Speichertemp mitte: {}".format(ww_temp))
 
-    if 
+    if betriebszustand == 5
+        if ww_temp < ww_soll:
+            Ww_ein = 1
+        else:
+            Ww_ein = 0
+    else:
+        if ww_temp < (ww_soll-5):
+            Ww_ein = 1
+        else:
+            Ww_ein = 0
+    
+    #if ww_temp >= ww_aus:
+    #    Ww_aus = 1
+    
+    #if (ww_aus - ww_temp) > ww_hyst:  
+    #    Ww_ein = 1
 
-    
-    if ww_temp >= ww_aus:
-        Ww_aus = 1
-    
-    if (ww_aus - ww_temp) > ww_hyst:  
-        Ww_ein = 1
     
     if now.time() > Ww_start and now.time() < Ww_stop:
         ww_time = 1
@@ -318,8 +326,8 @@ def main():
     write_vals(UUID["WW_Ein"], Ww_ein) 
     
     
-    logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
-    logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
+    logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,Ww_ein))
+    #logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
    
      
@@ -327,7 +335,7 @@ def main():
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
          
-    if (ww_time and Ww_aus == 0) or (ww_time and Ww_ein):
+    if ww_time and Ww_ein:
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         time.sleep(5)
