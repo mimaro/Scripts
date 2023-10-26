@@ -175,7 +175,7 @@ def main():
     akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
 
     if akt_freigabe_wp == 1:
-        if p_net > p_freigabe_now: #Freigabe WP auf Grund von PV-Leistung
+        if p_net > (p_freigabe_now - 200): #Freigabe WP auf Grund von PV-Leistung
             b_freigabe_wp = 1
         else:
             b_freigabe_wp = 0
