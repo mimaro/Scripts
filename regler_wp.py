@@ -237,7 +237,7 @@ def main():
         else:
             T_Freigabe_max = 0
     else:
-        if RT_akt_EG > (T_max_Tag_EG + T_Tag_hyst: #Freigabe WP Sperrung wenn Raumtemp max -0.5°C
+        if RT_akt_EG > (T_max_Tag_EG + T_Tag_hyst): #Freigabe WP Sperrung wenn Raumtemp max -0.5°C
             T_Freigabe_max = 1
         else:
             T_Freigabe_max = 0
