@@ -122,7 +122,9 @@ write_vals(UUID["P_WP_Therm"], P_WP_therm)
 
 if betriebszustand == 5:
     write_vals(UUID["P_WP_Therm_WW"], P_WP_therm)
+    write_vals(UUID["P_WP_Therm_RW"], 0)
 else:
+    write_vals(UUID["P_WP_Therm_WW"], 0)
     write_vals(UUID["P_WP_Therm_RW"], P_WP_therm)
   
 
