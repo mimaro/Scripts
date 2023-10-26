@@ -294,7 +294,7 @@ def main():
          
     if (ww_time and Ww_aus == 0) or (ww_time and Ww_ein):
         logging.info(f"WW-Betrieb") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2))
+        CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         time.sleep(5)
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)      
            
