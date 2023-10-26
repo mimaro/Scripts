@@ -29,7 +29,9 @@ UUID = {
     "T_SOLL_HK2": "911a3ea0-6523-11ee-8114-1fa309bb814a",
     "T_SOLL_HK1": "a2197880-6523-11ee-88a3-950f5e8f1efc",
     "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887",
-    "P_WP_Therm": "69630320-6522-11ee-9e09-ebb553e47b70"
+    "P_WP_Therm": "69630320-6522-11ee-9e09-ebb553e47b70",
+    "P_WP_Therm_WW": "8cfcadb0-73dc-11ee-b8cf-3975a73c8c72",
+    "P_WP_Therm_RW": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5"
 }
 
 REGISTER = {
