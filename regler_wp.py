@@ -217,7 +217,7 @@ def main():
     akt_sperrung_Tag = get_vals(UUID["t_Sperrung_Tag"], duration="-0min")["data"]["average"]
     akt_abesenk = get_vals(UUID["T_Absenk_F"], duration="-0min")["data"]["average"]
 
-    # Aktuelle Verzögerung Tag ein
+    # Aktuelle Sperrung Absenkbetrien Temp zu hoch
     if akt_freigabe_verz_Tag == 1:  
         if RT_akt_EG > (T_min_Tag - 0.2): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_min = 1  
@@ -229,7 +229,7 @@ def main():
         else:
             T_Freigabe_min = 0  
 
-    # Aktuelle Ausschaltung Tag aus
+    # Aktuelle Sperrung Sonderbetrieb wegen Temp zu hoch
     if akt_sperrung_Tag == 1:  
         if RT_akt_EG > (max_Tag_EG - 0.5): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_max = 1
@@ -241,19 +241,19 @@ def main():
         else:
             T_Freigabe_max = 0
 
-    # Aktuelle Ausschaltung Absenk aus
-    if T_Freigabe_min == 1:
-        T_Freigabe_Absenk = 0
-    else:
-        T_Freigabe_Absenk = 1
+    # Aktuelle Sperrung Absenkbetrieb
+    #if T_Freigabe_min == 1:
+    #    T_Freigabe_Absenk = 0
+    #else:
+    #    T_Freigabe_Absenk = 1
 
     write_vals(UUID["t_Verzoegerung_Tag"], T_Freigabe_min) # 1 wenn RT EG > 21°C 
     write_vals(UUID["t_Sperrung_Tag"], T_Freigabe_max) # 1 wenn RT OG > 22.5°C
-    write_vals(UUID["T_Absenk_F"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
+    #write_vals(UUID["T_Absenk_F"], T_Freigabe_Absenk) # 1 wenn RT EG < 21°C
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
-    logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
+    #logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
   
   
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
@@ -356,7 +356,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
-    elif (b_freigabe_normal & T_Freigabe_Absenk): #b_sperrung_wp
+    elif (b_freigabe_normal & (T_Freigabe_min == 0)): #b_sperrung_wp
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
