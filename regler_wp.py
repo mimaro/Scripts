@@ -213,12 +213,9 @@ def main():
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-    akt_freigabe_verz_Tag = get_vals(
-        UUID["t_Verzoegerung_Tag"], duration="-0min")["data"]["average"]
-    akt_sperrung_Tag = get_vals(
-        UUID["t_Sperrung_Tag"], duration="-0min")["data"]["average"]
-    akt_abesenk = get_vals(
-        UUID["T_Absenk_F"], duration="-0min")["data"]["average"]
+    akt_freigabe_verz_Tag = get_vals(UUID["t_Verzoegerung_Tag"], duration="-0min")["data"]["average"]
+    akt_sperrung_Tag = get_vals(UUID["t_Sperrung_Tag"], duration="-0min")["data"]["average"]
+    akt_abesenk = get_vals(UUID["T_Absenk_F"], duration="-0min")["data"]["average"]
 
     # Aktuelle Verzögerung Tag ein
     if akt_freigabe_verz_Tag == 1:  
@@ -299,10 +296,14 @@ def main():
     Ww_start = datetime.time(hour=int(ww_start.hour), minute=int((ww_start.hour - int(ww_start.hour))*60)) # Freigabezeit Warmwasser
     Ww_stop = datetime.time(hour=int(ww_stop.hour), minute=int((ww_stop.hour - int(ww_stop.hour))*60)) # Freigabezeit Warmwasser 
         
-    ww_temp = get_vals(
-        UUID["WW_Temp_mitte"], duration="-1min")["data"]["average"]
+    ww_temp = get_vals(UUID["WW_Temp_mitte"], duration="-1min")["data"]["average"]
+    akt_betriebsart = get_vals(UUID["T_Absenk_F"], duration="-0min")["data"]["average"]
+
     
     logging.info("Aktuelle WW-Speichertemp mitte: {}".format(ww_temp))
+
+    if 
+
     
     if ww_temp >= ww_aus:
         Ww_aus = 1
