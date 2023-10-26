@@ -35,7 +35,10 @@ UUID = {
     "T_Raum_OG": "78afd3c0-6523-11ee-980e-9fe998eb4bc6",
     "WW_Temp_mitte": "adf0da80-6522-11ee-82a3-4fe8ca3dfa5c",
     "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361",
-    "T_Absenk_F": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77"
+    "T_Absenk_F": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77",
+    "WW_Time": "24fb6470-7423-11ee-a18e-514019c4b69a",
+    "WW_Ein": "54ce3e80-7423-11ee-8ce6-bbd29c465ad6"
+
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -309,6 +312,10 @@ def main():
     
     if now.time() > Ww_start and now.time() < Ww_stop:
         ww_time = 1
+
+    write_vals(UUID["WW_Time"], ww_time) 
+    write_vals(UUID["WW_Ein"], Ww_ein) 
+    
     
     logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C): WW_Freigabe {}".format(ww_temp,ww_aus-ww_hyst,Ww_ein))
     logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
