@@ -125,8 +125,21 @@ def main():
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
     t_roll_avg_24 = get_vals(
         UUID["T_outdoor"], duration="-1440min")["data"]["average"]
-    if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
-        b_freigabe_normal = 1
+
+    akt_freigabe_normal = get_vals(
+        UUID["Freigabe_normalbetrieb"], duration="-0min")["data"]["average"]
+
+    if akt_freigabe_normal == True: #Wenn Wert = 1
+        if t_roll_avg_24 < (FREIGABE_NORMAL_TEMP + 0.5):
+            b_freigabe_normal = 1
+        else:
+            b_freigabe_normal = 0
+    
+    else:
+        if t_roll_avg_24 < FREIGABE_NORMAL_TEMP:
+            b_freigabe_normal = 1
+        else:
+            b_freigabe_normal = 0
     
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
