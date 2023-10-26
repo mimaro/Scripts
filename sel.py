@@ -92,6 +92,8 @@ def main():
         print(f"Parsed Integer WP: {parsed_val_wp}")
         print(f"Value Home: {val_home}")
         print(f"Value EIV: {val_eiv}")
+
+    akt_betriebszustand = get_vals(UUID["Betriebszustand"], duration="-0min")["data"]["average"]
         
     finally:
         # Close the Modbus connection
