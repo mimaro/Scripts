@@ -93,6 +93,10 @@ def main():
         print(f"Value Home: {val_home}")
         print(f"Value EIV: {val_eiv}")
 
+    finally:
+        # Close the Modbus connection
+        client.close()
+    
     akt_betriebszustand = get_vals(UUID["Betriebszustand"], duration="-0min")["data"]["average"]
 
     if akt_betriebszustand == 5:
@@ -108,9 +112,7 @@ def main():
     write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
     write_vals(UUID["P_EIV"], val_eiv) 
 
-     finally:
-        # Close the Modbus connection
-        client.close()
+    
      
 if __name__ == "__main__":
     main()
