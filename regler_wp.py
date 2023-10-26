@@ -200,7 +200,6 @@ def main():
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
-    
     akt_freigabe_verz_Tag = get_vals(
         UUID["t_Verzoegerung_Tag"], duration="-0min")["data"]["average"]
     akt_sperrung_Tag = get_vals(
@@ -215,7 +214,7 @@ def main():
         else:
             T_Freigabe_min = 0  
     else:
-       if RT_akt_EG > (T_min_Tag + 0.2): #Sperrung WP wenn Raumtemp EG zu hoch
+        if RT_akt_EG > (T_min_Tag + 0.2): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_min = 1  
         else:
             T_Freigabe_min = 0  
