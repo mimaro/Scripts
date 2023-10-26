@@ -183,7 +183,6 @@ def main():
     logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
         
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
-    #T_Freigabe_Nacht = 0
     T_Freigabe_max = 0
     T_Freigabe_min = 0
     T_Freigabe_Absenk = 0
@@ -244,30 +243,8 @@ def main():
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
     logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
-
-    
-
-#     logging.info(f"---------- Prüfung Freigabe / Sperrung Ladezustand Pufferspeicher ----------") 
-#     T_Freigabe_Puffer = 0
-
-#     HK2_Steigung = CLIENT.read_holding_registers(REGISTER["Steigung_HK1"], count=1, unit= 1).getRegister(0)/100
-#     VL_Temp_Soll_min = HK2_Steigung*1.8317984*abs(HK2_min-t_now)**0.8281902 + HK2_min 
-#     logging.info("SOLL min VL-Temp: {}".format(VL_Temp_Soll_min))
   
-#     T_Puffer_akt = get_vals(UUID["Puffer_Temp_oben"])["data"]["tuples"][0][1] 
-#     logging.info("Aktuelle Temp Puffer: {}".format(T_Puffer_akt))
-    
-#     betriebszustand = CLIENT.read_holding_registers(REGISTER["Betriebsart"], count=1, unit= 1).getRegister(0)
-#     logging.info("Betriebszustand: {}".format(betriebszustand))
-    
-#     if betriebszustand == 3:
-#         T_Freigabe_Puffer = 1
-    
-#     elif T_Puffer_akt < VL_Temp_Soll_min:
-#         T_Freigabe_Puffer = 1
-        
-#     logging.info("Freigabe T Puffer: {}".format(T_Freigabe_Puffer))
-    
+  
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
     r = requests.get(SUNSET_URL) 
