@@ -42,6 +42,7 @@ UUID = {
 
 # Parameter Freigabe Heizbetrieb
 FREIGABE_NORMAL_TEMP = 14
+FREIGABE_NORMAL_TEMP_HYST = 14.5
 
 #Parameter Freigabe Komfortbetrieb
 FREIGABE_WARM_P = -400
@@ -129,8 +130,8 @@ def main():
     akt_freigabe_normal = get_vals(
         UUID["Freigabe_normalbetrieb"], duration="-0min")["data"]["average"]
 
-    if akt_freigabe_normal == True: #Wenn Wert = 1
-        if t_roll_avg_24 < (FREIGABE_NORMAL_TEMP + 0.5):
+    if akt_freigabe_normal == True: 
+        if t_roll_avg_24 < FREIGABE_NORMAL_TEMP_HYST:
             b_freigabe_normal = 1
         else:
             b_freigabe_normal = 0
