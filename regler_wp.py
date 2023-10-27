@@ -73,7 +73,7 @@ T_Tag_hyst = 0.2
 #Parameter Freigabe vor Sonnenuntergang
 AT_MIN = 0
 AT_MAX = 14
-T_FREIGABE_MIN = 4
+T_FREIGABE_MIN = 7
 T_FREIGABE_MAX = 10
 
 #Parameter WW-Ladung
