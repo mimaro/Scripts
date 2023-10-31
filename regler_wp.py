@@ -52,7 +52,7 @@ FREIGABE_WARM_P = -400
 FREIGABE_KALT_P = -800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_HYST = 500 # Hysterese zur Sperrung Komfortbetrieb
+SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -179,7 +179,7 @@ def main():
     akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
 
     if akt_freigabe_wp == 1:
-        if p_net > (p_freigabe_now - 200): #Freigabe WP auf Grund von PV-Leistung
+        if p_net > (p_freigabe_now - SPERRUNG_HYST): #Freigabe WP auf Grund von PV-Leistung
             b_freigabe_wp = 1
         else:
             b_freigabe_wp = 0
