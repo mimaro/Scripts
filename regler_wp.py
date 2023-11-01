@@ -156,7 +156,7 @@ def main():
     #b_sperrung_wp = 0
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
-    power_balance = get_vals(UUID["PV_Produktion"], duration="-45min")["data"]["average"]
+    power_balance = get_vals(UUID["PV_Produktion"], duration="-30min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
