@@ -52,7 +52,7 @@ FREIGABE_WARM_P = -400
 FREIGABE_KALT_P = -800
 FREIGABE_WARM_TEMP = 15
 FREIGABE_KALT_TEMP = -10
-SPERRUNG_HYST = 400 # Hysterese zur Sperrung Komfortbetrieb
+SPERRUNG_HYST = 500 # Hysterese zur Sperrung Komfortbetrieb
 
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
@@ -66,7 +66,7 @@ T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 26.0 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 21 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
-T_Tag_hyst = 0.2
+T_Tag_hyst = 0.3
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
