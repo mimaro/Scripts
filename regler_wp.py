@@ -147,7 +147,7 @@ def main():
     
     write_vals(UUID["Freigabe_normalbetrieb"], b_freigabe_normal)
     
-    #logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
+    logging.info("Aktuelle Aussentemperatur: {}".format(t_now))
     logging.info("24h Aussentemperatur ({}°C) < Heizgrenze ({}°C): {}".format(t_roll_avg_24,FREIGABE_NORMAL_TEMP,b_freigabe_normal))
 
     #############################################################################################################
