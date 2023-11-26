@@ -312,14 +312,7 @@ def main():
             Ww_ein = 1
         else:
             Ww_ein = 0
-    
-    #if ww_temp >= ww_aus:
-    #    Ww_aus = 1
-    
-    #if (ww_aus - ww_temp) > ww_hyst:  
-    #    Ww_ein = 1
-
-    
+       
     if now.time() > Ww_start and now.time() < Ww_stop:
         ww_time = 1
 
