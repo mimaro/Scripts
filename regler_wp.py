@@ -169,7 +169,7 @@ def main():
     # Aktuelle Einschaltschwelle Sonderbetrieb    
     p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP))
-    #logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
+    logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
     
     # Aktuelle Ausschaltschwelle Sonderbetrieb
     #p_sperrung_now = p_freigabe_now-SPERRUNG_HYST
