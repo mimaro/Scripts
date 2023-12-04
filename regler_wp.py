@@ -235,7 +235,7 @@ def main():
 
     # Aktuelle Sperrung Sonderbetrieb wegen Temp zu hoch
     if akt_sperrung_Tag == 1:  
-        if RT_akt_EG > (max_Tag_EG - T_Tag_hyst): #Sperrung WP wenn Raumtemp EG zu hoch
+        if RT_akt_EG > (T_max_Tag_EG - T_Tag_hyst): #Sperrung WP wenn Raumtemp EG zu hoch
             T_Freigabe_max = 1
         else:
             T_Freigabe_max = 0
