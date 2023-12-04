@@ -91,8 +91,7 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "WW_Eco": 1510,
-    "AT": 506
+    "WW_Eco": 1510
 }
 
 IP_ISG = "192.168.178.36"
