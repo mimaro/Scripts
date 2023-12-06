@@ -363,6 +363,8 @@ def main():
         
     else:
         logging.info(f"Beibehalten aktuelle Betriebsart") 
+
+    CLIENT.close()
         
     logging.info("********************************")
     
