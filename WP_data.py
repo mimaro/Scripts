@@ -126,6 +126,8 @@ if betriebszustand == 5:
 else:
     write_vals(UUID["P_WP_Therm_WW"], 0)
     write_vals(UUID["P_WP_Therm_RW"], P_WP_therm)
+
+CLIENT.close()
   
 
 
