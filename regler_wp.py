@@ -125,13 +125,13 @@ def main():
     #######################################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Heizgrenze ----------") 
     # Abfrage aktuelle Aussentemperatur
-    t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
+    #t_now = get_vals(UUID["T_outdoor"])["data"]["tuples"][0][1]
     #t_now = (CLIENT.read_input_registers(REGISTER["AT"], count=1, unit=1).getRegister(0))/10
-    #t_now = 0
+    t_now = 0
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
-    t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min")["data"]["average"]
-    #t_roll_avg_24 = 0
+    #t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min")["data"]["average"]
+    t_roll_avg_24 = 0
 
     #Abfragen aktueller Zustand Freigabe Normalbetrieb (Heizgrenze)
     akt_freigabe_normal = get_vals(UUID["Freigabe_normalbetrieb"], duration="-0min")["data"]["average"]
