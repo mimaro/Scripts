@@ -69,12 +69,11 @@ def write_vals(uuid, val):
 #Vorlage read input registers
 T_outdoor = (CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0))/10
 
-
 if T_outdoor > 100:
-
+    T_outdoor = get_vals(UUID["Aussentemp"], duration="-5min")["data"]["average"]
+    Error = 1
 else:
     T_outdoor = T_outdoor
-
 T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_rl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_vl_hk1_ist = (CLIENT.read_input_registers(REGISTER["T_VL_HK1_ist"], count=1, unit=1).getRegister(0))/10
@@ -97,6 +96,7 @@ print(f"T_WW_ist= {T_ww_ist}")
 print(f"T_WW_soll= {T_ww_soll}")
 print(f"Volumenstrom = {Volumenstrom}")
 print(f"P_WP_therm = {P_WP_therm}")
+print(f"Error Code = {Error}")
 
 #Vorlage read holding registers
 #value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
@@ -128,6 +128,7 @@ write_vals(UUID["T_SOLL_BWW"], T_ww_soll)
 write_vals(UUID["T_SOLL_HK2"], T_vl_hk2_soll)
 write_vals(UUID["T_SOLL_HK1"], T_vl_hk1_soll)
 write_vals(UUID["P_WP_Therm"], P_WP_therm)
+write_vals(UUID["Error"], Error)
 
 if betriebszustand == 5:
     write_vals(UUID["P_WP_Therm_WW"], P_WP_therm)
