@@ -31,7 +31,8 @@ UUID = {
     "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887",
     "P_WP_Therm": "69630320-6522-11ee-9e09-ebb553e47b70",
     "P_WP_Therm_WW": "8cfcadb0-73dc-11ee-b8cf-3975a73c8c72",
-    "P_WP_Therm_RW": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5"
+    "P_WP_Therm_RW": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5",
+    "Error": "7fac2c60-aa34-11ee-942c-53b72dc69035"
 }
 
 REGISTER = {
@@ -52,6 +53,7 @@ IP_ISG = "192.168.178.36"
 
 CLIENT = ModbusTcpClient(IP_ISG)
 CLIENT.connect()
+Error = 0
 ############################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -63,9 +65,16 @@ def write_vals(uuid, val):
     #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
-  
+
 #Vorlage read input registers
 T_outdoor = (CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0))/10
+
+
+if T_outdoor > 100:
+
+else:
+    T_outdoor = T_outdoor
+
 T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_rl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_vl_hk1_ist = (CLIENT.read_input_registers(REGISTER["T_VL_HK1_ist"], count=1, unit=1).getRegister(0))/10
