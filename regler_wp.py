@@ -181,10 +181,12 @@ def main():
     #Abfragen aktuelle Freigabe auf Grund Solarüberschuss
     akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
 
+    
+    
     if akt_freigabe_wp == 1:
-        if p_net < 10
+        if p_net < 10:
             b_freigabe_wp = 0
-        else p_net > max(p_freigabe_now - SPERRUNG_HYST): #Freigabe WP auf Grund von PV-Leistung
+        else p_net > (p_freigabe_now - SPERRUNG_HYST): #Freigabe WP auf Grund von PV-Leistung
             b_freigabe_wp = 1
         else:
             b_freigabe_wp = 0
