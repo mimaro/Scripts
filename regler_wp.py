@@ -186,7 +186,7 @@ def main():
     if akt_freigabe_wp == 1:
         if p_net < 10:
             b_freigabe_wp = 0
-        else p_net > (p_freigabe_now - SPERRUNG_HYST): #Freigabe WP auf Grund von PV-Leistung
+        elif p_net > (p_freigabe_now - SPERRUNG_HYST): #Freigabe WP auf Grund von PV-Leistung
             b_freigabe_wp = 1
         else:
             b_freigabe_wp = 0
