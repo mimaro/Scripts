@@ -67,7 +67,9 @@ def write_vals(uuid, val):
     #logging.info("Ok? {}".format(postreq.ok))
 
 #Vorlage read input registers
-T_outdoor = (CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0))/10
+raw_value = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
+signed_value = raw_value if raw_value < 32768 else raw_value - 65536
+T_outdoor = signed_value / 10
 
 if T_outdoor > 100:
     T_outdoor = get_vals(UUID["Aussentemp"], duration="-5min")["data"]["average"]
