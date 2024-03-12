@@ -298,7 +298,6 @@ def main():
     logging.info(f"---------- Prüfung Speicherladung Pufferspeicher ----------") 
     Freigabe_T_Speicher = 0
     Freigabe_Komfortbetrieb = 0
-    Freigabe_Betriebszustand = 0
     Freigabe_Puffertemp = 0
 
     T_speicher_aktuell = get_vals(UUID["Puffer_Temp_oben"], duration="-1min")["data"]["average"]
@@ -309,17 +308,15 @@ def main():
     else:
         Freigabe_Komfortbetrieb = 0
 
-    if T_speicher_aktuell < T_Speicher_Min: #Prüfen Speichertemperatur oben < 25°C
+    if betriebszustand < 3:
+        if (T_speicher_aktuell < T_Speicher_Min): #Prüfen Speichertemperatur oben < 25°C
+            Freigabe_T_Speicher = 1
+        else:
+            Freigabe_T_Speicher = 0
+    else:
         Freigabe_T_Speicher = 1
-    else:
-        Freigabe_T_Speicher = 0
 
-    if betriebszustand == 3: #Prüfen aktueller Betriebszustand WP Anlage
-        Freigabe_Betriebszustand = 0
-    else:
-        Freigabe_Betriebszustand = 1
-
-    if Freigabe_Komfortbetrieb & Freigabe_T_Speicher & Freigabe_Betriebszustand:
+    if Freigabe_Komfortbetrieb & Freigabe_T_Speicher:
         Freigabe_Puffertemp = 1
     else:
         Freigabe_Puffertemp = 0
