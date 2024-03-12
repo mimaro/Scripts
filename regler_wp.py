@@ -76,6 +76,9 @@ AT_MAX = 14
 T_FREIGABE_MIN = 7
 T_FREIGABE_MAX = 10
 
+#Parameter Freigabe Speicherladung
+T_Speicher_Min = 25
+
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
 ww_stop = datetime.time(14, 0)
@@ -181,8 +184,6 @@ def main():
     #Abfragen aktuelle Freigabe auf Grund Solarüberschuss
     akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
 
-    
-    
     if akt_freigabe_wp == 1:
         if p_net < 10:
             b_freigabe_wp = 0
@@ -263,7 +264,6 @@ def main():
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
     #logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
   
-  
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
     r = requests.get(SUNSET_URL) 
@@ -294,7 +294,41 @@ def main():
     logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
+
+    logging.info(f"---------- Prüfung Speicherladung Pufferspeicher ----------") 
+    Freigabe_T_Speicher = 0
+    Freigabe_Komfortbetrieb = 0
+    Freigabe_Betriebszustand = 0
+    Freigabe_Puffertemp = 0
+
+    T_speicher_aktuell = get_vals(UUID["Puffer_Temp_oben"], duration="-1min")["data"]["average"]
+    betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
+
+    if b_freigabe_normal & b_freigabe_wp & sunset_freigabe: #Prüfen ob Bedingungen für Komfortbetrieb erfüllt
+        Freigabe_Komfortbetrieb = 1
+    else:
+        Freigabe_Komfortbetrieb = 0
+
+    if T_speicher_aktuell < T_Speicher_Min: #Prüfen Speichertemperatur oben < 25°C
+        Freigabe_T_Speicher = 1
+    else:
+        Freigabe_T_Speicher = 0
+
+    if betriebszustand == 3: #Prüfen aktueller Betriebszustand WP Anlage
+        Freigabe_Betriebszustand = 0
+    else:
+        Freigabe_Betriebszustand = 1
+
+    if Freigabe_Komfortbetrieb & Freigabe_T_Speicher & Freigabe_Betriebszustand:
+        Freigabe_Puffertemp = 1
+    else:
+        Freigabe_Puffertemp = 0
     
+    logging.info("Freigabe Komfortbetrieb: {}".format(Freigabe_Komfortbetrieb))
+    logging.info("Freigabe Puffertemperatur: {}".format(Freigabe_T_Speicher))
+    logging.info("Freigabe Betriebszustand: {}".format(Freigabe_Betriebszustand))
+    logging.info("Freigabe Gesamt: {}".format(Freigabe_Puffertemp))
+
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
     Ww_aus = 0
@@ -349,7 +383,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
     
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
-    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
+    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe & Freigabe_Puffertemp):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
