@@ -323,7 +323,6 @@ def main():
     
     logging.info("Freigabe Komfortbetrieb: {}".format(Freigabe_Komfortbetrieb))
     logging.info("Freigabe Puffertemperatur: {}".format(Freigabe_T_Speicher))
-    logging.info("Freigabe Betriebszustand: {}".format(Freigabe_Betriebszustand))
     logging.info("Freigabe Gesamt: {}".format(Freigabe_Puffertemp))
 
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
