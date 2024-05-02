@@ -394,7 +394,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
         
     else:
-        if betriebszustand == 5
+        if betriebszustand == 5:
             CLIENT.write_register(REGISTER["Betriebsart"], int(1))
             logging.info(f"Deaktivieren WW-Betrieb, Beibehalten aktuelle Betriebsart")    
         else:
