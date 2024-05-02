@@ -356,8 +356,7 @@ def main():
     write_vals(UUID["WW_Time"], ww_time) 
     write_vals(UUID["WW_Ein"], Ww_ein) 
     
-    
-    logging.info("Ist-Wert WW-Temp ({}°C) < Einschalt-Wert WW-Temp ({}°C):{}".format(ww_temp,ww_soll-ww_hyst,Ww_ein))
+    logging.info("Ist-Wert WW-Temp ({}°C) < Einschaltwert WW-Temp ({}°C): {}".format(ww_temp,ww_soll-ww_hyst,Ww_ein))
     #logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
    
@@ -370,7 +369,7 @@ def main():
         logging.info(f"WW-Betrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         time.sleep(5)
-        CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10)      
+        CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10) 
            
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
@@ -395,8 +394,11 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
         
     else:
-        CLIENT.write_register(REGISTER["WW_Eco"], 100) 
-        logging.info(f"Beibehalten aktuelle Betriebsart") 
+        if betriebszustand == 5
+            CLIENT.write_register(REGISTER["Betriebsart"], int(1))
+            logging.info(f"Deaktivieren WW-Betrieb, Beibehalten aktuelle Betriebsart")    
+        else:
+            logging.info(f"Beibehalten aktuelle Betriebsart") 
 
     CLIENT.close()
         
