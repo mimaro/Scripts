@@ -215,10 +215,10 @@ def main():
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-30min")["data"]["average"] 
     
-    RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-30min")["data"]["average"] 
+    #RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
+    #                  duration="-30min")["data"]["average"] 
     
-    #logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
+    logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
