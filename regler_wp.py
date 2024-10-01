@@ -81,10 +81,10 @@ T_Speicher_Min = 25
 
 #Parameter WW-Ladung
 ww_start = datetime.time(12, 0)
-ww_stop = datetime.time(15, 0)
-ww_soll = 52
-ww_aus = 52 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
-ww_hyst = 5 #Hysterese für Freigabe WW-Betrieb  
+ww_stop = datetime.time(17, 0)
+ww_soll = 60
+ww_aus = 60 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
+ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
 REGISTER = {
     "Komfort_HK1": 1501,
