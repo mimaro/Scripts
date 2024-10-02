@@ -80,7 +80,7 @@ T_FREIGABE_MAX = 10
 T_Speicher_Min = 25
 
 #Parameter WW-Ladung
-ww_start = datetime.time(07, 0)
+ww_start = datetime.time(7, 0)
 ww_stop = datetime.time(17, 0)
 ww_soll = 75
 ww_aus = 75 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP)
