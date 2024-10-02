@@ -2,7 +2,7 @@ import requests
 import json
 import logging
 
-UUID_P = "7f07bdc0-6525-11ee-97bc-bd186bf2b3bf"
+UUID_P = "d92bc9e0-80c5-11ef-8443-b5ad123097e5"
 IP_VENTI = "192.168.178.41"
 URL_VZ = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
