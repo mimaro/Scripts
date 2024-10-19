@@ -44,8 +44,8 @@ UUID = {
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
 
 # Parameter Freigabe Heizbetrieb
-FREIGABE_NORMAL_TEMP = 14
-FREIGABE_NORMAL_TEMP_HYST = 14.5
+FREIGABE_NORMAL_TEMP = 14.5
+FREIGABE_NORMAL_TEMP_HYST = 15
 
 #Parameter Freigabe Komfortbetrieb
 FREIGABE_WARM_P = -400
