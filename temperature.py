@@ -70,7 +70,7 @@ def readTempLines(sensorName) :
 temp_1 =  str(readTempLines(sensor1)[0])
 temp_2 =  str(readTempLines(sensor2)[0])
 temp_3 =  str(readTempLines(sensor3)[0])
-temp_4 =  str(readTempLines(sensor4)[0]-6.2)
+temp_4 =  str(readTempLines(sensor4)[0]-4.2)
 temp_5 =  str(readTempLines(sensor5)[0]+1.4) 
 temp_6 =  str(readTempLines(sensor6)[0]+1.4) 
 temp_7 =  str(readTempLines(sensor7)[0]+Offset_RT) 
