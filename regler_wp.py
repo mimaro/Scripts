@@ -370,8 +370,6 @@ def main():
     
     p_sol = power_sol - p_freigabe_now
 
-    print(p_sol)
-
     if p_sol > 0:
         steigung_soll = int((steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min)
 
@@ -380,11 +378,12 @@ def main():
     else:
         steigung_soll = steigung_min
 
-    print(steigung_soll)
-
     CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_soll)
     CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_soll)
     write_vals(UUID["Steigung_HK"], steigung_soll) 
+
+    logging.info("Überschussleistung: {}".format(p_sol))
+    logging.info("Aktuelle Steigung Heizkurve: {}".format(steigung_soll))
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
