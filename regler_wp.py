@@ -382,8 +382,8 @@ def main():
 
     print(steigung_soll)
 
-    #CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_soll)
-    #CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_soll)
+    CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_soll)
+    CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_soll)
     write_vals(UUID["Steigung_HK"], steigung_soll) 
     
     #######################################################################
