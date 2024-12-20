@@ -87,7 +87,7 @@ ww_soll = 56 #55°C
 ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP) 52.5°C
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
-Parameter Steigung Heizkurve
+#Parameter Steigung Heizkurve
 steigung_min = 45
 steigung_max = 200
 p_sol_max = 2000
