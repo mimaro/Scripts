@@ -41,7 +41,7 @@ def main():
         if cop_o_venti > 10:
             write_vals(UUID["COP_o_venti"], "0")
         else:
-        write_vals(UUID["COP_o_venti"], cop_o_venti)
+            write_vals(UUID["COP_o_venti"], cop_o_venti)
     else:
         write_vals(UUID["COP_o_venti"], "0")
     print(cop_o_venti)
