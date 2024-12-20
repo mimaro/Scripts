@@ -37,7 +37,8 @@ UUID = {
     "Puffer_Temp_oben": "59bd6680-6523-11ee-b354-998ee384c361",
     "T_Absenk_F": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77",
     "WW_Time": "24fb6470-7423-11ee-a18e-514019c4b69a",
-    "WW_Ein": "54ce3e80-7423-11ee-8ce6-bbd29c465ad6"
+    "WW_Ein": "54ce3e80-7423-11ee-8ce6-bbd29c465ad6",
+    "Steigung_HK": "1ad2ca90-becb-11ef-870c-3f013969b33b"
 
 }
 
@@ -86,9 +87,11 @@ ww_soll = 56 #55°C
 ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP) 52.5°C
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
-#Parameter Steigung Komfort/Ecobetrieb
-steigung_max = 150
+Parameter Steigung Heizkurve
 steigung_min = 45
+steigung_max = 200
+p_sol_max = 2000
+p_sol_min = 0
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -170,21 +173,11 @@ def main():
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
-    #Abfragen aktuelle Energiebilanz zur Prüfung Sperrung Sonderbetrieb
-    #power_balance2 = get_vals(
-    #    UUID["PV_Produktion"], duration="-60min")["data"]["average"]
-    #p_net2 = power_balance2 
-    #logging.info("PV-Produktion Ausschaltschwelle (45min): {}".format(p_net2))
-    
     # Aktuelle Einschaltschwelle Sonderbetrieb    
     p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
         (FREIGABE_WARM_P - FREIGABE_KALT_P)/(FREIGABE_WARM_TEMP - FREIGABE_KALT_TEMP))
     logging.info("Freigabe_Leistung: {}".format(p_freigabe_now))
-    
-    # Aktuelle Ausschaltschwelle Sonderbetrieb
-    #p_sperrung_now = p_freigabe_now-SPERRUNG_HYST
-    #logging.info("Sperrung_Leistung: {}".format(p_sperrung_now))
-
+  
     #Abfragen aktuelle Freigabe auf Grund Solarüberschuss
     akt_freigabe_wp = get_vals(UUID["Freigabe_WP"], duration="-0min")["data"]["average"]
 
@@ -370,9 +363,28 @@ def main():
 
     ######################################################################
     logging.info(f"---------- Modifikation Heizkurve ----------")   
+    steigung_soll = 45
+    
+    #Abfragen aktuelle Stromproduktion PV-Anlage
+    power_sol = get_vals(UUID["PV_Produktion"], duration="-15min")["data"]["average"]
+    
+    p_sol = power_sol - p_freigabe_now
 
+    print(p_sol)
 
+    if p_sol > 0:
+        steigung_soll = (steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min
 
+        if steigung_soll > 200:
+            steigung_soll = 200
+    else:
+        steigung_soll = steigung_min
+
+    print(steigung_soll)
+
+    CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_soll)
+    CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_soll)
+    write_vals(UUID["Steigung_HK"], steigung_soll) 
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
@@ -390,8 +402,6 @@ def main():
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_min)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_min)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
     elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
@@ -400,8 +410,6 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_akt)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_akt)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
     elif (b_freigabe_normal & (T_Freigabe_min == 0)): #b_sperrung_wp
@@ -410,8 +418,6 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_min)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_min)
 
     else:
         if betriebszustand == 5:
