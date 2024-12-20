@@ -87,8 +87,8 @@ ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
 #Parameter Steigung Komfort/Ecobetrieb
-steigung_comf = 1
-steigung_eco = 0.45
+steigung_max = 150
+steigung_min = 45
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -208,7 +208,8 @@ def main():
     #write_vals(UUID["Sperrung_WP"], b_sperrung_wp) # Aktiv wenn zu wenig PV Leistung vorhanden
     logging.info("30 min PV-Leistung ({} W) > Einschaltschwelle ({} W): {}".format(p_net,p_freigabe_now,b_freigabe_wp))
     #logging.info("45 min PV-Leistung ({} W) < Ausschaltschwelle ({}) W: {}".format(p_net2,p_sperrung_now,b_sperrung_wp))    
-        
+
+    #################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Raumtemperaturen ----------") 
     T_Freigabe_max = 0
     T_Freigabe_min = 0
@@ -267,7 +268,8 @@ def main():
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
     #logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
-  
+
+    ################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
     r = requests.get(SUNSET_URL) 
@@ -299,6 +301,7 @@ def main():
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
 
+    #############################################################################
     logging.info(f"---------- Prüfung Speicherladung Pufferspeicher ----------") 
     Freigabe_T_Speicher = 0
     Freigabe_Komfortbetrieb = 0
@@ -306,8 +309,6 @@ def main():
 
     T_speicher_aktuell = get_vals(UUID["Puffer_Temp_oben"], duration="-1min")["data"]["average"]
     betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
-    Steigung = CLIENT.read_holding_registers(1503, count=1, unit= 1).getRegister(0)
-    print(Steigung)
 
     #if b_freigabe_normal & b_freigabe_wp & sunset_freigabe: #Prüfen ob Bedingungen für Komfortbetrieb erfüllt
     #    Freigabe_Komfortbetrieb = 1
@@ -331,6 +332,7 @@ def main():
     #logging.info("Freigabe Puffertemperatur: {}".format(Freigabe_T_Speicher))
     #logging.info("Freigabe Gesamt: {}".format(Freigabe_Puffertemp))
 
+    #####################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
     Ww_aus = 0
@@ -365,8 +367,14 @@ def main():
     logging.info("Ist-Wert WW-Temp ({}°C) < Einschaltwert WW-Temp ({}°C): {}".format(ww_temp,ww_soll-ww_hyst,Ww_ein))
     #logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
-   
-     
+
+    ######################################################################
+    logging.info(f"---------- Modifikation Heizkurve ----------")   
+
+
+
+    
+    #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
     
     # Freigabe Programmbetrieb für Erzeugung Warmwasser während Zeitfenster bis max. Vorlauftemperatur erreicht ist. 
@@ -382,8 +390,8 @@ def main():
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_eco)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_eco)
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_min)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_min)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
     elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
@@ -392,8 +400,8 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_comf)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_comf)
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_akt)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_akt)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
     elif (b_freigabe_normal & (T_Freigabe_min == 0)): #b_sperrung_wp
@@ -402,8 +410,8 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_eco)
-        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_eco)
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_min)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_min)
 
     else:
         if betriebszustand == 5:
