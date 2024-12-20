@@ -373,7 +373,7 @@ def main():
     print(p_sol)
 
     if p_sol > 0:
-        steigung_soll = (steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min
+        steigung_soll = int((steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min)
 
         if steigung_soll > 200:
             steigung_soll = 200
