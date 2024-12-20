@@ -58,7 +58,7 @@ SPERRUNG_HYST = 500 # Hysterese zur Sperrung Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
 HK2_min = 20.5 # Tempvorgabe für Absenkbetrieb Heizgruppe, 
 HK1_max = 30 # Tempvorgabe für Komfortbetrieb Pufferspeicher
-HK2_max = 28 # Tempvorgabe für Komfortbetrieb Heizgruppe
+HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
@@ -85,6 +85,10 @@ ww_stop = datetime.time(15, 0)
 ww_soll = 56 #55°C
 ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird (VL-Temp WP) 52.5°C
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
+
+#Parameter Steigung Komfort/Ecobetrieb
+steigung_comf = 1
+steigung_eco = 0.45
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -376,7 +380,9 @@ def main():
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-    
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_eco)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_eco)
+ 
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
     elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
         logging.info(f"Komfortbetrieb")
@@ -384,6 +390,8 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_comf)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_comf)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
     elif (b_freigabe_normal & (T_Freigabe_min == 0)): #b_sperrung_wp
@@ -392,7 +400,9 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
-        
+        CLIENT.write_register(REGISTER["Steigung_HK1"], steigung_eco)
+        CLIENT.write_register(REGISTER["Steigung_HK2"], steigung_eco)
+
     else:
         if betriebszustand == 5:
             CLIENT.write_register(REGISTER["Betriebsart"], int(1))
