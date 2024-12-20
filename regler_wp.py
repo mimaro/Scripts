@@ -306,6 +306,8 @@ def main():
 
     T_speicher_aktuell = get_vals(UUID["Puffer_Temp_oben"], duration="-1min")["data"]["average"]
     betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
+    Steigung = CLIENT.read_holding_registers(1503, count=1, unit= 1).getRegister(0)
+    print(Steigung)
 
     #if b_freigabe_normal & b_freigabe_wp & sunset_freigabe: #Prüfen ob Bedingungen für Komfortbetrieb erfüllt
     #    Freigabe_Komfortbetrieb = 1
