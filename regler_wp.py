@@ -58,8 +58,8 @@ SPERRUNG_HYST = 500 # Hysterese zur Sperrung Komfortbetrieb
 #Parameter Absenk- und Komfortbetrieb
 HK1_min = 5 # Tempvorgabe für Absenkbetrieb Pufferspeicher 
 HK2_min = 20.5 # Tempvorgabe für Absenkbetrieb Heizgruppe, 
-HK1_max = 30 # Tempvorgabe für Komfortbetrieb Pufferspeicher
-HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
+HK1_max = 20.5 # Tempvorgabe für Komfortbetrieb Pufferspeicher
+HK2_max = 20.5 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
