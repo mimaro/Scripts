@@ -54,7 +54,7 @@ REGISTER = {
     "Heissgastemp": 543,
     "Niederdruck": 544,
     "Hochdruck": 546,
-    "T_Quelle": 535
+    "T_Quelle": 541
 }
 
 IP_ISG = "192.168.178.36"
