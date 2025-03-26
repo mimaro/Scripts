@@ -102,7 +102,7 @@ print(f"T_WW_soll= {T_ww_soll}")
 print(f"Volumenstrom = {Volumenstrom}")
 print(f"P_WP_therm = {P_WP_therm}")
 print(f"Error Code = {Error}")
-print(f"Heissgastemp = {T_Heissgas}")
+print(f"Heissgastemp = {T_heissgas}")
 
 #Vorlage read holding registers
 #value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
