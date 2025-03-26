@@ -90,7 +90,7 @@ T_ww_ist = (CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).g
 T_ww_soll = (CLIENT.read_input_registers(REGISTER["T_WW_soll"], count=1, unit=1).getRegister(0))/10
 Volumenstrom = (CLIENT.read_input_registers(REGISTER["Volumenstrom"], count=1, unit=1).getRegister(0))/100000*60
 T_heissgas = (CLIENT.read_input_registers(REGISTER["Heissgastemp"], count=1, unit=1).getRegister(0))/10
-p_nd = (CLIENT.read_input_registers(REGISTER["Niederdruck"], count=1, unit=1).getRegister(0))
+p_nd = (CLIENT.read_input_registers(REGISTER["Niederdruck"], count=1, unit=1).getRegister(0))/100
 P_WP_therm = Volumenstrom * 1.16 * (T_vl_wp_ist - T_rl_wp_ist) * 1000
 
 print(f"T_outdoor= {T_outdoor} ")
