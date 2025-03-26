@@ -35,8 +35,7 @@ UUID = {
     "Error": "7fac2c60-aa34-11ee-942c-53b72dc69035",
     "T_Heissgas": "01cddb40-0a14-11f0-94d8-29f192f3b0d0",
     "p_ND": "0e274e80-0a16-11f0-86e4-4d85645aa355",
-    "p_HD": "9aba8a50-0a4b-11f0-9f74-298f9eadd1ee",
-    "p_MD": "d7962a40-0a4b-11f0-ad93-77b8547d5554"
+    "p_HD": "9aba8a50-0a4b-11f0-9f74-298f9eadd1ee"
 }
 
 REGISTER = {
@@ -53,7 +52,6 @@ REGISTER = {
     "Betriebsart": 1500,
     "Heissgastemp": 543,
     "Niederdruck": 544,
-    "Mitteldruck": 545,
     "Hochdruck": 546,
 }
 
@@ -95,7 +93,6 @@ T_ww_soll = (CLIENT.read_input_registers(REGISTER["T_WW_soll"], count=1, unit=1)
 Volumenstrom = (CLIENT.read_input_registers(REGISTER["Volumenstrom"], count=1, unit=1).getRegister(0))/100000*60
 T_heissgas = (CLIENT.read_input_registers(REGISTER["Heissgastemp"], count=1, unit=1).getRegister(0))/10
 p_nd = (CLIENT.read_input_registers(REGISTER["Niederdruck"], count=1, unit=1).getRegister(0))/100
-p_md = (CLIENT.read_input_registers(REGISTER["Mitteldruck"], count=1, unit=1).getRegister(0))/100
 p_hd = (CLIENT.read_input_registers(REGISTER["Hochdruck"], count=1, unit=1).getRegister(0))/100
 P_WP_therm = Volumenstrom * 1.16 * (T_vl_wp_ist - T_rl_wp_ist) * 1000
 
@@ -113,7 +110,6 @@ print(f"P_WP_therm = {P_WP_therm}")
 print(f"Error Code = {Error}")
 print(f"Heissgastemp = {T_heissgas}")
 print(f"Niederdruck = {p_nd}")
-print(f"Mitteldruck = {p_md}")
 print(f"Hochdruck = {p_hd}")
 
 
