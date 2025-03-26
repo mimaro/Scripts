@@ -32,7 +32,8 @@ UUID = {
     "P_WP_Therm": "69630320-6522-11ee-9e09-ebb553e47b70",
     "P_WP_Therm_WW": "8cfcadb0-73dc-11ee-b8cf-3975a73c8c72",
     "P_WP_Therm_RW": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5",
-    "Error": "7fac2c60-aa34-11ee-942c-53b72dc69035"
+    "Error": "7fac2c60-aa34-11ee-942c-53b72dc69035",
+    "T_Heissgas": "01cddb40-0a14-11f0-94d8-29f192f3b0d0"
 }
 
 REGISTER = {
@@ -46,7 +47,8 @@ REGISTER = {
     "Volumenstrom" : 520,
     "T_WW_ist": 521,
     "T_WW_soll": 522,
-    "Betriebsart": 1500   
+    "Betriebsart": 1500,
+    "Heissgastemp": 543
 }
 
 IP_ISG = "192.168.178.36"
@@ -85,6 +87,7 @@ T_vl_hk2_soll = (CLIENT.read_input_registers(REGISTER["T_VL_HK2_soll"], count=1,
 T_ww_ist = (CLIENT.read_input_registers(REGISTER["T_WW_ist"], count=1, unit=1).getRegister(0))/10
 T_ww_soll = (CLIENT.read_input_registers(REGISTER["T_WW_soll"], count=1, unit=1).getRegister(0))/10
 Volumenstrom = (CLIENT.read_input_registers(REGISTER["Volumenstrom"], count=1, unit=1).getRegister(0))/100000*60
+T_heissgas = (CLIENT.read_input_registers(REGISTER["Heissgastemp"], count=1, unit=1).getRegister(0))/10
 P_WP_therm = Volumenstrom * 1.16 * (T_vl_wp_ist - T_rl_wp_ist) * 1000
 
 print(f"T_outdoor= {T_outdoor} ")
@@ -99,6 +102,7 @@ print(f"T_WW_soll= {T_ww_soll}")
 print(f"Volumenstrom = {Volumenstrom}")
 print(f"P_WP_therm = {P_WP_therm}")
 print(f"Error Code = {Error}")
+print(f"Heissgastemp = {T_Heissgas}")
 
 #Vorlage read holding registers
 #value_2 = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
@@ -131,6 +135,7 @@ write_vals(UUID["T_SOLL_HK2"], T_vl_hk2_soll)
 write_vals(UUID["T_SOLL_HK1"], T_vl_hk1_soll)
 write_vals(UUID["P_WP_Therm"], P_WP_therm)
 write_vals(UUID["Error"], Error)
+write_vals(UUID["T_Heissgas"], T_heissgas)
 
 if betriebszustand == 5:
     write_vals(UUID["P_WP_Therm_WW"], P_WP_therm)
