@@ -36,7 +36,7 @@ UUID = {
     "T_Heissgas": "01cddb40-0a14-11f0-94d8-29f192f3b0d0",
     "p_ND": "0e274e80-0a16-11f0-86e4-4d85645aa355",
     "p_HD": "9aba8a50-0a4b-11f0-9f74-298f9eadd1ee",
-    "p_MD: "d7962a40-0a4b-11f0-ad93-77b8547d5554"
+    "p_MD": "d7962a40-0a4b-11f0-ad93-77b8547d5554"
 }
 
 REGISTER = {
