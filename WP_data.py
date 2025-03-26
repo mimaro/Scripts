@@ -146,7 +146,6 @@ write_vals(UUID["P_WP_Therm"], P_WP_therm)
 write_vals(UUID["Error"], Error)
 write_vals(UUID["T_Heissgas"], T_heissgas)
 write_vals(UUID["p_ND"], p_nd)
-write_vals(UUID["p_MD"], p_md)
 write_vals(UUID["p_HD"], p_hd)
 
 if betriebszustand == 5:
