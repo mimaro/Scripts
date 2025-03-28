@@ -35,9 +35,6 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-# Lokale IP-Adresse des Geräts
-url = "http://192.168.1.100"  # <== bitte anpassen
-
 # Schlüsselwörter und ihre Einheiten
 werte_schluessel = {
     "VERDAMPFERTEMPERATUR": "°C",
