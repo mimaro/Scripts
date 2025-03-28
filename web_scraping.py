@@ -28,10 +28,12 @@ UUID = {
 #    "ISTDREHZAHL VERDICHTER": "uuid-5",
 #    "SOLLDREHZAHL VERDICHTER": "uuid-6",
 
-# Hier definierst du deine eigene Logik, wie Werte gesendet werden (z. B. über MQTT, HTTP, etc.)
-def write_vals(uuid, value):
-    print(f"Sende Wert {value} an UUID {uuid}")
-    # Hier echte Sende-Funktion einbauen (z. B. requests.post(), mqtt.publish(), etc.)
+def write_vals(uuid, val):
+    # Daten auf vz schreiben.
+    poststring = VZ_POST_URL.format(uuid, val)
+    #logging.info("Poststring {}".format(poststring))
+    postreq = requests.post(poststring)
+    #logging.info("Ok? {}".format(postreq.ok))
 
 # Lokale IP-Adresse des Geräts
 url = "http://192.168.1.100"  # <== bitte anpassen
@@ -79,7 +81,7 @@ try:
     for name, value in ergebnisse.items():
         uuid = UUID.get(name)
         if uuid and value is not None:
-            write_vals(uuid, value)
+            write_vals(uuid, val)
         else:
             print(f"Kein Wert oder keine UUID für {name}")
 
