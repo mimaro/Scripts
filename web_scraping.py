@@ -28,9 +28,9 @@ UUID = {
 #    "ISTDREHZAHL VERDICHTER": "uuid-5",
 #    "SOLLDREHZAHL VERDICHTER": "uuid-6",
 
-def write_vals(uuid, val):
+def write_vals(uuid, value):
     # Daten auf vz schreiben.
-    poststring = VZ_POST_URL.format(uuid, val)
+    poststring = VZ_POST_URL.format(uuid, value)
     #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
@@ -78,7 +78,7 @@ try:
     for name, value in ergebnisse.items():
         uuid = UUID.get(name)
         if uuid and value is not None:
-            write_vals(uuid, val)
+            write_vals(uuid, value)
         else:
             print(f"Kein Wert oder keine UUID für {name}")
 
