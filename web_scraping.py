@@ -14,62 +14,74 @@ VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&v
 url = "http://192.168.178.36/?s=1,1"  
 
 #######################################################################################################
-# Configuration
+
+
+# Beispielhafte UUID-Zuordnung (bitte anpassen!)
 UUID = {
-    "T_Verdampfer": "dd35c760-0bef-11f0-885e-8dc19dbf1d54"
-  
-    }
+    "VERDAMPFERTEMPERATUR": "dd35c760-0bef-11f0-885e-8dc19dbf1d54",
+    "VERDICHTEREINTRITTSTEMPERATUR": "90098280-0bf1-11f0-af91-9f616d5bd7d8",
+    "ÖLSUMPFTEMPERATUR": "a2174850-0bf1-11f0-9be6-c1126abb310a",
+    
+}
 
-def write_vals(uuid, val):
-    # Daten auf vz schreiben.
-    poststring = VZ_POST_URL.format(uuid, val)
-    #logging.info("Poststring {}".format(poststring))
-    postreq = requests.post(poststring)
+#"LÜFTERLEISTUNG REL": "uuid-4",
+#    "ISTDREHZAHL VERDICHTER": "uuid-5",
+#    "SOLLDREHZAHL VERDICHTER": "uuid-6",
 
-# https://www.youtube.com/watch?v=cVnYod9Fhko
+# Hier definierst du deine eigene Logik, wie Werte gesendet werden (z. B. über MQTT, HTTP, etc.)
+def write_vals(uuid, value):
+    print(f"Sende Wert {value} an UUID {uuid}")
+    # Hier echte Sende-Funktion einbauen (z. B. requests.post(), mqtt.publish(), etc.)
 
-def main():
+# Lokale IP-Adresse des Geräts
+url = "http://192.168.1.100"  # <== bitte anpassen
+
+# Schlüsselwörter und ihre Einheiten
+werte_schluessel = {
+    "VERDAMPFERTEMPERATUR": "°C",
+    "VERDICHTEREINTRITTSTEMPERATUR": "°C",
+    "ÖLSUMPFTEMPERATUR": "°C",
+ 
+}
 
 
+#   "LÜFTERLEISTUNG REL": "%",
+#    "ISTDREHZAHL VERDICHTER": "Hz",
+#    "SOLLDREHZAHL VERDICHTER": "Hz",
 
+# Ergebnisse zwischenspeichern
+ergebnisse = {}
 
-    try:
-        # Weboberfläche abrufen
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()  # wirft Fehler bei schlechtem Statuscode
+try:
+    # HTML laden
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()
 
-        # HTML parsen
-        soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
+    rows = soup.find_all("tr")
 
-        # Nach dem Wert der Verdampfertemperatur suchen
-        rows = soup.find_all("tr")
-        verdampfertemperatur = None
+    # Werte extrahieren
+    for row in rows:
+        cells = row.find_all("td")
+        if len(cells) == 2:
+            key = cells[0].text.strip()
+            value_text = cells[1].text.strip()
 
-        for row in rows:
-            cells = row.find_all("td")
-            if len(cells) == 2 and "VERDAMPFERTEMPERATUR" in cells[0].text:
-                value_text = cells[1].text.strip().replace("°C", "").replace(",", ".")
-                t_verdampfer = float(value_text)
-                break
+            for suchbegriff, einheit in werte_schluessel.items():
+                if suchbegriff in key:
+                    clean_value = value_text.replace(einheit, "").replace(",", ".").strip()
+                    try:
+                        ergebnisse[suchbegriff] = float(clean_value)
+                    except ValueError:
+                        ergebnisse[suchbegriff] = None
 
-        # Ergebnis ausgeben
-        if t_verdampfer is not None:
-            print("Verdampfertemperatur:", t_verdampfer, "°C")
+    # Werte an UUIDs senden
+    for name, value in ergebnisse.items():
+        uuid = UUID.get(name)
+        if uuid and value is not None:
+            write_vals(uuid, value)
         else:
-            print("Verdampfertemperatur nicht gefunden.")
+            print(f"Kein Wert oder keine UUID für {name}")
 
-    except requests.exceptions.RequestException as e:
-        print("Fehler beim Zugriff auf das Gerät:", e)
-   
-
-
-    write_vals(UUID["T_Verdampfer"], t_verdampfer)
-
-
-   
-    print("well done")
-
-
-if __name__=="__main__":
-        main()
-  
+except requests.exceptions.RequestException as e:
+    print("Fehler beim Zugriff auf das Gerät:", e)
