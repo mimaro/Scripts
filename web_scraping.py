@@ -29,6 +29,11 @@ UUID = {
 #    "ISTDREHZAHL VERDICHTER": "uuid-5",
 #    "SOLLDREHZAHL VERDICHTER": "uuid-6",
 
+def get_vals(uuid, duration="-0min"):
+    # Daten von vz lesen. 
+    req = requests.get(VZ_GET_URL.format(uuid, duration))
+    return req.json()
+
 def write_vals(uuid, value):
     # Daten auf vz schreiben.
     poststring = VZ_POST_URL.format(uuid, value)
