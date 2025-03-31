@@ -96,7 +96,7 @@ except requests.exceptions.RequestException as e:
 t_zul_wp = get_vals(UUID["t_zul"], duration="-0min")["data"]["average"]
 dt_verdampfer_zul = ergebnisse[VERDAMPFERTEMPERATUR]-t_zul_wp
 print(dt_verdampfer_zul)
-
+write_vals(UUID["dT_Verdampfer_ZUL"], dt_verdampfer_zul) 
 
 
 
