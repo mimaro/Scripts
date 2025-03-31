@@ -21,6 +21,7 @@ UUID = {
     "VERDAMPFERTEMPERATUR": "dd35c760-0bef-11f0-885e-8dc19dbf1d54",
     "VERDICHTEREINTRITTSTEMPERATUR": "90098280-0bf1-11f0-af91-9f616d5bd7d8",
     "ÖLSUMPFTEMPERATUR": "a2174850-0bf1-11f0-9be6-c1126abb310a",
+    "dT_Verdampfer_ZUL": "6af2e120-0dfb-11f0-a924-4ffd76bbaf26"
     
 }
 
