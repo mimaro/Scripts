@@ -64,7 +64,7 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
-T_max_Tag_EG = 26.0 # Maximaltemp EG für Sperrung WP
+T_max_Tag_EG = 24.5 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 21.5 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21.5 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 T_Tag_hyst = 0.3
@@ -211,10 +211,10 @@ def main():
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-30min")["data"]["average"] 
+                      duration="-60min")["data"]["average"] 
     
     #RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
-    #                  duration="-30min")["data"]["average"] 
+    #                  duration="-60min")["data"]["average"] 
     
     logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
     #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
