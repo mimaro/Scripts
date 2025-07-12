@@ -139,21 +139,21 @@ def main():
     fail_t_val = fail_t_pars.decode_32bit_uint()
     
     # Read Wagenrain SEL Bilanz
-    try:
-        res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
-        if res_bil.isError():
-            raise Exception("Modbus error response")
-        val_bil = res_bil.registers
-        byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
-        parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100) - 500
-    except Exception as e:
-        print(f"Fehler beim Lesen von SEL Modbus: {e}")
-        parsed_val_bil = 0  # Fallback-Wert bei Fehler
+    #try:
+    #    res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
+    #    if res_bil.isError():
+    #        raise Exception("Modbus error response")
+    #    val_bil = res_bil.registers
+    #    byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
+    #    parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100) - 500
+    #except Exception as e:
+    #    print(f"Fehler beim Lesen von SEL Modbus: {e}")
+    #    parsed_val_bil = 0  # Fallback-Wert bei Fehler
     
-    #res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
-    #val_bil = res_bil.registers
-    #byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
-    #parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)-500
+    res_bil = client_sel.read_input_registers(reg_bil, count=2, unit=1)
+    val_bil = res_bil.registers
+    byte_string_bil = struct.pack('>HH', val_bil[0], val_bil[1])     
+    parsed_val_bil = int((struct.unpack('>i', byte_string_bil)[0])/100)-500
 
     # Berechne Bilanz Wagenrain in A
     val_bil_i = ((parsed_val_bil-bil_offset) / (curr_v_val))*-1
