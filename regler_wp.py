@@ -396,13 +396,37 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
     
     T_Ist_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
-    t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
-    t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
+    t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
+    t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
+    t3 = T_Soll_Raum_OG = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
+    t4 = T_Soll_Raum_OG = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
+    t5 = T_Soll_Raum_OG = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
+    t6 = T_Soll_Raum_OG = (CLIENT.read_input_registers(585, count=1, unit= 1).getRegister(0))/10
+    t7 = T_Soll_Raum_OG = (CLIENT.read_input_registers(586, count=1, unit= 1).getRegister(0))/10
+    t8 = T_Soll_Raum_OG = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
+    t9 = T_Soll_Raum_OG = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
+
+    t10 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10
+    t11 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
+    t12 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1514, count=1, unit= 1).getRegister(0))/10
+    t13 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1515, count=1, unit= 1).getRegister(0))/10
+    t14 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1513, count=1, unit= 1).getRegister(0))/10
+    
     print(t1)
     print(t2)
-
-    print(t_now)
-    print(T_Ist_Raum_OG)
+    print(t3)
+    print(t4)
+    print(t5)
+    print(t6)
+    print(t7)
+    print(t8)
+    print(t9)
+    print(t10)
+    print(t11)
+    print(t12)
+    print(t13)
+    print(t14)
+    
 
     if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
         print("kuehlbetrieb freigegeben")
@@ -411,17 +435,25 @@ def main():
     
     #"RT_SOLL_OG": 1604
 
-    #Solltemp Kühlkreis 1: 603
-    #Solltemp Kühlkreis 2: 604??
+    #read holding registers
     #raumsoll hk2 1605
-    #raumsoll hk1 1604?
-    #rt_freigabe_kuehlen = 22
-    #at_freigabe_kuehlen = 22
+    #raumsoll hk1 1604?  
+    #Hysterese Kühlen 1514
+    #Raumsolltemp 1515
+    #Vorlaufsolltemp 1513
+
+    #Read Input register
+    #Isttemperatur FEK 502
+    #Solltemp FEK 503
+    # Raumfeuchte 504
+    # Taupunkt 505
     # RT Soll OG 584
     # Raumfeuchte 585
     #Taupunkt 586
     #Soll Raumtemp KK1 603 
     #Soll Raumtemp KK2 604
+   
+    
 
     
     #######################################################################
