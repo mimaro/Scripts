@@ -429,8 +429,8 @@ def main():
     #print(t14)
     
 
-    if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
-        print("kuehlbetrieb freigegeben")
+    #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
+    #    print("kuehlbetrieb freigegeben")
 
     #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 30)
     
