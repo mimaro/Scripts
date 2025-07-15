@@ -396,21 +396,21 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
     
     T_Ist_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
-    t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
-    t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
-    t3 = T_Soll_Raum_OG = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
-    t4 = T_Soll_Raum_OG = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
-    t5 = T_Soll_Raum_OG = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
-    t6 = T_Soll_Raum_OG = (CLIENT.read_input_registers(585, count=1, unit= 1).getRegister(0))/10
-    t7 = T_Soll_Raum_OG = (CLIENT.read_input_registers(586, count=1, unit= 1).getRegister(0))/10
-    t8 = T_Soll_Raum_OG = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
-    t9 = T_Soll_Raum_OG = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
+    t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
+    t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
+    t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
+    t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
+    t5 = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
+    t6 = (CLIENT.read_input_registers(585, count=1, unit= 1).getRegister(0))/10
+    t7 = (CLIENT.read_input_registers(586, count=1, unit= 1).getRegister(0))/10
+    t8 = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
+    t9 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
 
-    t10 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10
-    t11 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
-    t12 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1514, count=1, unit= 1).getRegister(0))/10
-    t13 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1515, count=1, unit= 1).getRegister(0))/10
-    t14 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1513, count=1, unit= 1).getRegister(0))/10
+    t10 = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10
+    t11 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
+    t12 = (CLIENT.read_holding_registers(1514, count=1, unit= 1).getRegister(0))/10
+    t13 = (CLIENT.read_holding_registers(1515, count=1, unit= 1).getRegister(0))/10
+    t14 = (CLIENT.read_holding_registers(1513, count=1, unit= 1).getRegister(0))/10
     
     print(t1)
     print(t2)
