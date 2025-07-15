@@ -400,6 +400,7 @@ def main():
     #t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
     #t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
     #t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
+    t45 = (CLIENT.read_input_registers(583, count=1, unit= 1).getRegister(0))/10
     t5 = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
     t6 = (CLIENT.read_input_registers(585, count=1, unit= 1).getRegister(0))/10
     t7 = (CLIENT.read_input_registers(586, count=1, unit= 1).getRegister(0))/10
@@ -431,7 +432,7 @@ def main():
     if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
         print("kuehlbetrieb freigegeben")
 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 30)
+    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 30)
     
     #"RT_SOLL_OG": 1604
 
@@ -447,6 +448,7 @@ def main():
     #Solltemp FEK 503
     # Raumfeuchte 504
     # Taupunkt 505
+    # ISt Raumtemp Heizkreis 1. 583
     # RT Soll OG 584
     # Raumfeuchte 585
     #Taupunkt 586
