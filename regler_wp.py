@@ -94,8 +94,8 @@ p_sol_max = 2000
 p_sol_min = 0
 
 #Parameter Kühlen
-rt_freigabe_kuehlen = 15
-at_freigabe_kuehlen = 15
+rt_freigabe_kuehlen = 15.0
+at_freigabe_kuehlen = 15.0
 
 REGISTER = {
     "Komfort_HK1": 1501,
