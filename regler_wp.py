@@ -390,7 +390,7 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
     
-    T_Soll_Raum_OG = CLIENT.read_holding_registers(RT_OG, count=1, unit= 1).getRegister(0)
+    T_Soll_Raum_OG = CLIENT.read_holding_registers(REGISTER["RT_OG"], count=1, unit= 1).getRegister(0)
     print(T_Soll_Raum_OG)
 
 
