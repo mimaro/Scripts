@@ -403,7 +403,7 @@ def main():
     print(t_now)
     print(T_Ist_Raum_OG)
 
-    if T_Soll_Raum_OG >= rt_freigabe_kuehlen & t_now >= at_freigabe_kuehlen:
+    if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
         print("kuehlbetrieb freigegeben")
     
     #Solltemp Kühlkreis 1: 603
