@@ -106,7 +106,8 @@ REGISTER = {
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
     "WW_Eco": 1510,
-    "RT_IST_OG": 583
+    "RT_IST_OG": 583,
+    "RT_SOLL_OG": 1604
 }
 
 IP_ISG = "192.168.178.36"
@@ -405,7 +406,11 @@ def main():
 
     if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
         print("kuehlbetrieb freigegeben")
+
+    CLIENT.write_register(REGISTER["RT_SOLL_OG"], 30)
     
+    #"RT_SOLL_OG": 1604
+
     #Solltemp Kühlkreis 1: 603
     #Solltemp Kühlkreis 2: 604??
     #raumsoll hk2 1605
