@@ -431,8 +431,9 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10) 
 
     #Freigabe Kühlbetrieb
-    elif (T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen): #Freigabe Kühlbetrieb
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
+    #elif (T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen): #Freigabe Kühlbetrieb
+    #    logging.info(f"Kühlbetrieb")
+    #    CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
     elif (T_Freigabe_min and b_freigabe_wp == 0):
