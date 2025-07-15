@@ -400,8 +400,7 @@ def main():
     print(t1)
     print(t2)
 
-    if T_Soll_Raum_OG >= rt_freigabe_kuehlen:
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
+    
 
     #raumsoll hk2 1605
     #raumsoll hk1 1604?
@@ -420,7 +419,9 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(5))
         time.sleep(5)
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10) 
-           
+
+    
+    
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden oder Raumtemp OG zu hoch.
     elif (T_Freigabe_min and b_freigabe_wp == 0 or T_Freigabe_max):
         logging.info(f"Bereitschaftsbetrieb") 
@@ -443,6 +444,9 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
+    elif T_Soll_Raum_OG >= rt_freigabe_kuehlen:
+            CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
+    
     else:
         if betriebszustand == 5:
             CLIENT.write_register(REGISTER["Betriebsart"], int(1))
