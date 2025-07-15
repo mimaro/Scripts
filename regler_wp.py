@@ -106,7 +106,7 @@ REGISTER = {
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
     "WW_Eco": 1510,
-    "RT_OG": 583
+    "RT_IST_OG": 583
 }
 
 IP_ISG = "192.168.178.36"
@@ -394,18 +394,24 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
     
-    T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_OG"], count=1, unit= 1).getRegister(0))/10
+    T_Ist_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
     t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
     t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(526, count=1, unit= 1).getRegister(0))/10
     print(t1)
     print(t2)
 
+    print(t_now)
+    print(T_Ist_Raum_OG)
     
-
+    #Solltemp Kühlkreis 1: 603
+    #Solltemp Kühlkreis 2: 604??
     #raumsoll hk2 1605
     #raumsoll hk1 1604?
     #rt_freigabe_kuehlen = 22
     #at_freigabe_kuehlen = 22
+    # RT Soll OG 584
+    # Raumfeuchte 585
+    #Taupunkt 586
 
 
     
