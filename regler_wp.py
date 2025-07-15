@@ -395,7 +395,7 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
     
-    T_Ist_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
+    T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
     #t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
     #t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
     #t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
