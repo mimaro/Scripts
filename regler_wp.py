@@ -402,6 +402,9 @@ def main():
 
     print(t_now)
     print(T_Ist_Raum_OG)
+
+    if T_Soll_Raum_OG >= rt_freigabe_kuehlen & t_now >= at_freigabe_kuehlen:
+        print("kuehlbetrieb freigegeben")
     
     #Solltemp Kühlkreis 1: 603
     #Solltemp Kühlkreis 2: 604??
@@ -453,8 +456,6 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
-    
-    
     else:
         if betriebszustand == 5:
             CLIENT.write_register(REGISTER["Betriebsart"], int(1))
