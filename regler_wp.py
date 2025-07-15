@@ -445,7 +445,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
     elif T_Soll_Raum_OG >= rt_freigabe_kuehlen:
-            CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
     else:
         if betriebszustand == 5:
