@@ -101,7 +101,8 @@ REGISTER = {
     "Eco_HK2": 1505,
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
-    "WW_Eco": 1510
+    "WW_Eco": 1510,
+    "RT_OG": 583
 }
 
 IP_ISG = "192.168.178.36"
@@ -384,6 +385,19 @@ def main():
 
     logging.info("Überschussleistung: {}".format(p_sol))
     logging.info("Aktuelle Steigung Heizkurve: {}".format(steigung_soll))
+
+
+    #######################################################################
+    logging.info(f"----------------Kühlfunktion--------------------")
+    
+    T_Soll_Raum_OG = CLIENT.read_holding_registers(RT_OG, count=1, unit= 1).getRegister(0)
+    print(T_Soll_Raum_OG)
+
+
+
+
+
+
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
