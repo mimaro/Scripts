@@ -93,6 +93,10 @@ steigung_max = 200
 p_sol_max = 2000
 p_sol_min = 0
 
+#Parameter Kühlen
+rt_freigabe_kuehlen = 22
+at_freigabe_kuehlen = 22
+
 REGISTER = {
     "Komfort_HK1": 1501,
     "Eco_HK1": 1502,
@@ -390,12 +394,15 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
     
-    T_Soll_Raum_OG = CLIENT.read_input_registers(REGISTER["RT_OG"], count=1, unit= 1).getRegister(0)
+    T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_OG"], count=1, unit= 1).getRegister(0))/10
     print(T_Soll_Raum_OG)
 
+    if T_Soll_Raum_OG >= rt_freigabe_kuehlen:
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
 
 
-
+    #rt_freigabe_kuehlen = 22
+    #at_freigabe_kuehlen = 22
 
 
     
