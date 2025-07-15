@@ -397,7 +397,7 @@ def main():
     
     T_Ist_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
     t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
-    t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(526, count=1, unit= 1).getRegister(0))/10
+    t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
     print(t1)
     print(t2)
 
