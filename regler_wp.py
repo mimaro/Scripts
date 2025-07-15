@@ -107,7 +107,7 @@ REGISTER = {
     "Betriebsart": 1500,
     "WW_Eco": 1510,
     "RT_IST_OG": 583,
-    "RT_SOLL_KK2": 1605
+    "RT_SOLL_KK2": 1604
 }
 
 IP_ISG = "192.168.178.36"
@@ -433,12 +433,12 @@ def main():
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 30)
+    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 27)
     
     #"RT_SOLL_OG": 1604
 
     #read holding registers
-    #raumsoll hk2 1605
+    #raumsoll hk2 1605 ==> kann geschrieben werden
     #raumsoll hk1 1604?  
     #Hysterese Kühlen 1514
     #Raumsolltemp 1515
