@@ -395,7 +395,7 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
     
     T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_OG"], count=1, unit= 1).getRegister(0))/10
-    t1 = T_Soll_Raum_OG = (CLIENT.read_input_registers(525, count=1, unit= 1).getRegister(0))/10
+    t1 = T_Soll_Raum_OG = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
     t2 = T_Soll_Raum_OG = (CLIENT.read_input_registers(526, count=1, unit= 1).getRegister(0))/10
     print(t1)
     print(t2)
@@ -403,7 +403,8 @@ def main():
     if T_Soll_Raum_OG >= rt_freigabe_kuehlen:
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
 
-
+    #raumsoll hk2 1605
+    #raumsoll hk1 1604?
     #rt_freigabe_kuehlen = 22
     #at_freigabe_kuehlen = 22
 
