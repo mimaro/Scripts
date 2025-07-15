@@ -95,7 +95,7 @@ p_sol_min = 0
 
 #Parameter Kühlen
 rt_freigabe_kuehlen = 22
-at_freigabe_kuehlen = 22
+at_freigabe_kuehlen = 15
 
 REGISTER = {
     "Komfort_HK1": 1501,
