@@ -94,8 +94,8 @@ p_sol_max = 2000
 p_sol_min = 0
 
 #Parameter Kühlen
-rt_freigabe_kuehlen = 30.0
-at_freigabe_kuehlen = 30.0
+rt_freigabe_kuehlen = 15.0
+at_freigabe_kuehlen = 15.0
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -433,7 +433,7 @@ def main():
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 270)
+    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 200)
     
     #"RT_SOLL_OG": 1604
 
