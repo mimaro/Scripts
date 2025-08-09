@@ -413,7 +413,9 @@ def main():
     t12 = (CLIENT.read_holding_registers(1514, count=2, unit= 1).getRegister(0))/10
     t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10
     t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
-
+    t15 = (CLIENT.read_input_registers(510, count=1, unit= 1).getRegister(0))/10
+    t16 = (CLIENT.read_input_registers(511, count=1, unit= 1).getRegister(0))/10
+    
     logging.info("Raumist Temp: {}".format(T_Soll_Raum_OG))
     
 
@@ -426,6 +428,8 @@ def main():
     logging.info("Hysterese Vorlauftemp 1514: {}".format(t12))
     logging.info("Raumsolltemp 1515: {}".format(t13))
     logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
+    logging.info("Isttemp HK2 510: {}".format(t15))
+    logging.info("Soltemp HK2 511: {}".format(t16))
    
 
 
