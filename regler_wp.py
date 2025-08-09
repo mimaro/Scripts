@@ -106,7 +106,7 @@ REGISTER = {
     "Steigung_HK2": 1506, 
     "Betriebsart": 1500,
     "WW_Eco": 1510,
-    "RT_IST_OG": 583,
+    "RT_IST_OG": 587,
     "RT_SOLL_KK2": 1604
 }
 
@@ -409,7 +409,8 @@ def main():
     #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
 
     
-    
+    "RT_IST_OG": 587,
+    "RT_SOLL_KK2": 1604
    
     
 
@@ -423,10 +424,6 @@ def main():
  
     #logging.info("Raumsolltemp 1515: {}".format(t13))
     #logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
-   
-
-    
-   
    
 
 
