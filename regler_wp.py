@@ -431,7 +431,7 @@ def main():
 
     CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
     write_vals(UUID["T_Raum_OG"], rt_ist_hk_2)
-    
+    print(rt_ist_hk_2)
   
    
     
