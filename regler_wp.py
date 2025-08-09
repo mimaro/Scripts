@@ -405,13 +405,11 @@ def main():
    
     # = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     rt_ist_hk_2 = float((CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10)
-    #t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
-    #t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    write_vals(UUID["T_Raum_OG"], rt_ist_hk_2)
 
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
-    #t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10 ist nichts
-    #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
-
+    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
+    
 
     
     
@@ -429,11 +427,12 @@ def main():
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
-    write_vals(UUID["T_Raum_OG"], rt_ist_hk_2)
     
     
-
+     #t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    #t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+ #t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10 ist nichts
+    #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
