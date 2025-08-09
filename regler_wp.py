@@ -407,29 +407,37 @@ def main():
     t7 = (CLIENT.read_input_registers(526, count=1, unit= 1).getRegister(0))/10
     t8 = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
     t9 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    t15 = (CLIENT.read_input_registers(587, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    t18 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
 
     #t10 = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     t11 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
     t12 = (CLIENT.read_holding_registers(1514, count=2, unit= 1).getRegister(0))/10
     t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10
     t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
-    t15 = (CLIENT.read_input_registers(510, count=1, unit= 1).getRegister(0))/10
-    t16 = (CLIENT.read_input_registers(511, count=1, unit= 1).getRegister(0))/10
+
+    
     
     logging.info("Raumist Temp: {}".format(T_Soll_Raum_OG))
     
 
     
-    logging.info("Isttemp Fläche 525: {}".format(t6))
-    logging.info("Solltemp Fläche 526: {}".format(t7))
+    #logging.info("Isttemp Fläche 525: {}".format(t6))
+    #logging.info("Solltemp Fläche 526: {}".format(t7))
     logging.info("Solltemp Kühlkreis 1 603: {}".format(t8))
     logging.info("Raumsoll Kühlkreis 2 604: {}".format(t9))
     logging.info("Raumsoll Temperatur 1604: {}".format(t11))
-    logging.info("Hysterese Vorlauftemp 1514: {}".format(t12))
+    #logging.info("Hysterese Vorlauftemp 1514: {}".format(t12))
     logging.info("Raumsolltemp 1515: {}".format(t13))
     logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
-    logging.info("Isttemp HK2 510: {}".format(t15))
-    logging.info("Soltemp HK2 511: {}".format(t16))
+    logging.info("Raumtemp Ist HK2 587: {}".format(t15))
+    logging.info("Raumtemp Soll HK2  588: {}".format(t16))
+    logging.info("Raumfeuchte 589: {}".format(t17))
+
+    
+   
    
 
 
