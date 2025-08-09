@@ -408,7 +408,7 @@ def main():
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
 
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
+    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
     
 
     
