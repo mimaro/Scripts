@@ -97,7 +97,7 @@ p_sol_min = 0
 rt_freigabe_kuehlen = 15.0
 at_freigabe_kuehlen = 15.0
 at_sperre_kuehlen = 25.0
-rt_soll_kuehlen = 
+
 
 REGISTER = {
     "Komfort_HK1": 1501,
