@@ -399,8 +399,8 @@ def main():
     T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
     #t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
     #t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
-    t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
-    t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
+    #t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
+    #t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
     #t45 = (CLIENT.read_input_registers(583, count=1, unit= 1).getRegister(0))/10
     #t5 = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
     t6 = (CLIENT.read_input_registers(525, count=1, unit= 1).getRegister(0))/10
@@ -429,13 +429,7 @@ def main():
    
 
 
-    
-   # print(t1)
-    #print(t2)
-    print(t3)
-    print(t4)
-
-    
+  
 
     #Vorlaufsolltemp fehlt 17°C
     #Raumtemp OG fehlt
