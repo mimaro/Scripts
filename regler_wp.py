@@ -397,10 +397,10 @@ def main():
 
     
     T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
-    #t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
-    #t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
-    #t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
-    #t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
+    t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
+    t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
+    t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
+    t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
     #t45 = (CLIENT.read_input_registers(583, count=1, unit= 1).getRegister(0))/10
     #t5 = (CLIENT.read_input_registers(584, count=1, unit= 1).getRegister(0))/10
     t6 = (CLIENT.read_input_registers(525, count=1, unit= 1).getRegister(0))/10
@@ -415,32 +415,27 @@ def main():
     t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
 
     logging.info("Raumist Temp: {}".format(T_Soll_Raum_OG))
-    logging.info("Raumsoll Temperatur 604: {}".format(t9))
-    logging.info("Raumsoll Temperatur 1604: {}".format(t11))
+    
+
+    
     logging.info("Isttemp Fläche 525: {}".format(t6))
     logging.info("Solltemp Fläche 526: {}".format(t7))
     logging.info("Solltemp Kühlkreis 1 603: {}".format(t8))
+    logging.info("Raumsoll Kühlkreis 2 604: {}".format(t9))
+    logging.info("Raumsoll Temperatur 1604: {}".format(t11))
+    logging.info("Hysterese Vorlauftemp 1514: {}".format(t12))
     logging.info("Raumsolltemp 1515: {}".format(t13))
     logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
-    logging.info("Hysterese Vorlauftemp 1514: {}".format(t12))
+   
 
 
     
-    #print(t1)
-    #print(t2)
-    #print(t3)
-    #print(t4)
-    #print(t45)
-    #print(t5)
-    print(t6)
-    print(t7)
-    print(t8)
-    print(t9)
-    #print(t10)
-    print(t11)
-    #print(t12)
-    print(t13)
-    #print(t14)
+    print(t1)
+    print(t2)
+    print(t3)
+    print(t4)
+
+    
 
     #Vorlaufsolltemp fehlt 17°C
     #Raumtemp OG fehlt
@@ -448,7 +443,7 @@ def main():
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 201)
+    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 201) 1604
     #write_vals(UUID["T_Raum_OG"], T_Soll_Raum_OG)
     
     #"RT_SOLL_OG": 1604
