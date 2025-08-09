@@ -434,6 +434,7 @@ def main():
     #    print("kuehlbetrieb freigegeben")
 
     CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 201)
+    write_vals(UUID["T_Raum_OG"], T_Soll_Raum_OG)
     
     #"RT_SOLL_OG": 1604
 
