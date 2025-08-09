@@ -409,10 +409,11 @@ def main():
 
     t10 = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10
     t11 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
-    t12 = (CLIENT.read_holding_registers(1514, count=2, unit= 1).getRegister(0))/10
+    #t12 = (CLIENT.read_holding_registers(1514, count=2, unit= 1).getRegister(0))/10
     t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10
     t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10
-    
+
+    print(T_Soll_Raum_OG)
     #print(t1)
     #print(t2)
     #print(t3)
@@ -425,7 +426,7 @@ def main():
     print(t9)
     #print(t10)
     print(t11)
-    print(t12)
+    #print(t12)
     print(t13)
     print(t14)
     
