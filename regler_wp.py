@@ -396,7 +396,6 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     
-    T_Soll_Raum_OG
     
   
    
