@@ -406,14 +406,18 @@ def main():
     t6 = (CLIENT.read_input_registers(526, count=1, unit= 1).getRegister(0))/10
     t7 = (CLIENT.read_input_registers(525, count=1, unit= 1).getRegister(0))/10
     t8 = (CLIENT.read_input_registers(603, count=1, unit= 1).getRegister(0))/10
-    t9 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10
+    t9 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
 
-    t10 = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10
+    #t10 = (CLIENT.read_holding_registers(1605, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     t11 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10
     #t12 = (CLIENT.read_holding_registers(1514, count=2, unit= 1).getRegister(0))/10
     t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10
-    t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10
+    t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
 
+    logging.info("Raumsoll Temperatur 604: {}".format(t9))
+    logging.info("Raumsoll Temperatur 1604: {}".format(t11))
+    logging.info("Kühlgrenze AT 1513: {}".format(t14))
+    
     print(T_Soll_Raum_OG)
     #print(t1)
     #print(t2)
@@ -429,8 +433,10 @@ def main():
     print(t11)
     #print(t12)
     print(t13)
-    print(t14)
-    
+    #print(t14)
+
+    #Vorlaufsolltemp fehlt 17°C
+    #Raumtemp OG fehlt
 
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
