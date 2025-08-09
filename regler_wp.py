@@ -405,7 +405,7 @@ def main():
    
     # = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     rt_ist_hk_2 = float((CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10)
-    write_vals(UUID["T_Raum_OG"], rt_ist_hk_2)
+    write_vals(UUID["T_Raum_OG"], "15.2")
 
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
     CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
