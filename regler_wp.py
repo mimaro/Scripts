@@ -441,8 +441,8 @@ def main():
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 201)
-    write_vals(UUID["T_Raum_OG"], T_Soll_Raum_OG)
+    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 201)
+    #write_vals(UUID["T_Raum_OG"], T_Soll_Raum_OG)
     
     #"RT_SOLL_OG": 1604
 
