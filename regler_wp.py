@@ -396,16 +396,16 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     
-    
+    T_Soll_Raum_OG
     
   
    
-    #RT_SOLL_HK_2 = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
-    RT_IST_HK_2 = (CLIENT.read_input_registers(587, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    # = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
+    rt_ist_hk_2 = (CLIENT.read_input_registers(587, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     #t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     #t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
 
-    RT_SOLL_HK_2 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10 
+    rt_soll_hk_2 = (CLIENT.read_holding_registers(1604, count=1, unit= 1).getRegister(0))/10 
     #t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10 ist nichts
     #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
 
@@ -415,8 +415,8 @@ def main():
     
 
     
-    logging.info("Raumsoll Kühlkreis 2 1604: {}".format(RT_SOLL_HK_2))
-    logging.info("Raumtemp Ist HK2 587: {}".format(RT_SOLL_HK_2))
+    logging.info("Raumsoll Kühlkreis 2 1604: {}".format(rt_soll_hk_2))
+    logging.info("Raumtemp Ist HK2 587: {}".format(rt_ist_hk_2))
     #logging.info("Raumtemp Soll HK2  588: {}".format(t16))
     #logging.info("Raumfeuchte 589: {}".format(t17))
     
@@ -478,7 +478,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10) 
 
     #Freigabe Kühlbetrieb
-    elif (T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen): #Freigabe Kühlbetrieb
+    elif (rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen): #Freigabe Kühlbetrieb
         logging.info(f"Kühlbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
