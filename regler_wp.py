@@ -397,8 +397,8 @@ def main():
 
     
     T_Soll_Raum_OG = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10
-    t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
-    t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
+    #t1 = (CLIENT.read_input_registers(502, count=1, unit= 1).getRegister(0))/10
+    #t2 = (CLIENT.read_input_registers(503, count=1, unit= 1).getRegister(0))/10
     #t3 = (CLIENT.read_input_registers(504, count=1, unit= 1).getRegister(0))/10
     #t4 = (CLIENT.read_input_registers(505, count=1, unit= 1).getRegister(0))/10
     #t45 = (CLIENT.read_input_registers(583, count=1, unit= 1).getRegister(0))/10
@@ -415,8 +415,8 @@ def main():
     t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10
 
     print(T_Soll_Raum_OG)
-    print(t1)
-    print(t2)
+    #print(t1)
+    #print(t2)
     #print(t3)
     #print(t4)
     #print(t45)
