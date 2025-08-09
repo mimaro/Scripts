@@ -399,7 +399,7 @@ def main():
 
     freiabe_kühlen = 0
 
-    (rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen
+    #(rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen
     
   
    
@@ -412,7 +412,7 @@ def main():
     #t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10 ist nichts
     #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
 
-   
+
     
     
     logging.info("Raumsoll Kühlkreis 2 1604: {}".format(rt_soll_hk_2))
