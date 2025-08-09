@@ -96,6 +96,8 @@ p_sol_min = 0
 #Parameter Kühlen
 rt_freigabe_kuehlen = 15.0
 at_freigabe_kuehlen = 15.0
+at_sperre_kuehlen = 25.0
+rt_soll_kuehlen = 
 
 REGISTER = {
     "Komfort_HK1": 1501,
@@ -395,7 +397,9 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
 
-    
+    freiabe_kühlen = 0
+
+    (rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen
     
   
    
@@ -410,7 +414,6 @@ def main():
 
    
     
-
     
     logging.info("Raumsoll Kühlkreis 2 1604: {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist HK2 587: {}".format(rt_ist_hk_2))
@@ -423,36 +426,13 @@ def main():
     #logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
    
 
-
-    #Vorlaufsolltemp fehlt 17°C
-    #Raumtemp OG fehlt
-
     #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
     #    print("kuehlbetrieb freigegeben")
 
-    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 200) 
-    #write_vals(UUID["T_Raum_OG"], T_Soll_Raum_OG)
+    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 250) 
+    write_vals(UUID["T_Raum_OG"], rt_ist_hk_2)
     
-    #"RT_SOLL_OG": 1604
-
-    #read holding registers
-    #raumsoll hk2 1605 ==> kann geschrieben werden
-    #raumsoll hk1 1604?  
-    #Hysterese Kühlen 1514
-    #Raumsolltemp 1515
-    #Vorlaufsolltemp 1513
-
-    #Read Input register
-    #Isttemperatur FEK 502
-    #Solltemp FEK 503
-    # Raumfeuchte 504
-    # Taupunkt 505
-    # ISt Raumtemp Heizkreis 1. 583
-    # RT Soll OG 584
-    # Raumfeuchte 585
-    #Taupunkt 586
-    #Soll Raumtemp KK1 603 
-    #Soll Raumtemp KK2 604
+  
    
     
 
