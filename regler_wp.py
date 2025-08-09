@@ -400,7 +400,7 @@ def main():
   
    
     # = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
-    rt_ist_hk_2 = (CLIENT.read_input_registers((REGISTER["RT_IST_OG"], count=1, unit= 1).getRegister(0))/10 
+    rt_ist_hk_2 = CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0) / 10
     #t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
     #t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
 
