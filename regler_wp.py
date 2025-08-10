@@ -409,7 +409,7 @@ def main():
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
-    elif t_puffer_unten > 20 and rt_ist_hk_2 > 23.5:
+    elif t_puffer_unten > 19 and rt_ist_hk_2 > 23.5:
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
         
