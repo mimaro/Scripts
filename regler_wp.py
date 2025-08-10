@@ -399,7 +399,7 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
 
-    freiabe_kühlen = 0
+    freigabe_kühlen = 0
     t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-1min")["data"]["average"]
     t_vorlauf_hk2 = get_vals(UUID["T_VL_HK2"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
