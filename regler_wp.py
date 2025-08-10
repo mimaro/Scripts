@@ -38,7 +38,9 @@ UUID = {
     "T_Absenk_F": "65bf3760-6cc2-11ee-a9fc-972ab9d69e77",
     "WW_Time": "24fb6470-7423-11ee-a18e-514019c4b69a",
     "WW_Ein": "54ce3e80-7423-11ee-8ce6-bbd29c465ad6",
-    "Steigung_HK": "1ad2ca90-becb-11ef-870c-3f013969b33b"
+    "Steigung_HK": "1ad2ca90-becb-11ef-870c-3f013969b33b",
+    "T_Puffer_unten": "6832c0e0-6523-11ee-9722-2d954a0be504",
+    "T_VL_HK2": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b"
 
 }
 
@@ -398,41 +400,32 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     freiabe_kühlen = 0
+    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-1min")["data"]["average"]
+    t_vorlauf_hk2 = get_vals(UUID["T_VL_HK2"], duration="-1min")["data"]["average"]
+    rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
+    rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
 
-    #(rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen
+    if t_puffer_unten <= 18:
+        freigabe_kühlen = 0
+        CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
+
+    elif t_puffer_unten > 20 and rt_ist_hk_2 > 23.5:
+        freigabe_kühlen = 1
+        CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
+
+    else: 
+        freigabe kühlen = 0
+        CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
-  
-   
-    # = (CLIENT.read_input_registers(604, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
-    rt_ist_hk_2 = float((CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10)
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
 
-    rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
-    #CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230) 
-    
+    logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
+    logging.info("Aktuelle VL-Temp WP: {}".format(t_vorlauf_hk2))
+    logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
+    logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2))
+    logging.info("Freigabe Kühlen: {}".format(freigabe_kühlen))
 
     
-    
-    logging.info("Raumsoll Kühlkreis 2 1604: {}".format(rt_soll_hk_2))
-    logging.info("Raumtemp Ist HK2 587: {}".format(rt_ist_hk_2))
-    #logging.info("Raumtemp Soll HK2  588: {}".format(t16))
-    #logging.info("Raumfeuchte 589: {}".format(t17))
-    
-    #logging.info("Raumsoll Temperatur 1604: {}".format(t11)) siehe oben
- 
-    #logging.info("Raumsolltemp 1515: {}".format(t13))
-    #logging.info("Vorlauftemp Soltemp 1513: {}".format(t14))
-   
-
-    #if T_Soll_Raum_OG >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen:
-    #    print("kuehlbetrieb freigegeben")
-
-    
-    
-     #t16 = (CLIENT.read_input_registers(588, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
-    #t17 = (CLIENT.read_input_registers(589, count=1, unit= 1).getRegister(0))/10 #Raumsoll Temp
- #t13 = (CLIENT.read_holding_registers(1515, count=2, unit= 1).getRegister(0))/10 ist nichts
-    #t14 = (CLIENT.read_holding_registers(1513, count=2, unit= 1).getRegister(0))/10 #Grenze Kühlen AT
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
@@ -446,7 +439,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], ww_soll*10) 
 
     #Freigabe Kühlbetrieb
-    elif (rt_ist_hk_2 >= rt_freigabe_kuehlen and t_now >= at_freigabe_kuehlen): #Freigabe Kühlbetrieb
+    elif freigabe_kühlen: #Freigabe Kühlbetrieb
         logging.info(f"Kühlbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
