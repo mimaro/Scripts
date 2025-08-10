@@ -413,8 +413,8 @@ def main():
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
 
-    else: 
-        freigabe kühlen = 0
+    else:
+        freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
