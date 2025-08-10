@@ -412,15 +412,16 @@ def main():
     elif t_puffer_unten > 20 and rt_ist_hk_2 > 23.5:
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
-
+        
     else:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
-
+    print(rt_soll_hk_2)
+    
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
-    logging.info("Aktuelle VL-Temp WP: {}".format(t_vorlauf_hk2))
+    logging.info("Aktuelle VL-Temp HK2: {}".format(t_vorlauf_hk2))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2))
     logging.info("Freigabe Kühlen: {}".format(freigabe_kühlen))
