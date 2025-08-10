@@ -400,7 +400,7 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     freigabe_kühlen = 0
-    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-1min")["data"]["average"]
+    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-10min")["data"]["average"]
     t_vorlauf_hk2 = get_vals(UUID["T_VL_HK2"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
@@ -413,9 +413,9 @@ def main():
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
         
-    else:
-        freigabe_kühlen = 0
-        CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
+    #else:
+    #    freigabe_kühlen = 0
+    #    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
     print(rt_soll_hk_2)
