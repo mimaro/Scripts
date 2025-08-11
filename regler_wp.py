@@ -6,6 +6,7 @@ import logging
 import pytz
 import time
 from pymodbus.client.sync import ModbusTcpClient
+from collections import deque
 
 #######################################################################################################
 # Format URLs
@@ -40,7 +41,8 @@ UUID = {
     "WW_Ein": "54ce3e80-7423-11ee-8ce6-bbd29c465ad6",
     "Steigung_HK": "1ad2ca90-becb-11ef-870c-3f013969b33b",
     "T_Puffer_unten": "6832c0e0-6523-11ee-9722-2d954a0be504",
-    "T_VL_HK2": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b"
+    "T_VL_HK2": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b",
+    "S_FREIGABE_KÜHLEN": "21eb5f90-76ef-11f0-be2d-11efc51999be"
 
 }
 
@@ -402,22 +404,29 @@ def main():
     freigabe_kühlen = 0
     t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-10min")["data"]["average"]
     t_vorlauf_hk2 = get_vals(UUID["T_VL_HK2"], duration="-1min")["data"]["average"]
+    s_freigabe_kühlen = get_vals(UUID["S_FREIGABE_KÜHLEN"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
 
-    if t_puffer_unten <= 18 or rt_ist_hk_2 < 23:
+
+    
+    if t_puffer_unten <= 18.0 or rt_ist_hk_2 < 23.0:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
-    elif t_puffer_unten > 19 and rt_ist_hk_2 > 23.5 and p_net > 1000:
+    elif p_net > 1000 and t_puffer_unten > 19.0 and rt_ist_hk_2 > 23.5:
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
-        
+
+
     #else:
     #    freigabe_kühlen = 0
     #    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
-    write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
+    write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
+    write_vals(UUID["S_FREIGABE_KÜHLEN"], str(freigabe_kühlen))
+
+    
     
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
     logging.info("Aktuelle VL-Temp HK2: {}".format(t_vorlauf_hk2))
