@@ -426,7 +426,9 @@ def main():
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2))
     logging.info("Freigabe Kühlen: {}".format(freigabe_kühlen))
 
-    
+
+    #t_now Aktuelle Aussentemp
+    #p_net Aktuelle PV-Produktion
     
     #######################################################################
     logging.info(f"---------- Schreiben Betriebsfälle ----------")   
