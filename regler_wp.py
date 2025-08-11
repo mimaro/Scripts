@@ -401,9 +401,8 @@ def main():
     #######################################################################
     logging.info(f"----------------Kühlfunktion--------------------")
 
-    freigabe_kühlen = 0
+    freigabe_kühlen = 1
     t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-10min")["data"]["average"]
-    t_vorlauf_hk2 = get_vals(UUID["T_VL_HK2"], duration="-1min")["data"]["average"]
     s_freigabe_kühlen = get_vals(UUID["S_FREIGABE_KÜHLEN"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
@@ -429,7 +428,6 @@ def main():
     
     
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
-    logging.info("Aktuelle VL-Temp HK2: {}".format(t_vorlauf_hk2))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2))
     logging.info("Aktuelle PV-Leistung: {}".format(p_net))
