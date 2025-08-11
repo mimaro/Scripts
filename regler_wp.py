@@ -409,7 +409,7 @@ def main():
 
 
     
-    if t_puffer_unten <= 18.0 or rt_ist_hk_2 < 23.0:
+    if p_net < 500 and t_puffer_unten <= 18.0 or rt_ist_hk_2 < 23.0:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
