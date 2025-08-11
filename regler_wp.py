@@ -409,7 +409,7 @@ def main():
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
-    elif t_puffer_unten > 19 and rt_ist_hk_2 > 23.5:
+    elif t_puffer_unten > 19 and rt_ist_hk_2 > 23.5 and p_net > 1000:
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
         
@@ -418,14 +418,14 @@ def main():
     #    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2) )
-    print(rt_soll_hk_2)
     
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
     logging.info("Aktuelle VL-Temp HK2: {}".format(t_vorlauf_hk2))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2))
+    logging.info("Aktuelle PV-Leistung: {}".format(p_net))
     logging.info("Freigabe Kühlen: {}".format(freigabe_kühlen))
-
+    
 
     #t_now Aktuelle Aussentemp
     #p_net Aktuelle PV-Produktion
