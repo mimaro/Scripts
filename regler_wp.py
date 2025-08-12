@@ -420,7 +420,7 @@ def main():
     #    CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
     
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
-    write_vals(UUID["S_FREIGABE_KÜHLEN"], str(freigabe_kühlen))
+    write_vals(UUID["S_FREIGABE_KÜHLEN"], (freigabe_kühlen))
 
     
     
