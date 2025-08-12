@@ -409,7 +409,7 @@ def main():
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
     rt_ist_hk_2_puffer = get_vals(UUID["T_Raum_OG"], duration="-20min")["data"]["average"]
-    write_vals(UUID["T_Raum_OG_puffer"], str(rt_ist_hk_2_puffer))
+    write_vals(UUID["T_Raum_OG_puffer"], (rt_ist_hk_2_puffer))
     
     if rt_ist_hk_2 > 30:
         rt_ist_hk_2 == 30
