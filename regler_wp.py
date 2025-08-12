@@ -43,8 +43,8 @@ UUID = {
     "T_Puffer_unten": "6832c0e0-6523-11ee-9722-2d954a0be504",
     "T_VL_HK2": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b",
     "S_FREIGABE_KÜHLEN": "21eb5f90-76ef-11f0-be2d-11efc51999be",
-    "T_Raum_OG_puffer": "82ba5d00-77b5-11f0-acfb-7d514a443171"
-
+    "T_Raum_OG_puffer": "82ba5d00-77b5-11f0-acfb-7d514a443171",
+    "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -406,10 +406,8 @@ def main():
     t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-10min")["data"]["average"]
     s_freigabe_kühlen = get_vals(UUID["S_FREIGABE_KÜHLEN"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
-    write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
     rt_ist_hk_2_puffer = get_vals(UUID["T_Raum_OG"], duration="-20min")["data"]["average"]
-    write_vals(UUID["T_Raum_OG_puffer"], (rt_ist_hk_2_puffer))
     
     if rt_ist_hk_2 > 30:
         rt_ist_hk_2 == 30
@@ -430,8 +428,10 @@ def main():
     
    
     write_vals(UUID["S_FREIGABE_KÜHLEN"], (freigabe_kühlen))
+    write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
+    write_vals(UUID["T_Raum_OG_puffer"], (rt_ist_hk_2_puffer))
+    write_vals(UUID["T_Speicher_unten_puffer"], (rt_puffer_unten))
 
-    
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2_puffer))
