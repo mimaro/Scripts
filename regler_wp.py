@@ -407,6 +407,11 @@ def main():
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
 
+    if rt_ist_hk_2 > 30:
+        rt_ist_hk_2 == 30
+    else:
+        rt_ist_hk_2 == rt_ist_hk_2
+
     if p_net < 500 or t_puffer_unten <= 18.0 or rt_ist_hk_2 < 23.0:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
