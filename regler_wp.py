@@ -403,7 +403,7 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     freigabe_kühlen = 1
-    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-10min")["data"]["average"]
+    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-20min")["data"]["average"]
     s_freigabe_kühlen = get_vals(UUID["S_FREIGABE_KÜHLEN"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
