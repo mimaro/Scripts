@@ -416,11 +416,11 @@ def main():
     else:
         rt_ist_hk_2 == rt_ist_hk_2
 
-    if t_puffer_unten <= 18 or rt_ist_hk_2_puffer < 23.4:
+    if t_puffer_unten <= 18 or rt_ist_hk_2_puffer < 20:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
-    elif t_puffer_unten > 18.5 and rt_ist_hk_2_puffer > 23.6:
+    elif t_puffer_unten > 18.5 and rt_ist_hk_2_puffer > 20:
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
 
