@@ -433,7 +433,7 @@ def main():
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
     write_vals(UUID["T_Raum_OG_puffer"], (rt_ist_hk_2_puffer))
     write_vals(UUID["T_Speicher_unten_puffer"], (t_puffer_unten))
-    write_vals(UUID["T_Taupunkt"], str(t_taupunkt))
+    write_vals(UUID["T_Taupunkt"], float(t_taupunkt))
 
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
