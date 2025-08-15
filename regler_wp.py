@@ -44,7 +44,8 @@ UUID = {
     "T_VL_HK2": "d9ad7d10-6522-11ee-bcaa-e7b07cee865b",
     "S_FREIGABE_KÜHLEN": "21eb5f90-76ef-11f0-be2d-11efc51999be",
     "T_Raum_OG_puffer": "82ba5d00-77b5-11f0-acfb-7d514a443171",
-    "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533"
+    "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533",
+    "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -432,6 +433,7 @@ def main():
     write_vals(UUID["T_Raum_OG"], str(rt_ist_hk_2))
     write_vals(UUID["T_Raum_OG_puffer"], (rt_ist_hk_2_puffer))
     write_vals(UUID["T_Speicher_unten_puffer"], (t_puffer_unten))
+    write_vals(UUID["T_Taupunkt"], str(t_taupunkt))
 
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
