@@ -408,6 +408,7 @@ def main():
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
     rt_ist_hk_2_puffer = get_vals(UUID["T_Raum_OG"], duration="-20min")["data"]["average"]
+    t_taupunkt = (CLIENT.read_input_registers(590, count=1, unit=1).getRegister(0))/10
     
     if rt_ist_hk_2 > 30:
         rt_ist_hk_2 == 30
@@ -436,6 +437,7 @@ def main():
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2_puffer))
     logging.info("Aktuelle PV-Leistung: {}".format(p_net))
+    logging.info("Taupunkttemperatur: {}".format(t_taupunkt))
     logging.info("Freigabe Kühlen: {}".format(freigabe_kühlen))
     
 
