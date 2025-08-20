@@ -32,7 +32,7 @@ sensor3 = '/sys/bus/w1/devices/28-0302977901be/w1_slave'
 sensor4 = '/sys/bus/w1/devices/28-030297796ad5/w1_slave'
 sensor5 = '/sys/bus/w1/devices/28-03029779113a/w1_slave'
 sensor6 = '/sys/bus/w1/devices/28-030297791325/w1_slave'
-sensor7 = '/sys/bus/w1/devices/28-02199245a854/w1_slave'
+sensor7 = '/sys/bus/w1/devices/28-3c01f09622c9/w1_slave'
 
 Offset_RT = 0.3
 
