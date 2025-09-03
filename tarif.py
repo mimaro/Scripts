@@ -207,7 +207,7 @@ def main():
       reader = csv.DictReader(f)
       first_row = next(reader, None)  # erste Zeile nach dem Header
       if first_row:
-        first_price = float(first_row["price_chf_per_kwh"])
+        first_price = float(first_row["price_chf_per_kwh"]*100)
         first_start = first_row["start_local"]
         first_end   = first_row["end_local"]
 
