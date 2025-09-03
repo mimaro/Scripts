@@ -39,6 +39,12 @@ AUTH_TOKEN = os.environ.get(
 # Tariftyp: "integrated" liefert Gesamtpreis; alternativ "electricity"/"dso"
 TARIFF_TYPE = os.environ.get("ESIT_TARIFF_TYPE", "integrated")
 
+
+f828d020-88c1-11f0-87f7-958162b459c7
+
+
+
+
 # ==========================
 
 def floor_to_quarter(dt: datetime) -> datetime:
