@@ -123,7 +123,7 @@ def main():
 
     # optionale 'Jetzt'-Linie
     now_line = None
-    if not args.no-now-line:
+    if not args.no_now_line:
         try:
             tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
             now = datetime.now(tz) if tz else datetime.now()
