@@ -20,6 +20,8 @@ from datetime import datetime, timedelta, timezone
 from dateutil import tz
 import requests
 import urllib.parse
+import csv
+from datetime import datetime
 
 # ===== Konfiguration =====
 # Production ist Standard; für Staging: ESIT_BASE_URL=https://esit-test.code-fabrik.ch
@@ -179,6 +181,25 @@ def main():
     print(">> Aktueller Preis:")
     print(f"  {st.strftime('%Y-%m-%d %H:%M')} – {en.strftime('%H:%M')}  ->  {pr:.5f} CHF/kWh\n")
 
+    # Pfad zur CSV-Datei
+    csv_path = "esit_prices.csv"
+    now = datetime.now()  # lokale Zeit (wie in CSV gespeichert)
+    tarif_now = None
+
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            start = datetime.fromisoformat(row["start_local"])
+            end = datetime.fromisoformat(row["end_local"])
+            if start <= now <= end:
+              tarif_now = float(row["price_chf_per_kwh"])
+              break
+
+    if tarif_now is None:
+      raise RuntimeError("Kein aktueller Slot gefunden!")
+  
+    write_vals(UUID["Energiepreis"], tarif_now)
+  
     print(">> Nächste 24h (15-Min-Raster):")
     for st, en, pr in sorted(rows, key=lambda x: x[0]):
         print(f"{st.strftime('%Y-%m-%d %H:%M')} ; {pr:.5f}")
