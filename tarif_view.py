@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
+# Scripts über Timer direkt starten systemctl --user start tarif-view.service
+
 """
 tarif.view – Visualisiert ESIT-Preise aus einer CSV als Linienchart.
 
@@ -11,6 +14,8 @@ tarif.view – Visualisiert ESIT-Preise aus einer CSV als Linienchart.
 - Zeigt den Plot auf dem angeschlossenen Bildschirm
 - Es wird **keine Datei gespeichert**
 """
+import matplotlib
+matplotlib.use("TkAgg")
 
 import os
 import sys
