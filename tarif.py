@@ -22,6 +22,7 @@ import requests
 import urllib.parse
 import csv
 from datetime import datetime
+import logging
 
 # ===== Konfiguration =====
 # Production ist Standard; für Staging: ESIT_BASE_URL=https://esit-test.code-fabrik.ch
