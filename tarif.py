@@ -39,13 +39,19 @@ AUTH_TOKEN = os.environ.get(
 # Tariftyp: "integrated" liefert Gesamtpreis; alternativ "electricity"/"dso"
 TARIFF_TYPE = os.environ.get("ESIT_TARIFF_TYPE", "integrated")
 
+VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 
-f828d020-88c1-11f0-87f7-958162b459c7
-
-
-
+UUID = {
+    "Energiepreis": "f828d020-88c1-11f0-87f7-958162b459c7"
+   }
 
 # ==========================
+
+def write_vals(uuid, val):
+    poststring = VZ_POST_URL.format(uuid, val)
+    logging.info("Poststring {}".format(poststring))
+    postreq = requests.post(poststring)
+    logging.info("Ok? {}".format(postreq.ok))
 
 def floor_to_quarter(dt: datetime) -> datetime:
     return dt.replace(minute=(dt.minute // 15) * 15, second=0, microsecond=0)
