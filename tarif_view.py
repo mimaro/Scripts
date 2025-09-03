@@ -66,6 +66,8 @@ def make_plot(times, values, draw_now=True):
     ax.set_xlabel("Zeit")
     ax.set_ylabel("Energiepreis [Rp/kWh]")
 
+    ax.set_ylim(0, 40)
+  
     start_dt = times[0]
     end_dt = times[-1]
     if start_dt.date() == end_dt.date():
