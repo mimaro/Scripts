@@ -35,17 +35,16 @@ def read_csv(csv_path):
     times = []
     values = []
 
+    local_tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
+
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             # Zeit aus 'start_local' parsen (ISO-8601)
             t = datetime.fromisoformat(row["start_local"])
             # Falls keine TZ: Europe/Zurich annehmen
-            if t.tzinfo is None and ZoneInfo:
-                try:
-                    t = t.replace(tzinfo=ZoneInfo("Europe/Zurich"))
-                except Exception:
-                    pass
+            if t.tzinfo is None and local_tz:
+                t = t.replace(tzinfo=local_tz)
             rp = float(row["price_chf_per_kwh"]) * 100.0  # Rp/kWh
             times.append(t)
             values.append(rp)
@@ -59,6 +58,9 @@ def make_plot(times, values, draw_now=True):
     """Erstellt das Linienchart und zeigt es auf dem Bildschirm."""
     if not times:
         raise RuntimeError("Keine Datenpunkte gefunden.")
+
+    # Zeitzone Europe/Zurich für Achsenbeschriftung
+    tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(times, values, linewidth=1.8)
@@ -78,16 +80,16 @@ def make_plot(times, values, draw_now=True):
 
     span_hours = (end_dt - start_dt).total_seconds() / 3600.0
     if span_hours <= 36:
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=tz))
     else:
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d\n%H:%M"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=tz))
 
     fig.autofmt_xdate()
     ax.grid(True, which="both", linestyle="--", alpha=0.4)
 
     if draw_now:
         try:
-            now = datetime.now(times[0].tzinfo) if times[0].tzinfo else datetime.now()
+            now = datetime.now(tz) if tz else datetime.now()
             ax.axvline(now, linestyle=":", linewidth=1.2)
         except Exception:
             pass
