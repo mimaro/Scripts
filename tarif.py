@@ -33,7 +33,7 @@ METERING_CODE = os.environ.get(
 )
 AUTH_TOKEN = os.environ.get(
     "ESIT_API_TOKEN",
-    ""  # Optional: "459cceb84e827d308cb61a14da203506"
+    ""   Optional: "459cceb84e827d308cb61a14da203506"
 )
 
 # Tariftyp: "integrated" liefert Gesamtpreis; alternativ "electricity"/"dso"
