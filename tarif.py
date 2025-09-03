@@ -181,24 +181,7 @@ def main():
     print(">> Aktueller Preis:")
     print(f"  {st.strftime('%Y-%m-%d %H:%M')} – {en.strftime('%H:%M')}  ->  {pr:.5f} CHF/kWh\n")
 
-    # Pfad zur CSV-Datei
-    csv_path = "esit_prices.csv"
-    now = datetime.now()  # lokale Zeit (wie in CSV gespeichert)
-    tarif_now = None
-
-    with open(csv_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            start = datetime.fromisoformat(row["start_local"])
-            end = datetime.fromisoformat(row["end_local"])
-            if start <= now <= end:
-              tarif_now = float(row["price_chf_per_kwh"])
-              break
-
-    if tarif_now is None:
-      raise RuntimeError("Kein aktueller Slot gefunden!")
-  
-    write_vals(UUID["Energiepreis"], tarif_now)
+   
   
     print(">> Nächste 24h (15-Min-Raster):")
     for st, en, pr in sorted(rows, key=lambda x: x[0]):
@@ -212,6 +195,25 @@ def main():
         for st, en, pr in sorted(rows, key=lambda x: x[0]):
             w.writerow([st.isoformat(timespec="seconds"), en.isoformat(timespec="seconds"), f"{pr:.8f}"])
     print(f"\nCSV gespeichert: {os.path.abspath(csv_path)}")
+
+    csv_path = "esit_prices.csv"
+
+    first_price = None
+    first_start = None
+    first_end = None
+
+    with open(csv_path, newline="", encoding="utf-8") as f:
+      reader = csv.DictReader(f)
+      first_row = next(reader, None)  # erste Zeile nach dem Header
+      if first_row:
+        first_price = float(first_row["price_chf_per_kwh"])
+        first_start = first_row["start_local"]
+        first_end   = first_row["end_local"]
+
+    if first_price is None:
+      raise RuntimeError("CSV-Datei leer oder fehlerhaft!")
+
+    write_vals(UUID["Energiepreis"], first_price)
 
 if __name__ == "__main__":
     main()
