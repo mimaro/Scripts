@@ -214,6 +214,8 @@ def main():
     if first_price is None:
       raise RuntimeError("CSV-Datei leer oder fehlerhaft!")
 
+    print(first_price)
+  
     write_vals(UUID["Energiepreis"], first_price)
 
 if __name__ == "__main__":
