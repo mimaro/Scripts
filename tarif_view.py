@@ -1,23 +1,19 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-#Starten mit:
-#export DISPLAY=:0
-#export XAUTHORITY=/home/pi/.Xauthority
-#python3 /home/pi/Scripts/tarif_view.py --interval 60
-
+# Start:
+# export DISPLAY=:0
+# export XAUTHORITY=/home/pi/.Xauthority
+# python3 /home/pi/Scripts/tarif_view.py --interval 60
 
 """
 tarif.view – Live-Update aus 'esit_prices.csv' als Linienchart (Rp/kWh).
 - Liest start_local, end_local, price_chf_per_kwh
 - Rechnet Preis * 100 -> Rp/kWh
-- X-Achse: lokale Zeit Europe/Zurich (Sommer-/Winterzeit korrekt)
-- Y-Achse: fix 0..40
-- Keine Datei speichern, nur anzeigen
-- Aktualisiert die Daten im gleichen Fenster in festem Intervall
-
-Startbeispiel (auf HDMI-Desktop):
-  DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority /usr/bin/python3 /home/pi/Scripts/tarif_view.py --interval 60
+- X-Achse: Europe/Zurich (DST korrekt), Y: 0..40
+- Kein Speichern, nur Anzeige
+- Aktualisiert sich periodisch; bei unveränderter CSV nur 'Jetzt'-Linie bewegen
 """
 
 import matplotlib
@@ -29,6 +25,7 @@ import csv
 import time
 import argparse
 from datetime import datetime
+
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
 except Exception:
@@ -37,69 +34,67 @@ except Exception:
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-
 CSV_PATH_DEFAULT = "esit_prices.csv"
+
+# === Globale, wiederverwendete Objekte ===
+LOCAL_TZ = ZoneInfo("Europe/Zurich") if ZoneInfo else None
+FMT_SHORT = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)                # ≤ 36h
+FMT_LONG  = mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=LOCAL_TZ)      # > 36h
 
 
 def read_csv(csv_path):
-    """Liest CSV und liefert (times, rp_per_kwh). Zeiten tz-aware in Europe/Zurich, sortiert."""
+    """
+    Liest CSV -> (x_num, y_rp, start_dt, end_dt)
+    - x_num: Matplotlib-Zeitachsenwerte (mdates.date2num)
+    - y_rp : Preise in Rp/kWh (float)
+    - start_dt, end_dt: erste/letzte Zeit (datetime, tz-aware/naiv wie CSV; ggf. LOCAL_TZ angenommen)
+    """
     times, values = [], []
-    local_tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
 
     with open(csv_path, newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        r = csv.DictReader(f)
+        for row in r:
             t = datetime.fromisoformat(row["start_local"])
-            # Falls keine TZ im CSV: Europe/Zurich annehmen
-            if t.tzinfo is None and local_tz:
-                t = t.replace(tzinfo=local_tz)
-            rp = float(row["price_chf_per_kwh"]) * 100.0  # CHF/kWh -> Rp/kWh
+            if t.tzinfo is None and LOCAL_TZ:
+                t = t.replace(tzinfo=LOCAL_TZ)
+            rp = float(row["price_chf_per_kwh"]) * 100.0
             times.append(t)
             values.append(rp)
 
-    pairs = sorted(zip(times, values), key=lambda x: x[0])
-    times, values = [p[0] for p in pairs], [p[1] for p in pairs]
-    return times, values
+    if not times:
+        return [], [], None, None
+
+    # Sortierung (falls nötig) und Umwandlung für schnellere set_data
+    pairs = sorted(zip(times, values), key=lambda z: z[0])
+    times_sorted = [p[0] for p in pairs]
+    values_sorted = [p[1] for p in pairs]
+    x_num = mdates.date2num(times_sorted)
+    return x_num, values_sorted, times_sorted[0], times_sorted[-1]
 
 
-def build_axes(ax, times, values):
-    """Initiale Achsen-/Format-Setups (ohne Farben)."""
-    tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-
-    # Achsentitel
+def setup_axes(ax, x_first, x_last):
+    """Einmaliges Achsen-Setup (Labels, Limits, Formatter, Grid)."""
     ax.set_xlabel("Zeit")
     ax.set_ylabel("Energiepreis [Rp/kWh]")
-
-    # Y-Achse fix
     ax.set_ylim(0, 40)
 
-    # Titel
-    if not times:
-        ax.set_title("ESIT-Preise – keine Daten")
-    else:
-        start_dt, end_dt = times[0], times[-1]
-        if start_dt.date() == end_dt.date():
-            title = f"ESIT-Preise – {start_dt.strftime('%Y-%m-%d')}"
-        else:
-            title = f"ESIT-Preise – {start_dt.strftime('%Y-%m-%d')} bis {end_dt.strftime('%Y-%m-%d')}"
-        ax.set_title(title)
-
-    # X-Achsen-Formatter mit TZ
-    if times:
-        span_hours = (times[-1] - times[0]).total_seconds() / 3600.0
-        if span_hours <= 36:
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=tz))
-        else:
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=tz))
+    # Formatter je nach Spannweite
+    span_hours = (x_last - x_first) * 24  # numdays -> hours
+    ax.xaxis.set_major_formatter(FMT_SHORT if span_hours <= 36 else FMT_LONG)
 
     ax.grid(True, which="both", linestyle="--", alpha=0.4)
 
 
-def update_title_with_stamp(ax, times):
-    """Ergänzt den Titel um 'Stand: HH:MM TZ'."""
-    tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-    now = datetime.now(tz) if tz else datetime.now()
-    base = ax.get_title()
+def update_title(ax, first_dt, last_dt):
+    """Titel inkl. 'Stand: ... TZ' setzen – ohne teure String-Neuberechnung jedes Mal."""
+    if first_dt is None or last_dt is None:
+        base = "ESIT-Preise – keine Daten"
+    else:
+        if first_dt.date() == last_dt.date():
+            base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')}"
+        else:
+            base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')} bis {last_dt.strftime('%Y-%m-%d')}"
+    now = datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()
     ax.set_title(f"{base}  –  Stand: {now.strftime('%Y-%m-%d %H:%M %Z')}")
 
 
@@ -117,83 +112,87 @@ def main():
 
     # Erstes Einlesen
     try:
-        times, values = read_csv(csv_path)
+        x_num, y_rp, first_dt, last_dt = read_csv(csv_path)
     except Exception as e:
         print(f"Fehler beim Lesen der CSV: {e}", file=sys.stderr)
         sys.exit(2)
 
-    # Plot vorbereiten
     fig, ax = plt.subplots(figsize=(10, 5))
-    line, = ax.plot(times, values, linewidth=1.8)  # Linie-Handle merken
-    build_axes(ax, times, values)
 
-    # optionale 'Jetzt'-Linie
+    # Initiale Linie(n)
+    if x_num:
+        line, = ax.plot(x_num, y_rp, linewidth=1.8)
+        setup_axes(ax, x_num[0], x_num[-1])
+        ax.set_xlim(x_num[0], x_num[-1])
+    else:
+        line, = ax.plot([], [], linewidth=1.8)
+
+    # Now-Linie optional
     now_line = None
     if not args.no_now_line:
-        try:
-            tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-            now = datetime.now(tz) if tz else datetime.now()
-            now_line = ax.axvline(now, linestyle=":", linewidth=1.2)
-        except Exception:
-            pass
+        now = mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now())
+        now_line = ax.axvline(now, linestyle=":", linewidth=1.2)
 
-    update_title_with_stamp(ax, times)
+    update_title(ax, first_dt, last_dt)
     fig.autofmt_xdate()
     plt.tight_layout()
-    plt.show(block=False)  # Fenster anzeigen, aber nicht blockieren
+    plt.show(block=False)
 
-    last_mtime = os.path.getmtime(csv_path)
+    try:
+        last_mtime = os.path.getmtime(csv_path)
+    except FileNotFoundError:
+        last_mtime = 0
 
     try:
         while True:
             time.sleep(args.interval)
 
+            # 1) CSV geändert?
             try:
                 mtime = os.path.getmtime(csv_path)
             except FileNotFoundError:
-                # CSV fehlt temporär -> überspringen
-                continue
+                mtime = last_mtime  # keine Änderung melden
 
-            if mtime == last_mtime:
-                # keine Änderung -> nur Now-Linie aktualisieren
+            if mtime != last_mtime:
+                # Neu einlesen und Linie aktualisieren
+                try:
+                    x_new, y_new, fdt, ldt = read_csv(csv_path)
+                except Exception:
+                    # CSV gerade im Schreibvorgang? nächster Tick…
+                    continue
+
+                last_mtime = mtime
+
+                if x_new:
+                    line.set_data(x_new, y_new)
+                    # Achsen-Aktualisierung minimal halten: nur X neu skalieren, Y bleibt 0..40
+                    ax.set_xlim(x_new[0], x_new[-1])
+                    setup_axes(ax, x_new[0], x_new[-1])  # Formatter ggf. umschalten
+                    update_title(ax, fdt, ldt)
+
+                # Now-Linie mitziehen
                 if now_line is not None:
-                    tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-                    now = datetime.now(tz) if tz else datetime.now()
+                    now = mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now())
                     now_line.set_xdata([now, now])
+
                 fig.canvas.draw_idle()
                 plt.pause(0.01)
                 continue
 
-            # CSV hat sich geändert -> neu laden
-            try:
-                new_times, new_values = read_csv(csv_path)
-            except Exception as e:
-                # Beim Lesen schiefgegangen -> nächster Versuch später
-                continue
-
-            last_mtime = mtime
-
-            # Daten in vorhandener Linie aktualisieren
-            line.set_xdata(new_times)
-            line.set_ydata(new_values)
-
-            # X-Achse neu formatieren und Limits anpassen (Y bleibt 0..40 fix)
-            ax.relim()
-            ax.autoscale_view(scalex=True, scaley=False)
-            build_axes(ax, new_times, new_values)
-            update_title_with_stamp(ax, new_times)
-
-            # Now-Linie nachführen
+            # 2) Keine CSV-Änderung → nur Now-Linie & Zeitstempel im Titel nachführen
+            something_changed = False
             if now_line is not None:
-                tz = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-                now = datetime.now(tz) if tz else datetime.now()
+                now = mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now())
                 now_line.set_xdata([now, now])
+                something_changed = True
 
-            fig.canvas.draw_idle()
-            plt.pause(0.01)
+            # Titel alle Intervalle aktualisieren (Stand: …)
+            update_title(ax, first_dt, last_dt)
+            if something_changed:
+                fig.canvas.draw_idle()
+                plt.pause(0.01)
 
     except KeyboardInterrupt:
-        # sauberes Beenden mit Ctrl+C
         pass
 
 
