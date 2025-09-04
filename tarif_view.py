@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 
 #lokal starte mit
-#python3 /home/pi/Scripts/tarif_view.py --csv /home/pi/data/esit_prices.csv --interval 60
+#python3 /home/pi/Scripts/tarif_view.py --csv /home/pi/Scripts/esit_prices.csv --interval 60
 
 """
 tarif.view – Live-Update aus 'esit_prices.csv' als Linienchart (Rp/kWh).
