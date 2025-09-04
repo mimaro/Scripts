@@ -86,7 +86,7 @@ def main():
     warn = None
 
     if len(x_num) > 0:
-       (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
+        (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
         setup_axes(ax, x_num[0], x_num[-1])
         ax.set_xlim(x_num[0], x_num[-1])
     else:
