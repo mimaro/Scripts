@@ -85,9 +85,10 @@ def main():
     fig, ax = plt.subplots(figsize=(10, 5))
     warn = None
 
-    if x_num:
-        (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
-        setup_axes(ax, x_num[0], x_num[-1]); ax.set_xlim(x_num[0], x_num[-1])
+   if len(x_num) > 0:
+       (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
+        setup_axes(ax, x_num[0], x_num[-1])
+        ax.set_xlim(x_num[0], x_num[-1])
     else:
         (line,) = ax.plot([], [], linewidth=1.8)
         warn = overlay_text(ax, "Keine Daten in CSV")
@@ -119,7 +120,7 @@ def main():
                 except Exception as e:
                     info(f"CSV noch im Schreibvorgang? {e}"); continue
                 last_mtime = mtime
-                if x_new:
+                if len(x_new) > 0:
                     line.set_data(x_new, y_new)
                     ax.set_xlim(x_new[0], x_new[-1])
                     setup_axes(ax, x_new[0], x_new[-1])
