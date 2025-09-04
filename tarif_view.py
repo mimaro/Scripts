@@ -2,186 +2,144 @@
 # -*- coding: utf-8 -*-
 
 """
-tarif_view.py – Live-Update aus '/home/pi/Scripts/esit_prices.csv' als Linienchart (Rp/kWh).
-- Liest start_local, end_local, price_chf_per_kwh
-- Rechnet Preis * 100 -> Rp/kWh
-- X-Achse: Europe/Zurich (DST korrekt), Y: 0..40
-- Kein Speichern, nur Anzeige
-- Aktualisiert sich periodisch; bei unveränderter CSV nur 'Jetzt'-Linie bewegen
-- Start: python3 tarif_view.py
+tarif_view.py – zeigt /home/pi/Scripts/esit_prices.csv als Live-Linienchart (Rp/kWh)
+Start: python3 tarif_view.py
+Aktualisierung: alle 60s
 """
 
-import os
-import sys
-import csv
-import time
+import os, sys, csv, time
 from datetime import datetime
-
 import matplotlib
-matplotlib.use("TkAgg")  # GUI-Backend (Tkinter)
+matplotlib.use("TkAgg")  # GUI-Backend
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-# --- Einstellungen ---
 CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
 INTERVAL_SECONDS = 60
-FULLSCREEN = False  # auf True setzen, wenn Vollbild gewünscht ist
+FULLSCREEN = False  # bei Bedarf True
 
-# --- Zeitzone/Formatter ---
+# Zeitzone/Formatter
 try:
-    from zoneinfo import ZoneInfo  # Python 3.9+
+    from zoneinfo import ZoneInfo
+    LOCAL_TZ = ZoneInfo("Europe/Zurich")
 except Exception:
-    ZoneInfo = None
+    LOCAL_TZ = None
+FMT_SHORT = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)
+FMT_LONG  = mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=LOCAL_TZ)
 
-LOCAL_TZ = ZoneInfo("Europe/Zurich") if ZoneInfo else None
-FMT_SHORT = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)                # ≤ 36h
-FMT_LONG  = mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=LOCAL_TZ)      # > 36h
-
+def info(msg): print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
 
 def read_csv(csv_path):
-    """
-    Liest CSV -> (x_num, y_rp, start_dt, end_dt)
-    - x_num: Matplotlib-Zeitachsenwerte (mdates.date2num)
-    - y_rp : Preise in Rp/kWh (float)
-    - start_dt, end_dt: erste/letzte Zeit (datetime, tz-aware/naiv wie CSV; ggf. LOCAL_TZ angenommen)
-    """
-    times, values = [], []
-
+    """liest CSV -> (x_num, y_rp, first_dt, last_dt); überspringt fehlerhafte Zeilen"""
+    times, values, bad = [], [], 0
     with open(csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
+        if "start_local" not in r.fieldnames or "price_chf_per_kwh" not in r.fieldnames:
+            raise KeyError(f"CSV-Header erwartet: start_local, price_chf_per_kwh (gefunden: {r.fieldnames})")
         for row in r:
-            # erwartet Spalten: start_local, price_chf_per_kwh
-            t = datetime.fromisoformat(row["start_local"])
-            if t.tzinfo is None and LOCAL_TZ:
-                t = t.replace(tzinfo=LOCAL_TZ)
-            rp = float(row["price_chf_per_kwh"]) * 100.0
-            times.append(t)
-            values.append(rp)
-
-    if not times:
-        return [], [], None, None
-
+            try:
+                t = datetime.fromisoformat(row["start_local"])
+                if t.tzinfo is None and LOCAL_TZ: t = t.replace(tzinfo=LOCAL_TZ)
+                rp = float(row["price_chf_per_kwh"]) * 100.0
+                times.append(t); values.append(rp)
+            except Exception:
+                bad += 1
+    if bad: info(f"{bad} CSV-Zeile(n) übersprungen (Parsefehler).")
+    if not times: return [], [], None, None
     pairs = sorted(zip(times, values), key=lambda z: z[0])
-    times_sorted = [p[0] for p in pairs]
-    values_sorted = [p[1] for p in pairs]
+    times_sorted = [p[0] for p in pairs]; values_sorted = [p[1] for p in pairs]
     x_num = mdates.date2num(times_sorted)
     return x_num, values_sorted, times_sorted[0], times_sorted[-1]
 
-
 def setup_axes(ax, x_first, x_last):
-    """Einmaliges Achsen-Setup (Labels, Limits, Formatter, Grid)."""
-    ax.set_xlabel("Zeit")
-    ax.set_ylabel("Energiepreis [Rp/kWh]")
-    ax.set_ylim(0, 40)
-
-    span_hours = (x_last - x_first) * 24  # numdays -> hours
+    ax.set_xlabel("Zeit"); ax.set_ylabel("Energiepreis [Rp/kWh]"); ax.set_ylim(0, 40)
+    span_hours = (x_last - x_first) * 24 if x_first is not None and x_last is not None else 0
     ax.xaxis.set_major_formatter(FMT_SHORT if span_hours <= 36 else FMT_LONG)
     ax.grid(True, which="both", linestyle="--", alpha=0.4)
 
-
-def update_title(ax, first_dt, last_dt):
-    """Titel inkl. 'Stand: ... TZ' setzen."""
+def update_title(ax, first_dt, last_dt, extra=""):
     if first_dt is None or last_dt is None:
         base = "ESIT-Preise – keine Daten"
+    elif first_dt.date() == last_dt.date():
+        base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')}"
     else:
-        if first_dt.date() == last_dt.date():
-            base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')}"
-        else:
-            base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')} bis {last_dt.strftime('%Y-%m-%d')}"
+        base = f"ESIT-Preise – {first_dt.strftime('%Y-%m-%d')} bis {last_dt.strftime('%Y-%m-%d')}"
     now = datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()
-    ax.set_title(f"{base}  –  Stand: {now.strftime('%Y-%m-%d %H:%M %Z')}")
+    ax.set_title(f"{base} – Stand: {now.strftime('%Y-%m-%d %H:%M %Z')}{extra}")
 
+def overlay_text(ax, text):
+    return ax.text(0.5, 0.5, text, transform=ax.transAxes, ha="center", va="center",
+                   bbox=dict(boxstyle="round", fc="w", ec="r"), fontsize=10, zorder=10)
 
 def main():
-    csv_path = CSV_PATH
-    if not os.path.exists(csv_path):
-        print(f"[FEHLER] CSV nicht gefunden: {csv_path}", file=sys.stderr)
-        sys.exit(1)
+    if not os.environ.get("DISPLAY"):
+        info("WARNUNG: DISPLAY ist leer. Falls per SSH gestartet, setze DISPLAY=:0 und XAUTHORITY.")
+    if not os.path.exists(CSV_PATH):
+        print(f"[FEHLER] CSV nicht gefunden: {CSV_PATH}", file=sys.stderr); sys.exit(1)
 
-    # Erstes Einlesen
     try:
-        x_num, y_rp, first_dt, last_dt = read_csv(csv_path)
+        x_num, y_rp, first_dt, last_dt = read_csv(CSV_PATH)
     except Exception as e:
-        print(f"[FEHLER] Lesen der CSV fehlgeschlagen: {e}", file=sys.stderr)
-        sys.exit(2)
+        print(f"[FEHLER] CSV-Problem: {e}", file=sys.stderr); sys.exit(2)
 
     fig, ax = plt.subplots(figsize=(10, 5))
+    warn = None
 
-    # Initiale Linie(n)
-    if len(x_num) > 0:
-        line, = ax.plot(x_num, y_rp, linewidth=1.8)
-        setup_axes(ax, x_num[0], x_num[-1])
-        ax.set_xlim(x_num[0], x_num[-1])
+    if x_num:
+        (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
+        setup_axes(ax, x_num[0], x_num[-1]); ax.set_xlim(x_num[0], x_num[-1])
     else:
-        line, = ax.plot([], [], linewidth=1.8)
+        (line,) = ax.plot([], [], linewidth=1.8)
+        warn = overlay_text(ax, "Keine Daten in CSV")
 
-    # Now-Linie
-    now_line = ax.axvline(
-        mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()),
-        linestyle=":", linewidth=1.2
-    )
+    now_line = ax.axvline(mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()),
+                          linestyle=":", linewidth=1.2)
 
     update_title(ax, first_dt, last_dt)
-    fig.autofmt_xdate()
-    plt.tight_layout()
-    plt.show(block=False)
+    fig.autofmt_xdate(); plt.tight_layout(); plt.show(block=False)
 
-    # Optional Vollbild
     if FULLSCREEN:
-        try:
-            plt.get_current_fig_manager().full_screen_toggle()
-        except Exception:
-            pass
+        try: plt.get_current_fig_manager().full_screen_toggle()
+        except Exception: pass
 
-    try:
-        last_mtime = os.path.getmtime(csv_path)
-    except FileNotFoundError:
-        last_mtime = 0
+    try: last_mtime = os.path.getmtime(CSV_PATH)
+    except FileNotFoundError: last_mtime = 0
 
+    info(f"Starte Live-Update: Datei={CSV_PATH}, Intervall={INTERVAL_SECONDS}s")
     try:
         while True:
             time.sleep(INTERVAL_SECONDS)
 
-            # 1) CSV geändert?
-            try:
-                mtime = os.path.getmtime(csv_path)
-            except FileNotFoundError:
-                mtime = last_mtime  # keine Änderung melden
+            try: mtime = os.path.getmtime(CSV_PATH)
+            except FileNotFoundError: mtime = last_mtime
 
             if mtime != last_mtime:
                 try:
-                    x_new, y_new, fdt, ldt = read_csv(csv_path)
-                except Exception:
-                    # CSV evtl. im Schreibvorgang – nächster Tick
-                    continue
-
+                    x_new, y_new, fdt, ldt = read_csv(CSV_PATH)
+                except Exception as e:
+                    info(f"CSV noch im Schreibvorgang? {e}"); continue
                 last_mtime = mtime
-
                 if x_new:
                     line.set_data(x_new, y_new)
                     ax.set_xlim(x_new[0], x_new[-1])
                     setup_axes(ax, x_new[0], x_new[-1])
                     update_title(ax, fdt, ldt)
+                    if warn: warn.remove(); warn = None
+                else:
+                    if warn: warn.set_text("Keine Daten in CSV")
+                    else: warn = overlay_text(ax, "Keine Daten in CSV")
 
-                # Now-Linie aktualisieren
-                now = mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now())
-                now_line.set_xdata([now, now])
-
-                fig.canvas.draw_idle()
-                plt.pause(0.01)
-                continue
-
-            # 2) Keine CSV-Änderung → nur Now-Linie & Titelzeit aktualisieren
+            # Now-Linie + Titelzeit aktualisieren
             now = mdates.date2num(datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now())
             now_line.set_xdata([now, now])
-            update_title(ax, first_dt, last_dt)
-            fig.canvas.draw_idle()
-            plt.pause(0.01)
+            if not x_num: update_title(ax, first_dt, last_dt)  # bei leerem Datensatz Zeit nachführen
+
+            fig.canvas.draw_idle(); plt.pause(0.01)
 
     except KeyboardInterrupt:
-        pass
-
+        info("Beendet (Strg+C)")
 
 if __name__ == "__main__":
     main()
+
 
