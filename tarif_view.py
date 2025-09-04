@@ -2,10 +2,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Start:
-# export DISPLAY=:0
-# export XAUTHORITY=/home/pi/.Xauthority
-# python3 /home/pi/Scripts/tarif_view.py --interval 60
+#lokal starte mit
+#python3 /home/pi/Scripts/tarif_view.py --csv /home/pi/data/esit_prices.csv --interval 60
 
 """
 tarif.view – Live-Update aus 'esit_prices.csv' als Linienchart (Rp/kWh).
