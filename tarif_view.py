@@ -85,7 +85,7 @@ def main():
     fig, ax = plt.subplots(figsize=(10, 5))
     warn = None
 
-   if len(x_num) > 0:
+    if len(x_num) > 0:
        (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
         setup_axes(ax, x_num[0], x_num[-1])
         ax.set_xlim(x_num[0], x_num[-1])
