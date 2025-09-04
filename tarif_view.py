@@ -48,8 +48,9 @@ def read_csv(csv_path):
     if not times: return [], [], None, None
     pairs = sorted(zip(times, values), key=lambda z: z[0])
     times_sorted = [p[0] for p in pairs]; values_sorted = [p[1] for p in pairs]
-    x_num = mdates.date2num(times_sorted)
+    x_num = list(mdates.date2num(times_sorted))
     return x_num, values_sorted, times_sorted[0], times_sorted[-1]
+
 
 def setup_axes(ax, x_first, x_last):
     ax.set_xlabel("Zeit"); ax.set_ylabel("Energiepreis [Rp/kWh]"); ax.set_ylim(0, 40)
@@ -85,7 +86,7 @@ def main():
     fig, ax = plt.subplots(figsize=(10, 5))
     warn = None
 
-    if len(x_num) > 0:
+    if x_num:
         (line,) = ax.plot(x_num, y_rp, linewidth=1.8)
         setup_axes(ax, x_num[0], x_num[-1])
         ax.set_xlim(x_num[0], x_num[-1])
@@ -120,7 +121,7 @@ def main():
                 except Exception as e:
                     info(f"CSV noch im Schreibvorgang? {e}"); continue
                 last_mtime = mtime
-                if len(x_new) > 0:
+                if x_new:
                     line.set_data(x_new, y_new)
                     ax.set_xlim(x_new[0], x_new[-1])
                     setup_axes(ax, x_new[0], x_new[-1])
