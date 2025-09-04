@@ -28,7 +28,7 @@ import matplotlib.dates as mdates
 
 CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
 INTERVAL_SECONDS = 60
-FULLSCREEN = False  # bei Bedarf True
+FULLSCREEN = True  # bei Bedarf True
 
 # Zeitzone/Formatter/Lokatoren
 try:
