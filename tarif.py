@@ -5,7 +5,7 @@
 Swisspower ESIT – dynamische Preise:
 - Vergangene 2h + nächste 24h (15-Minuten-Raster)
 - Aktueller Slot + CSV-Ausgabe
-- Post des (ersten CSV-)Werts in Rp/kWh an Volkszähler (write_vals)
+- Post des (aktuellen Slot-)Werts in Rp/kWh an Volkszähler (write_vals)
 
 Voraussetzungen:
   pip3 install requests python-dateutil
@@ -43,7 +43,8 @@ FUTURE_HOURS = 24
 VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
 UUID = {"Energiepreis": "f828d020-88c1-11f0-87f7-958162b459c7"}
 
-CSV_PATH = "esit_prices.csv"
+# Absoluter Pfad zur CSV
+CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
 HTTP_TIMEOUT = 20
 # ==========================
 
@@ -122,6 +123,35 @@ def extract_slot_price(slot, prefer="integrated"):
         p += sum_chf_per_kwh(slot["grid"])
     return p, start_dt, end_dt
 
+# === CSV atomar schreiben ===
+def write_csv_atomic(path, rows):
+    """
+    Schreibt die CSV atomar.
+    Erwartet rows als Iterable von (price, start_dt, end_dt).
+    Header: start_local, end_local, price_chf_per_kwh
+    """
+    tmp = f"{path}.tmp"
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["start_local", "end_local", "price_chf_per_kwh"])
+        for price, st, en in rows:
+            w.writerow([
+                st.isoformat(timespec="seconds"),
+                en.isoformat(timespec="seconds"),
+                f"{price:.8f}",
+            ])
+        f.flush()
+        os.fsync(f.fileno())
+
+    os.replace(tmp, path)
+    try:
+        os.chmod(path, 0o644)
+    except Exception:
+        pass
+# ================================
+
 def main():
     if not AUTH_TOKEN:
         print("⚠️  Bitte ESIT_API_TOKEN setzen!", file=sys.stderr)
@@ -130,7 +160,7 @@ def main():
     local_tz = tz.tzlocal()
     now_local = datetime.now(local_tz)
 
-    # --> NEU: letzten 2h + nächsten 24h
+    # letzten 2h + nächsten 24h
     start_local = floor_to_quarter(now_local - timedelta(hours=PAST_HOURS))
     end_local   = floor_to_quarter(now_local) + timedelta(hours=FUTURE_HOURS) - timedelta(seconds=1)
 
@@ -150,7 +180,7 @@ def main():
         print("Keine Preise erhalten.")
         sys.exit(3)
 
-    # Slots extrahieren (direkt sortiert)
+    # Slots extrahieren und sortieren
     rows = [extract_slot_price(s, prefer="integrated") for s in prices]
     rows.sort(key=lambda x: x[1])  # sortiere nach start_dt
 
@@ -161,7 +191,6 @@ def main():
             current = (st, en, price)
             break
     if current is None:
-        # falls gerade kein Slot gefunden (z. B. Randfall): nächster zukünftiger oder letzter
         for price, st, en in rows:
             if st > now_local:
                 current = (st, en, price)
@@ -178,33 +207,21 @@ def main():
     print(">> Aktueller Preis:")
     print(f"  {st.strftime('%Y-%m-%d %H:%M')} – {en.strftime('%H:%M')}  ->  {pr:.5f} CHF/kWh\n")
 
-    # CSV schreiben (effizient)
+    # CSV schreiben (ATOMAR)
     try:
-        with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["start_local", "end_local", "price_chf_per_kwh"])
-            w.writerows([
-                (st.isoformat(timespec="seconds"),
-                 en.isoformat(timespec="seconds"),
-                 f"{price:.8f}")
-                for price, st, en in rows
-            ])
+        write_csv_atomic(CSV_PATH, rows)
         print(f"CSV gespeichert: {os.path.abspath(CSV_PATH)}")
     except Exception as e:
         print(f"⚠️ CSV konnte nicht gespeichert werden: {e}", file=sys.stderr)
 
-    # Ersten CSV-Wert (jetziger Zeitraumanfang) in Rp/kWh posten – wie bisher
+    # >>> NEU: aktuellen Slot an VZ posten (Rp/kWh)
     try:
-        with open(CSV_PATH, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            first = next(reader, None)
-        if first is None:
-            raise RuntimeError("CSV leer.")
-        first_price_rp = float(first["price_chf_per_kwh"]) * 100.0
-        print(f"Erster CSV-Wert (Rp/kWh): {first_price_rp:.2f}")
-        write_vals(UUID["Energiepreis"], first_price_rp)
+        current_price_rp = pr * 100.0  # CHF/kWh -> Rp/kWh
+        logging.info("Poste aktuellen Preis an VZ: %.2f Rp/kWh (Slot %s–%s)", current_price_rp, st, en)
+        write_vals(UUID["Energiepreis"], current_price_rp)
     except Exception as e:
-        logging.warning("Post des ersten CSV-Werts fehlgeschlagen: %s", e)
+        logging.warning("Post des aktuellen Slot-Werts fehlgeschlagen: %s", e)
 
 if __name__ == "__main__":
     main()
+
