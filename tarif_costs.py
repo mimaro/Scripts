@@ -24,10 +24,13 @@ UUID = {
     "Netto_Energie": "8d8af7c0-8c8a-11f0-9d28-a9c875202312",
     "Preis_dyn": "a1547420-8c87-11f0-ab9a-bd73b64c1942",
     "Kosten_b_d": "72161320-8c87-11f0-873f-79e6590634b2",
-    "Kosten_b_e": "42e29fa0-8c87-11f0-a699-831fc5906f38",
+    "Kosten_b_s": "42e29fa0-8c87-11f0-a699-831fc5906f38",
     "Kosten_n_d": "18f74440-8c8c-11f0-948b-013fcbd37465",
-    "Kosten_n_e": "132713a0-8c8c-11f0-96f2-dfda5706e0e8",
-    "Kosten_b_d_kum": "c401dfc0-8cea-11f0-aac3-2331ae468eda"
+    "Kosten_n_s": "132713a0-8c8c-11f0-96f2-dfda5706e0e8",
+    "Kosten_b_s_kum": "b4540e10-8ceb-11f0-b3fc-35adf2b97e3c",
+    "Kosten_b_d_kum":  "bc2da4a0-8ceb-11f0-9f6d-095b9044f5b8",
+    "Kosten_n_s_kum":  "c9a41ad0-8ceb-11f0-9adc-c72a0562776f",
+    "Kosten_n_d_kum": "c17d6230-8ceb-11f0-a44e-950dce954c9a"
     
 }
 
@@ -59,45 +62,37 @@ def main():
 
     #Energie exkl PV letzte 15 Minuten Abfragen
     brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min")["data"]["consumption"]/60
-
-
+    
     #Energie inkl PV letzte 15 Minuten Abfragen
     netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]/60
-
-    preis_einh = 27.129
+  
+    preis_stat = 27.129
     preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
 
     print(preis_dyn)
-    print(preis_einh)
+    print(preis_stat)
     print(brutto_energie)
     print(netto_energie)
 
     kosten_b_d = brutto_energie * preis_dyn/100
-    kosten_b_e = brutto_energie * preis_einh/100
+    kosten_b_s = brutto_energie * preis_stat/100
     kosten_n_d = netto_energie * preis_dyn/100
-    kosten_n_e = netto_energie * preis_einh/100
+    kosten_n_s = netto_energie * preis_stat/100
 
     print(kosten_b_d)
-    print(kosten_b_e)
+    print(kosten_b_s)
     print(kosten_n_d)
-    print(kosten_n_e)
-
-
-    write_vals(UUID["Kosten_b_d_kum"], kosten_b_d)
-    write_vals(UUID["Kosten_b_e"], kosten_b_e)
-    write_vals(UUID["Kosten_n_d"], kosten_n_d)
-    write_vals(UUID["Kosten_n_e"], kosten_n_e)
-
+    print(kosten_n_s)
     
     loops = 0
-    while loops < 15:
+    while loops < 2:
         start = time.time()
     
         # deine Berechnung + write_vals
         write_vals(UUID["Kosten_b_d"], kosten_b_d)
-        write_vals(UUID["Kosten_b_e"], kosten_b_e)
+        write_vals(UUID["Kosten_b_s"], kosten_b_s)
         write_vals(UUID["Kosten_n_d"], kosten_n_d)
-        write_vals(UUID["Kosten_n_e"], kosten_n_e)
+        write_vals(UUID["Kosten_n_s"], kosten_n_s)
     
         print(f"Loop {loops+1} abgeschlossen")
     
@@ -105,7 +100,7 @@ def main():
     
         # Restzeit bis zur vollen Minute schlafen
         elapsed = time.time() - start
-        time.sleep(max(0, 1 - elapsed))
+        time.sleep(max(0, 890 - elapsed)) #890
     
     print("Fertig: 13 Loops ausgeführt")
 
