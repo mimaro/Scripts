@@ -61,11 +61,13 @@ def main():
     netto_energie = get_data(UUID["Netto_Energie"], duration="-15min")["data"]
 
     energie = 0
-    for ts, p, _ in netto_energie:
+    for row in netto_energie:
+        ts = row[0]      # Zeitstempel
+        p  = row[1]      # Wert (Leistung in W)
+        # Rest (row[2:], z. B. Status) ignorieren
         if p > 0:
             energie += p / 60
 
-    
     
     print(brutto_energie)
     print(netto_energie)
