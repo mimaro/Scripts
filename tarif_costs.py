@@ -26,7 +26,7 @@ UUID = {
     "Kosten_b_d": "72161320-8c87-11f0-873f-79e6590634b2",
     "Kosten_b_e": "42e29fa0-8c87-11f0-a699-831fc5906f38",
     "Kosten_n_d": "18f74440-8c8c-11f0-948b-013fcbd37465",
-    "Kosten_n_e": "132713a0-8c8c-11f0-96f2-dfda5706e0e8"
+    "Kosten_n_e": "132713a0-8c8c-11f0-96f2-dfda5706e0e8",
     
 }
 
