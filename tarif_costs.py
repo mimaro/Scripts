@@ -98,7 +98,7 @@ def main():
     
         # Restzeit bis zur vollen Minute schlafen
         elapsed = time.time() - start
-        time.sleep(max(0, 1 - elapsed))
+        time.sleep(max(0, 60 - elapsed))
     
     print("Fertig: 13 Loops ausgeführt")
 
