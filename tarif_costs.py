@@ -27,6 +27,7 @@ UUID = {
     "Kosten_b_e": "42e29fa0-8c87-11f0-a699-831fc5906f38",
     "Kosten_n_d": "18f74440-8c8c-11f0-948b-013fcbd37465",
     "Kosten_n_e": "132713a0-8c8c-11f0-96f2-dfda5706e0e8",
+    "Kosten_b_d_kum": "a9f17c50-8ce6-11f0-a6be-2b51369286a6"
     
 }
 
@@ -82,6 +83,12 @@ def main():
     print(kosten_n_e)
 
 
+    write_vals(UUID["Kosten_b_d_kum"], kosten_b_d)
+    write_vals(UUID["Kosten_b_e"], kosten_b_e)
+    write_vals(UUID["Kosten_n_d"], kosten_n_d)
+    write_vals(UUID["Kosten_n_e"], kosten_n_e)
+
+    
     loops = 0
     while loops < 15:
         start = time.time()
@@ -98,7 +105,7 @@ def main():
     
         # Restzeit bis zur vollen Minute schlafen
         elapsed = time.time() - start
-        time.sleep(max(0, 60 - elapsed))
+        time.sleep(max(0, 1 - elapsed))
     
     print("Fertig: 13 Loops ausgeführt")
 
