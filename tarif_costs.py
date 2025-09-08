@@ -22,7 +22,8 @@ SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&for
 # Configuration
 UUID = {
     "Brutto_Energie": "85ffa8d0-683e-11ee-9486-113294e4804d",
-    "Netto_Energie": "e3fc7a80-6731-11ee-8571-5bf96a498b43"
+    "Netto_Energie": "8d8af7c0-8c8a-11f0-9d28-a9c875202312",
+    "Preis_dyn": "a1547420-8c87-11f0-ab9a-bd73b64c1942"
     
 }
 
@@ -58,15 +59,10 @@ def main():
     brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min")["data"]["consumption"]
 
     #Energie inkl PV letzte 15 Minuten Abfragen
-    netto_energie = get_data(UUID["Netto_Energie"], duration="-15min")["data"]
+    netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]
 
-    energie = 0
-    for row in netto_energie:
-        ts = int(row[0])      # Zeitstempel
-        p  = float(row[1])      # Wert (Leistung in W)
-        # Rest (row[2:], z. B. Status) ignorieren
-        if p > 0:
-            energie += p / 60
+    preis_einh =
+    preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
 
 
     print(brutto_energie)
