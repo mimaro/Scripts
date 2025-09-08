@@ -53,24 +53,11 @@ def get_data(uuid, duration="-15min"):
     r.raise_for_status()
     return r.json()
 
-def get_last_quarter(uuid):
-    now = datetime.now()
-
-    # Minute auf das letzte Viertel runden
-    minute_block = (now.minute // 15) * 15
-    block_start = now.replace(minute=minute_block, second=0, microsecond=0)
-    block_end = block_start + timedelta(minutes=15)
-
-    # Unix-Timestamps
-    start_ts = int(block_start.timestamp())
-    end_ts = int(block_end.timestamp())
-
-    return get_data(uuid, start=start_ts, end=end_ts)
 
 def main():
 
     #Energie exkl PV letzte 15 Minuten Abfragen
-    brutto_energie = get_last_quarter(UUID["Brutto_Energie"]),["data"]["consumption"]/60
+    brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min")["data"]["consumption"]/60
 
 
     #Energie inkl PV letzte 15 Minuten Abfragen
