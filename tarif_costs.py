@@ -81,11 +81,19 @@ def main():
     print(kosten_n_d)
     print(kosten_n_e)
 
-    write_vals(UUID["Kosten_b_d"], (kosten_b_d))
-    write_vals(UUID["Kosten_b_e"], (kosten_b_e))
-    write_vals(UUID["Kosten_n_d"], (kosten_n_d))
-    write_vals(UUID["Kosten_n_e"], (kosten_n_e))
 
+    while True:
+        start = time.time()
+
+        # deine Berechnung + write_vals
+        write_vals(UUID["Kosten_b_d"], (kosten_b_d))
+        write_vals(UUID["Kosten_b_e"], (kosten_b_e))
+        write_vals(UUID["Kosten_n_d"], (kosten_n_d))
+        write_vals(UUID["Kosten_n_e"], (kosten_n_e))
+
+        # Restzeit bis zur vollen Minute schlafen
+        elapsed = time.time() - start
+        time.sleep(max(0, 60 - elapsed))
 
 if __name__ == "__main__":
     main()
