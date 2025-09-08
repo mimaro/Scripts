@@ -83,7 +83,7 @@ def main():
 
 
     loops = 0
-    while loops < 13:
+    while loops < 15:
         start = time.time()
     
         # deine Berechnung + write_vals
