@@ -70,7 +70,7 @@ def get_last_quarter(uuid):
 def main():
 
     #Energie exkl PV letzte 15 Minuten Abfragen
-    brutto_energie = get_last_quarter(UUID["Brutto_Energie"],["data"]["consumption"]/60
+    brutto_energie = get_last_quarter(UUID["Brutto_Energie"]),["data"]["consumption"]/60
 
 
     #Energie inkl PV letzte 15 Minuten Abfragen
