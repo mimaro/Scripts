@@ -82,18 +82,26 @@ def main():
     print(kosten_n_e)
 
 
-    while True:
+    loops = 0
+    while loops < 13:
         start = time.time()
-
+    
         # deine Berechnung + write_vals
-        write_vals(UUID["Kosten_b_d"], (kosten_b_d))
-        write_vals(UUID["Kosten_b_e"], (kosten_b_e))
-        write_vals(UUID["Kosten_n_d"], (kosten_n_d))
-        write_vals(UUID["Kosten_n_e"], (kosten_n_e))
-
+        write_vals(UUID["Kosten_b_d"], kosten_b_d)
+        write_vals(UUID["Kosten_b_e"], kosten_b_e)
+        write_vals(UUID["Kosten_n_d"], kosten_n_d)
+        write_vals(UUID["Kosten_n_e"], kosten_n_e)
+    
+        print(f"Loop {loops+1} abgeschlossen")
+    
+        loops += 1  # Zähler erhöhen
+    
         # Restzeit bis zur vollen Minute schlafen
         elapsed = time.time() - start
-        time.sleep(max(0, 60 - elapsed))
+        time.sleep(max(0, 1 - elapsed))
+    
+    print("Fertig: 13 Loops ausgeführt")
+
 
 if __name__ == "__main__":
     main()
