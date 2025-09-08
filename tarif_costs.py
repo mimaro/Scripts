@@ -81,6 +81,8 @@ def main():
     print(kosten_n_e)
 
 
+    
+
 
     
 if __name__ == "__main__":
