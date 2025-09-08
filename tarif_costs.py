@@ -65,6 +65,8 @@ def main():
     preis_einh = 27.129
     preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
 
+    print(preis_dyn)
+    print(preis_einh)
     print(brutto_energie)
     print(netto_energie)
 
