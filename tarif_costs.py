@@ -61,7 +61,7 @@ def main():
     #Energie inkl PV letzte 15 Minuten Abfragen
     netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]
 
-    preis_einh =
+    preis_einh = 27.129
     preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
 
 
