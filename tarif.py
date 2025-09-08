@@ -41,7 +41,7 @@ FUTURE_HOURS = 24
 
 # Volkszähler (optional)
 VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
-UUID = {"Energiepreis": "f828d020-88c1-11f0-87f7-958162b459c7"}
+UUID = {"Energiepreis": "a1547420-8c87-11f0-ab9a-bd73b64c1942"}
 
 # Absoluter Pfad zur CSV
 CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
