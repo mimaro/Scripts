@@ -46,6 +46,12 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
+def get_data(uuid, duration="-15min"):
+    url = VZ_GET_URL.format(uuid, duration)
+    r = requests.get(url)
+    r.raise_for_status()
+    return r.json()
+
 def main():
 
     #Energie exkl PV letzte 15 Minuten Abfragen
