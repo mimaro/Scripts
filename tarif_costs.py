@@ -61,11 +61,11 @@ def get_last_quarter(uuid):
     block_start = now.replace(minute=minute_block, second=0, microsecond=0)
     block_end = block_start + timedelta(minutes=15)
 
-    # Unix-Timestamps erzeugen
+    # Unix-Timestamps
     start_ts = int(block_start.timestamp())
     end_ts = int(block_end.timestamp())
 
-    return get_data(uuid, start_ts, end_ts)
+    return get_data(uuid, start=start_ts, end=end_ts)
 
 def main():
 
