@@ -61,11 +61,11 @@ def main():
     netto_energie = get_data(UUID["Netto_Energie"], duration="-15min")["data"]
 
     energie = 0
-    for ts, p in netto_energie:        # ts = Zeitstempel, p = Leistungswert in W
-        if p > 0:             # nur positive Werte berücksichtigen
-            energie += p / 60 # 1 Minute = 1/60 h → Watt * h = Wh
+    for ts, p, _ in netto_energie:
+        if p > 0:
+            energie += p / 60
 
-
+    
     
     print(brutto_energie)
     print(netto_energie)
