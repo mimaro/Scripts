@@ -110,7 +110,7 @@ def main():
     if parsed_val_bil > 0:
         write_vals(UUID["P_Netzbezug"], parsed_val_bil)
     else:
-        write_vals(UUID["P_Netzbezug"], 0) 
+        write_vals(UUID["P_Netzbezug"], "0") 
     
     write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
     write_vals(UUID["P_Home_Verbrauch"], val_home)
