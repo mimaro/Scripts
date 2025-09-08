@@ -24,10 +24,10 @@ UUID = {
     "Brutto_Energie": "85ffa8d0-683e-11ee-9486-113294e4804d",
     "Netto_Energie": "8d8af7c0-8c8a-11f0-9d28-a9c875202312",
     "Preis_dyn": "a1547420-8c87-11f0-ab9a-bd73b64c1942",
-    "Kosten_b_d": "	72161320-8c87-11f0-873f-79e6590634b2",
+    "Kosten_b_d": "72161320-8c87-11f0-873f-79e6590634b2",
     "Kosten_b_e": "42e29fa0-8c87-11f0-a699-831fc5906f38",
     "Kosten_n_d": "18f74440-8c8c-11f0-948b-013fcbd37465",
-    "Kosten_n_e": "	132713a0-8c8c-11f0-96f2-dfda5706e0e8"
+    "Kosten_n_e": "132713a0-8c8c-11f0-96f2-dfda5706e0e8"
     
 }
 
