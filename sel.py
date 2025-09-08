@@ -24,6 +24,7 @@ UUID = {
     "P_Warmepumpe_WW": "a5ba4740-73dc-11ee-a50c-e5d033b0048f",
     "P_Warmepumpe_RW": "a9017680-73dc-11ee-9767-9f1216ff8467",
     "Betriebszustand": "b8b10bd0-6523-11ee-910d-a13553f16887",
+    "P_Netzbezug": 	"8d8af7c0-8c8a-11f0-9d28-a9c875202312"
 }
 
 modbus_host = "192.168.178.40"
@@ -105,12 +106,19 @@ def main():
     else:
         write_vals(UUID["P_Warmepumpe_RW"], parsed_val_wp)
         write_vals(UUID["P_Warmepumpe_WW"], 0)
+
+    if parsed_val_bil > 0:
+        write_vals(UUID["P_Netzbezug"], parsed_val_bil)
+    else:
+        write_vals(UUID["P_Netzbezug"], 0) 
+
     
     write_vals(UUID["P_Home_Bilanz"], parsed_val_bil)
     write_vals(UUID["P_Home_Verbrauch"], val_home)
     write_vals(UUID["P_PV_Anlage"], parsed_val_pv)
     write_vals(UUID["P_Warmepumpe"], parsed_val_wp)    
     write_vals(UUID["P_EIV"], val_eiv) 
+    
 
     
      
