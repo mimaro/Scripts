@@ -80,10 +80,11 @@ def main():
     print(kosten_n_d)
     print(kosten_n_e)
 
+    write_vals(UUID["Kosten_b_d"], (kosten_b_d))
+    write_vals(UUID["Kosten_b_e"], (kosten_b_e))
+    write_vals(UUID["Kosten_n_d"], (kosten_n_d))
+    write_vals(UUID["Kosten_n_e"], (kosten_n_e))
 
-    
 
-
-    
 if __name__ == "__main__":
     main()
