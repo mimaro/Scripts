@@ -52,13 +52,15 @@ def main():
     brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min")["data"]["consumption"]
 
     #Energie inkl PV letzte 15 Minuten Abfragen
-    netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]
+    netto_energie = get_data(UUID["Netto_Energie"], duration="-15min")["data"]
 
     energie = 0
     for ts, p in netto_energie:        # ts = Zeitstempel, p = Leistungswert in W
         if p > 0:             # nur positive Werte berücksichtigen
             energie += p / 60 # 1 Minute = 1/60 h → Watt * h = Wh
 
+
+    
     print(brutto_energie)
     print(netto_energie)
 
