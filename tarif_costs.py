@@ -70,10 +70,10 @@ def main():
     print(brutto_energie)
     print(netto_energie)
 
-    kosten_b_d = float(brutto_energie * preis_dyn/100)
-    kosten_b_e = float(brutto_energie * preis_einh/100)
-    kosten_n_d = float(netto_energie * preis_dyn/100)
-    kosten_n_e = float(netto_energie * preis_einh/100)
+    kosten_b_d = brutto_energie * preis_dyn/100
+    kosten_b_e = brutto_energie * preis_einh/100
+    kosten_n_d = netto_energie * preis_dyn/100
+    kosten_n_e = netto_energie * preis_einh/100
 
     print(kosten_b_d)
     print(kosten_b_e)
