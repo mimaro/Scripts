@@ -11,15 +11,20 @@ CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
 PNG_PATH = "/home/pi/Scripts/esit_prices.png"
 INTERVAL_SECONDS = 60
 
-# Bildgröße (in Inch) und DPI anpassbar
+# Bildgröße (in Inch) und DPI
 FIG_SIZE = (16, 14)   # (Breite, Höhe) in Inch
 DPI = 200
 
 # Referenzlinie (Rp/kWh)
 REFERENCE_VALUE = 27.129
+
+# Schriftgrößen
+FONT_SIZE_LABELS = 18       # Achsenbeschriftungen
+FONT_SIZE_TICKS  = 16       # Tick-Labels
+FONT_SIZE_INFO   = 22       # Text oben rechts (aktueller Preis/Zeit)
 # -----------------------
 
-# Zeitzone: Europe/Zurich für Achsen & "aktueller" Slot
+# Zeitzone: Europe/Zurich
 try:
     from zoneinfo import ZoneInfo
     LOCAL_TZ = ZoneInfo("Europe/Zurich")
@@ -27,7 +32,7 @@ except Exception:
     LOCAL_TZ = None  # Fallback
 
 def read_csv(csv_path):
-    """CSV -> (times[datetime], values_rp[list[float]]), sortiert nach Zeit"""
+    """CSV -> (times[datetime], values_rp[list[float]]) sortiert"""
     times, values = [], []
     with open(csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
@@ -59,11 +64,7 @@ def round_to_even_2h(dt, direction):
     return base
 
 def find_current_slot(times, values):
-    """
-    Liefert (t_cur, v_cur) des aktuell gültigen Slots:
-    - nimmt den letzten Startzeitpunkt <= jetzt
-    - wenn alle in der Zukunft: den frühesten
-    """
+    """liefert (t_cur, v_cur) des aktuell gültigen Slots"""
     if not times:
         return None, None
     now = datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now(times[0].tzinfo)
@@ -72,57 +73,77 @@ def find_current_slot(times, values):
             return t, v
     return times[0], values[0]
 
+def plot_colored_line(ax, times, values, ref_value, linewidth=1.5):
+    """zeichnet Linie segmentweise mit Farbe nach Referenz"""
+    if not times:
+        return
+    seg_times, seg_values = [], []
+    def color_for(val):
+        if val > ref_value: return "red"
+        if val < ref_value: return "green"
+        return "black"
+    current_color = color_for(values[0])
+    for t, v in zip(times, values):
+        c = color_for(v)
+        if seg_times and c != current_color:
+            ax.plot(seg_times, seg_values, color=current_color, linewidth=linewidth)
+            seg_times, seg_values = [], []
+            current_color = c
+        seg_times.append(t)
+        seg_values.append(v)
+    if seg_times:
+        ax.plot(seg_times, seg_values, color=current_color, linewidth=linewidth)
+
 def render_png(times, values, path):
     fig, ax = plt.subplots(figsize=FIG_SIZE, dpi=DPI)
 
-    # Hauptlinie
-    ax.plot(times, values, linewidth=1.0)
+    # Hauptlinie farbig
+    plot_colored_line(ax, times, values, REFERENCE_VALUE, linewidth=2.0)
 
-    # Referenzlinie (schwarz) über dasselbe Zeitfenster
+    # Referenzlinie
     if times:
-        ax.plot(times, [REFERENCE_VALUE] * len(times), color="black", linewidth=1.0)
+        ax.plot(times, [REFERENCE_VALUE]*len(times), color="black", linewidth=1.2)
 
-    # Labels/Achsen
-    ax.set_xlabel("Zeit")
-    ax.set_ylabel("Stromtarif [Rp/kWh]")
-
-    # Y-Achse fest 20..35
+    # Achsen
+    ax.set_xlabel("Zeit", fontsize=FONT_SIZE_LABELS)
+    ax.set_ylabel("Stromtarif [Rp/kWh]", fontsize=FONT_SIZE_LABELS)
     ax.set_ylim(20, 35)
-
-    # X-Achse: 2h-Ticks HH:MM in Europe/Zurich
     hour_locator = mdates.HourLocator(byhour=range(0, 24, 2), tz=LOCAL_TZ)
     hour_fmt = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)
     ax.xaxis.set_major_locator(hour_locator)
     ax.xaxis.set_major_formatter(hour_fmt)
+    ax.tick_params(axis="x", labelsize=FONT_SIZE_TICKS)
+    ax.tick_params(axis="y", labelsize=FONT_SIZE_TICKS)
 
-    # X-Limits auf 2h-Raster
     if times:
         x_min = round_to_even_2h(times[0], "down")
         x_max = round_to_even_2h(times[-1], "up")
         if x_min and x_max and x_min < x_max:
             ax.set_xlim(x_min, x_max)
 
-    # Grid
     ax.grid(True, linestyle="--", alpha=0.25)
 
-    # Aktueller Slot (Zeit + Wert) und roter Punkt
+    # aktueller Slot + Punkt
     t_cur, v_cur = find_current_slot(times, values)
     if t_cur is not None and v_cur is not None:
-        # roter Punkt
-        ax.scatter([t_cur], [v_cur], color="red", s=30, zorder=3)
+        if v_cur > REFERENCE_VALUE:
+            point_color = "red"
+        elif v_cur < REFERENCE_VALUE:
+            point_color = "green"
+        else:
+            point_color = "black"
+        ax.scatter([t_cur], [v_cur], color=point_color, s=60, zorder=3)
 
-        # Text oben rechts: aktueller Preis + Zeitstempel
         now_disp = datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()
         ax.text(
             0.995, 0.995,
             f"Aktuell: {v_cur:.2f} Rp/kWh\n{now_disp.strftime('%Y-%m-%d %H:%M %Z')}",
             transform=ax.transAxes,
             ha="right", va="top",
-            fontsize=20,
+            fontsize=FONT_SIZE_INFO,
             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", alpha=0.7)
         )
 
-    # Layout + Speichern (atomar)
     fig.autofmt_xdate()
     plt.tight_layout()
     tmp = path + ".tmp.png"
@@ -147,6 +168,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
