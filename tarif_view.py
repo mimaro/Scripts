@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-import os, csv, time
+import os, csv, sys
 from datetime import datetime, timedelta
 import matplotlib
-matplotlib.use("Agg")  # kein GUI
+matplotlib.use("Agg")  # kein GUI / für cron geeignet
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 # ---- Konfiguration ----
 CSV_PATH = "/home/pi/Scripts/esit_prices.csv"
 PNG_PATH = "/home/pi/Scripts/esit_prices.png"
-INTERVAL_SECONDS = 60
 
 # Bildgröße (in Inch) und DPI
 FIG_SIZE = (16, 14)   # (Breite, Höhe) in Inch
@@ -36,6 +35,8 @@ def read_csv(csv_path):
     times, values = [], []
     with open(csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
+        if "start_local" not in r.fieldnames or "price_chf_per_kwh" not in r.fieldnames:
+            raise ValueError(f"CSV-Header erwartet: start_local, price_chf_per_kwh (gefunden: {r.fieldnames})")
         for row in r:
             t = datetime.fromisoformat(row["start_local"])
             if t.tzinfo is None and LOCAL_TZ:
@@ -78,17 +79,18 @@ def render_png(times, values, path):
 
     # Hauptlinie (immer schwarz)
     if times:
-        ax.plot(times, values, color="black", linewidth=2.0)
+        ax.plot(times, values, color="black", linewidth=2.0, label="Tarif")
 
     # Referenzlinie (schwarz gestrichelt)
     if times:
         ax.plot(times, [REFERENCE_VALUE]*len(times),
-                color="black", linestyle="--", linewidth=1.2)
+                color="black", linestyle="--", linewidth=1.2, label="Referenz")
 
     # Achsen
     ax.set_xlabel("Zeit", fontsize=FONT_SIZE_LABELS)
     ax.set_ylabel("Stromtarif [Rp/kWh]", fontsize=FONT_SIZE_LABELS)
     ax.set_ylim(20, 35)
+
     hour_locator = mdates.HourLocator(byhour=range(0, 24, 2), tz=LOCAL_TZ)
     hour_fmt = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)
     ax.xaxis.set_major_locator(hour_locator)
@@ -104,10 +106,9 @@ def render_png(times, values, path):
 
     ax.grid(True, linestyle="--", alpha=0.25)
 
-    # aktueller Slot + Punkt
+    # aktueller Slot + Punkt (Farbe abhängig von Referenz)
     t_cur, v_cur = find_current_slot(times, values)
     if t_cur is not None and v_cur is not None:
-        # Farbe des Punktes abhängig von Referenz
         if v_cur > REFERENCE_VALUE:
             point_color = "red"
         elif v_cur < REFERENCE_VALUE:
@@ -129,6 +130,8 @@ def render_png(times, values, path):
 
     fig.autofmt_xdate()
     plt.tight_layout()
+
+    # atomar speichern
     tmp = path + ".tmp.png"
     fig.savefig(tmp)
     plt.close(fig)
@@ -136,20 +139,23 @@ def render_png(times, values, path):
     print(f"PNG aktualisiert: {path}")
 
 def main():
-    last_mtime = 0
-    while True:
-        try:
-            mtime = os.path.getmtime(CSV_PATH)
-            if mtime != last_mtime:
-                times, values = read_csv(CSV_PATH)
-                if times:
-                    render_png(times, values, PNG_PATH)
-                last_mtime = mtime
-        except Exception as e:
-            print("Fehler:", e)
-        time.sleep(INTERVAL_SECONDS)
+    # absolute Pfade sind für cron wichtig
+    csv_path = os.path.abspath(CSV_PATH)
+    png_path = os.path.abspath(PNG_PATH)
+
+    if not os.path.exists(csv_path):
+        print(f"[FEHLER] CSV nicht gefunden: {csv_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        times, values = read_csv(csv_path)
+        if not times:
+            print("[HINWEIS] CSV enthält keine Daten – PNG wird nicht erzeugt.", file=sys.stderr)
+            sys.exit(2)
+        render_png(times, values, png_path)
+    except Exception as e:
+        print(f"[FEHLER] {e}", file=sys.stderr)
+        sys.exit(3)
 
 if __name__ == "__main__":
     main()
-
-
