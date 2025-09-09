@@ -19,9 +19,9 @@ DPI = 200
 REFERENCE_VALUE = 27.129
 
 # Schriftgrößen
-FONT_SIZE_LABELS = 25       # Achsenbeschriftungen
-FONT_SIZE_TICKS  = 25       # Tick-Labels
-FONT_SIZE_INFO   = 25       # Text oben rechts (aktueller Preis/Zeit)
+FONT_SIZE_LABELS = 18       # Achsenbeschriftungen
+FONT_SIZE_TICKS  = 16       # Tick-Labels
+FONT_SIZE_INFO   = 22       # Text oben rechts (aktueller Preis/Zeit)
 # -----------------------
 
 # Zeitzone: Europe/Zurich
@@ -148,7 +148,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 
