@@ -53,6 +53,7 @@ char_curr_v = 1040
 set_curr = 5004
 failsafe_curr = 1600
 failsafe_timeout = 1602
+state = 5014
 set_fail_curr = 5016
 set_fail_time = 5018
 set_fail = 5020
