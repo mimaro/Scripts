@@ -80,9 +80,10 @@ def render_png(times, values, path):
     if times:
         ax.plot(times, values, color="black", linewidth=2.0)
 
-    # Referenzlinie (schwarz) über dasselbe Zeitfenster
+    # Referenzlinie (schwarz gestrichelt)
     if times:
-        ax.plot(times, [REFERENCE_VALUE]*len(times), color="black", linestyle="--", linewidth=1.2)
+        ax.plot(times, [REFERENCE_VALUE]*len(times),
+                color="black", linestyle="--", linewidth=1.2)
 
     # Achsen
     ax.set_xlabel("Zeit", fontsize=FONT_SIZE_LABELS)
@@ -106,13 +107,15 @@ def render_png(times, values, path):
     # aktueller Slot + Punkt
     t_cur, v_cur = find_current_slot(times, values)
     if t_cur is not None and v_cur is not None:
+        # Farbe des Punktes abhängig von Referenz
         if v_cur > REFERENCE_VALUE:
             point_color = "red"
         elif v_cur < REFERENCE_VALUE:
             point_color = "green"
         else:
             point_color = "black"
-        ax.scatter([t_cur], [v_cur], color=point_color, s=60, zorder=3)
+
+        ax.scatter([t_cur], [v_cur], color=point_color, s=100, zorder=3)
 
         now_disp = datetime.now(LOCAL_TZ) if LOCAL_TZ else datetime.now()
         ax.text(
@@ -148,8 +151,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
 
 
