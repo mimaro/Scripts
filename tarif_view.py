@@ -19,9 +19,9 @@ DPI = 200
 REFERENCE_VALUE = 27.129
 
 # Schriftgrößen
-FONT_SIZE_LABELS = 18       # Achsenbeschriftungen
-FONT_SIZE_TICKS  = 16       # Tick-Labels
-FONT_SIZE_INFO   = 22       # Text oben rechts (aktueller Preis/Zeit)
+FONT_SIZE_LABELS = 25       # Achsenbeschriftungen
+FONT_SIZE_TICKS  = 25       # Tick-Labels
+FONT_SIZE_INFO   = 25       # Text oben rechts (aktueller Preis/Zeit)
 # -----------------------
 
 # Zeitzone: Europe/Zurich
@@ -73,36 +73,16 @@ def find_current_slot(times, values):
             return t, v
     return times[0], values[0]
 
-def plot_colored_line(ax, times, values, ref_value, linewidth=1.5):
-    """zeichnet Linie segmentweise mit Farbe nach Referenz"""
-    if not times:
-        return
-    seg_times, seg_values = [], []
-    def color_for(val):
-        if val > ref_value: return "red"
-        if val < ref_value: return "green"
-        return "black"
-    current_color = color_for(values[0])
-    for t, v in zip(times, values):
-        c = color_for(v)
-        if seg_times and c != current_color:
-            ax.plot(seg_times, seg_values, color=current_color, linewidth=linewidth)
-            seg_times, seg_values = [], []
-            current_color = c
-        seg_times.append(t)
-        seg_values.append(v)
-    if seg_times:
-        ax.plot(seg_times, seg_values, color=current_color, linewidth=linewidth)
-
 def render_png(times, values, path):
     fig, ax = plt.subplots(figsize=FIG_SIZE, dpi=DPI)
 
-    # Hauptlinie farbig
-    plot_colored_line(ax, times, values, REFERENCE_VALUE, linewidth=2.0)
-
-    # Referenzlinie
+    # Hauptlinie (immer schwarz)
     if times:
-        ax.plot(times, [REFERENCE_VALUE]*len(times), color="black", linewidth=1.2)
+        ax.plot(times, values, color="black", linewidth=2.0)
+
+    # Referenzlinie (schwarz) über dasselbe Zeitfenster
+    if times:
+        ax.plot(times, [REFERENCE_VALUE]*len(times), color="black", linestyle="--", linewidth=1.2)
 
     # Achsen
     ax.set_xlabel("Zeit", fontsize=FONT_SIZE_LABELS)
