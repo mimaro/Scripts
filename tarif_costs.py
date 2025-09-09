@@ -83,7 +83,18 @@ def main():
     print(kosten_b_s)
     print(kosten_n_d)
     print(kosten_n_s)
-    
+
+
+    kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"], duration="last")["data"] + kosten_b_d
+    kosten_b_s_kum = get_vals(UUID["Kosten_b_s_kum"], duration="last")["data"] + kosten_b_s
+    kosten_n_d_kum = get_vals(UUID["Kosten_n_d_kum"], duration="last")["data"] + kosten_n_d
+    kosten_n_s_kum = get_vals(UUID["Kosten_n_s_kum"], duration="last")["data"] + kosten_n_s
+
+    write_vals(UUID["Kosten_b_d_kum"], kosten_b_d_kum)
+    write_vals(UUID["Kosten_b_s_kum"], kosten_b_s_kum)
+    write_vals(UUID["Kosten_n_d_kum"], kosten_n_d_kum)
+    write_vals(UUID["Kosten_n_s_kum"], kosten_n_s_kum)
+
     loops = 0
     while loops < 2:
         start = time.time()
@@ -100,7 +111,7 @@ def main():
     
         # Restzeit bis zur vollen Minute schlafen
         elapsed = time.time() - start
-        time.sleep(max(0, 890 - elapsed)) #890
+        time.sleep(max(0, 1 - elapsed)) #890
     
     print("Fertig: 13 Loops ausgeführt")
 
