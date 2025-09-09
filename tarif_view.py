@@ -28,11 +28,14 @@ def render_png(xs, ys, path):
     ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
     fig.autofmt_xdate()
-    tmp = path + ".tmp"
     plt.tight_layout()
-    fig.savefig(tmp)
+
+    # WICHTIG: temporäre Datei mit .png-Endung, dann atomar ersetzen
+    tmp = path + ".tmp.png"
+    fig.savefig(tmp)   # Endung .png -> Format erkannt
     plt.close(fig)
-    os.replace(tmp, path)  # atomar
+    os.replace(tmp, path)
+
     print(f"PNG aktualisiert: {path}")
 
 def main():
