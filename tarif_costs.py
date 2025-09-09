@@ -86,12 +86,11 @@ def main():
 
     print(get_vals(UUID["Kosten_n_s_kum"], duration="last"))
 
-["data"]["tuples"][0][1]
-    
-    kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"], duration="last") + kosten_b_d
-    kosten_b_s_kum = get_vals(UUID["Kosten_b_s_kum"], duration="last") + kosten_b_s
-    kosten_n_d_kum = get_vals(UUID["Kosten_n_d_kum"], duration="last") + kosten_n_d
-    kosten_n_s_kum = get_vals(UUID["Kosten_n_s_kum"], duration="last") + kosten_n_s
+
+    kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"][0][1] + kosten_b_d
+    kosten_b_s_kum = get_vals(UUID["Kosten_b_s_kum"])["data"]["tuples"][0][1] + kosten_b_s
+    kosten_n_d_kum = get_vals(UUID["Kosten_n_d_kum"])["data"]["tuples"][0][1] + kosten_n_d
+    kosten_n_s_kum = get_vals(UUID["Kosten_n_s_kum"])["data"]["tuples"][0][1] + kosten_n_s
 
     write_vals(UUID["Kosten_b_d_kum"], kosten_b_d_kum)
     write_vals(UUID["Kosten_b_s_kum"], kosten_b_s_kum)
