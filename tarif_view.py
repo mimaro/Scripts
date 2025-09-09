@@ -12,7 +12,7 @@ PNG_PATH = "/home/pi/Scripts/esit_prices.png"
 INTERVAL_SECONDS = 60
 
 # Bildgröße (in Inch) und DPI anpassbar
-FIG_SIZE = (14, 10)   # (Breite, Höhe) in Inch
+FIG_SIZE = (16, 14)   # (Breite, Höhe) in Inch
 DPI = 200
 
 # Referenzlinie (Rp/kWh)
@@ -84,7 +84,7 @@ def render_png(times, values, path):
 
     # Labels/Achsen
     ax.set_xlabel("Zeit")
-    ax.set_ylabel("Preis [Rp/kWh]")
+    ax.set_ylabel("Stromtarif [Rp/kWh]")
 
     # Y-Achse fest 20..35
     ax.set_ylim(20, 35)
@@ -118,7 +118,7 @@ def render_png(times, values, path):
             f"Aktuell: {v_cur:.2f} Rp/kWh\n{now_disp.strftime('%Y-%m-%d %H:%M %Z')}",
             transform=ax.transAxes,
             ha="right", va="top",
-            fontsize=12,
+            fontsize=20,
             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", alpha=0.7)
         )
 
