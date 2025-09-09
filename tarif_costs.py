@@ -84,7 +84,7 @@ def main():
     print(kosten_n_d)
     print(kosten_n_s)
 
-    kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"]["0"]["0"]
+    kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"][0][0]
     print(kosten_b_d_kum)
 
     #kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"][0][1] + kosten_b_d
