@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 import os, csv, sys
 from datetime import datetime, timedelta
+
+# --- Matplotlib Setup (ohne GUI, mit fester Zeitzone) ---
 import matplotlib
 matplotlib.use("Agg")  # kein GUI / für cron geeignet
+# WICHTIG: Standard-Zeitzone für Datumsformatierung auf Europe/Zurich setzen
+matplotlib.rcParams["timezone"] = "Europe/Zurich"
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -31,7 +36,10 @@ except Exception:
     LOCAL_TZ = None  # Fallback
 
 def read_csv(csv_path):
-    """CSV -> (times[datetime], values_rp[list[float]]) sortiert"""
+    """
+    CSV -> (times[datetime], values_rp[list[float]]) sortiert.
+    Alle Zeitstempel werden konsequent in Europe/Zurich konvertiert.
+    """
     times, values = [], []
     with open(csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
@@ -39,10 +47,19 @@ def read_csv(csv_path):
             raise ValueError(f"CSV-Header erwartet: start_local, price_chf_per_kwh (gefunden: {r.fieldnames})")
         for row in r:
             t = datetime.fromisoformat(row["start_local"])
-            if t.tzinfo is None and LOCAL_TZ:
-                t = t.replace(tzinfo=LOCAL_TZ)
+
+            # Einheitliche TZ-Behandlung:
+            # - Wenn kein tzinfo: als lokale (Europe/Zurich) Zeit interpretieren
+            # - Wenn tzinfo vorhanden (z.B. UTC): in Europe/Zurich umrechnen
+            if LOCAL_TZ:
+                if t.tzinfo is None:
+                    t = t.replace(tzinfo=LOCAL_TZ)
+                else:
+                    t = t.astimezone(LOCAL_TZ)
+
             values.append(float(row["price_chf_per_kwh"]) * 100.0)  # Rp/kWh
             times.append(t)
+
     pairs = sorted(zip(times, values), key=lambda z: z[0])
     if not pairs:
         return [], []
@@ -91,8 +108,9 @@ def render_png(times, values, path):
     ax.set_ylabel("Stromtarif [Rp/kWh]", fontsize=FONT_SIZE_LABELS)
     ax.set_ylim(20, 35)
 
-    hour_locator = mdates.HourLocator(byhour=range(0, 24, 2), tz=LOCAL_TZ)
-    hour_fmt = mdates.DateFormatter("%H:%M", tz=LOCAL_TZ)
+    # Locator/Formatter: TZ kommt aus rcParams["timezone"] = "Europe/Zurich"
+    hour_locator = mdates.HourLocator(byhour=range(0, 24, 2))
+    hour_fmt = mdates.DateFormatter("%H:%M")
     ax.xaxis.set_major_locator(hour_locator)
     ax.xaxis.set_major_formatter(hour_fmt)
     ax.tick_params(axis="x", labelsize=FONT_SIZE_TICKS)
@@ -159,3 +177,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
