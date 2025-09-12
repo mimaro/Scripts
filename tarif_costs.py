@@ -83,18 +83,22 @@ def main():
     print(kosten_b_s)
     print(kosten_n_d)
     print(kosten_n_s)
-
-
-    print(kosten_b_d_kum)
-    print(kosten_b_s_kum)
-    print(kosten_n_d_kum)
-    print(kosten_n_s_kum)
-
     
     kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"][0][1] + kosten_b_d
     kosten_b_s_kum = get_vals(UUID["Kosten_b_s_kum"])["data"]["tuples"][0][1] + kosten_b_s
     kosten_n_d_kum = get_vals(UUID["Kosten_n_d_kum"])["data"]["tuples"][0][1] + kosten_n_d
     kosten_n_s_kum = get_vals(UUID["Kosten_n_s_kum"])["data"]["tuples"][0][1] + kosten_n_s
+
+    print(kosten_b_d_kum)
+    print(kosten_b_s_kum)
+    print(kosten_n_d_kum)
+    print(kosten_n_s_kum)
+    
+    kosten_b_d_kum = kosten_b_d_kum + kosten_b_d
+    kosten_b_s_kum = kosten_b_s_kum + kosten_b_s
+    kosten_n_d_kum = kosten_n_d_kum + kosten_n_d
+    kosten_n_s_kum = kosten_n_s_kum + kosten_n_s
+
 
 
     print(kosten_b_d_kum)
