@@ -69,30 +69,30 @@ def main():
     preis_stat = 27.129
     preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
 
-    print(preis_dyn)
-    print(preis_stat)
-    print(brutto_energie)
-    print(netto_energie)
+    print(f" Preis dyn: {preis_dyn} Rp./kWh")
+    print(f" Preis stat: {preis_stat} Rp./kWh")
+    print(f" Brutto Energie: {brutto_energie} kWh)
+    print(F" Netto Energie: {netto_energie} kWh)
 
     kosten_b_d = brutto_energie * preis_dyn/100
     kosten_b_s = brutto_energie * preis_stat/100
     kosten_n_d = netto_energie * preis_dyn/100
     kosten_n_s = netto_energie * preis_stat/100
 
-    print(kosten_b_d)
-    print(kosten_b_s)
-    print(kosten_n_d)
-    print(kosten_n_s)
+    print(f" Kosten bd: {kosten_b_d} CHF)
+    print(f" Kosten bs: {kosten_b_s} CHF)
+    print(f" Kosten nd: {kosten_n_d} CHF)
+    print(f" Kosten ns: {kosten_n_s} CHF)
     
     kosten_b_d_kum = get_vals(UUID["Kosten_b_d_kum"])["data"]["tuples"][0][1] #+ kosten_b_d
     kosten_b_s_kum = get_vals(UUID["Kosten_b_s_kum"])["data"]["tuples"][0][1] #+ kosten_b_s
     kosten_n_d_kum = get_vals(UUID["Kosten_n_d_kum"])["data"]["tuples"][0][1] #+ kosten_n_d
     kosten_n_s_kum = get_vals(UUID["Kosten_n_s_kum"])["data"]["tuples"][0][1] #+ kosten_n_s
 
-    print(kosten_b_d_kum)
-    print(kosten_b_s_kum)
-    print(kosten_n_d_kum)
-    print(kosten_n_s_kum)
+    print(f" Kosten bd kum: {kosten_b_d_kum} CHF)
+    print(f" Kosten bs kum: {kosten_b_s_kum} CHF)
+    print(f" Kosten nd kum: {kosten_n_d_kum} CHF)
+    print(f" Kosten ns kum: {kosten_n_s_kum} CHF)
     
     kosten_b_d_kum = kosten_b_d_kum + kosten_b_d
     kosten_b_s_kum = kosten_b_s_kum + kosten_b_s
@@ -101,10 +101,10 @@ def main():
 
 
 
-    print(kosten_b_d_kum)
-    print(kosten_b_s_kum)
-    print(kosten_n_d_kum)
-    print(kosten_n_s_kum)
+    print(f" Kosten bd kum+: {kosten_b_d_kum} CHF)
+    print(f" Kosten bs kum+: {kosten_b_s_kum} CHF)
+    print(f" Kosten nd kum+: {kosten_n_d_kum} CHF)
+    print(f" Kosten ns kum+: {kosten_n_s_kum} CHF)
 
     
     write_vals(UUID["Kosten_b_d_kum"], kosten_b_d_kum)
