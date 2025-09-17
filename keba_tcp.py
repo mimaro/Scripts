@@ -28,7 +28,9 @@ UUID = {
     "V_act": "3cd2a490-6e7a-11ee-8790-ab29c7762bfa",
     "I_opt": "d45b7370-6e8c-11ee-b809-49218e061c3c",
     "I_bil": "b95b68e0-6e8e-11ee-b0f1-f53999b676d0",
-    "Error": "a23a3510-6ea6-11ee-a52a-650ae6b78585"
+    "Error": "a23a3510-6ea6-11ee-a52a-650ae6b78585",
+    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
+    "PV_Prod": "0ece9080-6732-11ee-92bb-d5c31bcb9442"
 }
 
 #Network KEBA
@@ -189,6 +191,12 @@ def main():
     # Prüfe ob Anlage in Betrieb 
     if char_state_val < 3:
         i_opt = 10
+
+    #Prüfen PV-Ertrag & Freitage Stromtarif
+
+"Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
+    "PV_Prod": "0ece9080-6732-11ee-92bb-d5c31bcb9442"
+
     
     # Schreibe auf KEBA
     if switch_state == 0:
