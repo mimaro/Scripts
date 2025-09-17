@@ -113,9 +113,14 @@ def main():
     write_vals(UUID["Kosten_n_d_kum"], kosten_n_d_kum)
     write_vals(UUID["Kosten_n_s_kum"], kosten_n_s_kum)
 
+    freigabe_emob = 0
+    if preis_dyn < preis_stat:
+        freigabe_emob = 1
+    else:
+        freigabe_emob = 0
 
-
-    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb"
+    print(f"Freigabe Tarif E-Mobilität: {freigabe_emob}")
+    write_vals(UUID["Freigabe_EMob"], freigabe_emob)
     
 
     loops = 0
