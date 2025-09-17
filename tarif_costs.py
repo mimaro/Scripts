@@ -30,7 +30,8 @@ UUID = {
     "Kosten_b_s_kum": "b4540e10-8ceb-11f0-b3fc-35adf2b97e3c",
     "Kosten_b_d_kum":  "bc2da4a0-8ceb-11f0-9f6d-095b9044f5b8",
     "Kosten_n_s_kum":  "c9a41ad0-8ceb-11f0-9adc-c72a0562776f",
-    "Kosten_n_d_kum": "c17d6230-8ceb-11f0-a44e-950dce954c9a"
+    "Kosten_n_d_kum": "c17d6230-8ceb-11f0-a44e-950dce954c9a",
+    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb"
     
 }
 
@@ -111,6 +112,11 @@ def main():
     write_vals(UUID["Kosten_b_s_kum"], kosten_b_s_kum)
     write_vals(UUID["Kosten_n_d_kum"], kosten_n_d_kum)
     write_vals(UUID["Kosten_n_s_kum"], kosten_n_s_kum)
+
+
+
+    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb"
+    
 
     loops = 0
     while loops < 2:
