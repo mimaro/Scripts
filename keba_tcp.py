@@ -55,7 +55,7 @@ char_curr_v = 1040
 set_curr = 5004
 failsafe_curr = 1600
 failsafe_timeout = 1602
-state = 5014
+keba_state = 5014
 set_fail_curr = 5016
 set_fail_time = 5018
 set_fail = 5020
@@ -196,16 +196,27 @@ def main():
     freigabe_pv = get_vals(UUID["PV_Prod"], duration="-15min")["data"]["average"]
     freigabe_emob = get_vals(UUID["Freigabe_EMob"], duration="-1min")["data"]["average"]
 
-    if freigabe_pv > 2000:
-
-    
     # Schreibe auf KEBA
-    if switch_state == 0 and freigabe_pv > 2000:
+    if switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 0:
+        client_keba.write_register(keba_state, 0, unit=1)
+        client_keba.write_register(set_curr, 0, unit=1)
+        write_vals(UUID["I_opt"], 0)
+        print(f"Actual Set Ampere: {0}")
+
+    elif switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 1:
+        client_keba.write_register(keba_state, 1, unit=1)
+        client_keba.write_register(set_curr, 32000, unit=1)
+        write_vals(UUID["I_opt"], 32)
+        print(f"Actual Set Ampere: {32}")
+    
+    elif switch_state == 0 and freigabe_pv > 2000:
+        client_keba.write_register(keba_state, 1, unit=1)
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
         write_vals(UUID["I_opt"], i_opt)
         print(f"Actual Set Ampere: {i_opt}")
-    elif switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 1
+        
     else:
+        client_keba.write_register(keba_state, 1, unit=1)
         client_keba.write_register(set_curr, 32000, unit=1)
         write_vals(UUID["I_opt"], 32)
         print(f"Actual Set Ampere: 32 ")
