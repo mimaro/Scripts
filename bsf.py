@@ -21,14 +21,14 @@ def main():
     print("Actual Power {}".format(decoded_data["power"]))
     print("Actual Temperature {}".format(decoded_data["temperature"]+ Offset))
     print("Posting to VZ")
-    #poststring_p = URL_VZ.format(UUID_P, decoded_data["power"])
-    poststring_t = URL_VZ.format(UUID_T, decoded_data["temperature"]+ Offset)
-    #postreq_p = requests.post(poststring_p)
-    postreq_t = requests.post(poststring_t)
-    #print(poststring_p)
-    print(poststring_t)
-    #print(postreq_p.ok)
-    print(postreq_t.ok)
+    poststring_p = URL_VZ.format(UUID_P, decoded_data["power"])
+    #poststring_t = URL_VZ.format(UUID_T, decoded_data["temperature"]+ Offset)
+    postreq_p = requests.post(poststring_p)
+    #postreq_t = requests.post(poststring_t)
+    print(poststring_p)
+    #print(poststring_t)
+    print(postreq_p.ok)
+    #print(postreq_t.ok)
 
 
 
