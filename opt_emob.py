@@ -10,7 +10,7 @@ UUIDS = {
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
 }
 MAX_MINUTES   = 4320          # 72h
-TARGET_VALUE  = 3             # <— hier zentral setzen (z.B. 3; in deinem Beispiel ist der Wert 1)
+TARGET_VALUE  = 1             # <— hier zentral setzen (z.B. 3; in deinem Beispiel ist der Wert 1)
 
 # =========================
 # Fetch
