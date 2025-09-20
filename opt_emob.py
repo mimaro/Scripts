@@ -10,9 +10,10 @@ UUIDS = {
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
 }
 MAX_MINUTES   = 4320          # 72h
-TARGET_VALUE  = 1            # <- zentral: gesuchter Status (z.B. 3)
-
-DEBUG = True  # bei Bedarf True setzen, um Diagnose-Infos zu sehen
+TARGET_VALUE  = 1             # <— zentral definierter Zielwert
+VALUE_COLUMN_INDEX = 1        # <— 1 oder 2 (dein Wert sitzt in tuples[INDEX])
+AUTO_FALLBACK_TO_OTHER_COLUMN = True
+DEBUG = True                 # auf True stellen für Diagnose
 
 # =========================
 # Fetch
@@ -23,91 +24,67 @@ def get_vals(uuid, duration=f"-{MAX_MINUTES}min"):
     return r.json()
 
 # =========================
-# Hilfen: Spalten-Erkennung & Iteration
+# Parser & Suche
 # =========================
-def _detect_value_index(section):
+def _iter_section_tuples(section):
     """
-    Bestimmt, ob in section['tuples'] die Spalte 1 oder 2 der eigentliche 'value' ist,
-    indem der jeweilige Spaltenmittelwert mit section['average'] verglichen wird.
-    Fallback ist Index 1.
+    Gibt alle tuples einer Section zurück: [ts_ms, c1, c2, ...]
     """
     tuples = section.get("tuples", [])
-    if not tuples:
-        return 1
-
-    avg = section.get("average", None)
-    if avg is None:
-        return 1
-
-    def col_avg(idx):
-        vals = []
+    if isinstance(tuples, list):
         for t in tuples:
-            if isinstance(t, (list, tuple)) and len(t) > idx:
-                try:
-                    vals.append(float(t[idx]))
-                except Exception:
-                    pass
-        return (sum(vals) / len(vals)) if vals else None
+            if isinstance(t, (list, tuple)) and len(t) >= 2:
+                yield t
 
-    a1 = col_avg(1)
-    a2 = col_avg(2)
-
+def _cast_to_int(val):
     try:
-        avg = float(avg)
+        return int(float(val))
     except Exception:
-        return 1
+        return None
 
-    if a1 is None and a2 is None:
-        return 1
-    if a1 is None:
-        return 2
-    if a2 is None:
-        return 1
-
-    # wähle die Spalte, deren Durchschnitt näher an 'average' liegt
-    return 1 if abs(a1 - avg) <= abs(a2 - avg) else 2
-
-def iter_points_vz_v03(payload):
+def _find_last_match_in_sections(sections, col_idx, target_value):
     """
-    Erwartetes Format (Version 0.3):
-    {
-      "version": "0.3",
-      "data": [
-        {
-          "tuples": [[ts_ms, col1, col2], ...],
-          "average": <float|int>,
-          ...
-        }
-      ]
-    }
-    Gibt (timestamp_ms, value) zurück – wobei 'value' dynamisch aus Spalte 1 oder 2 kommt.
+    Durchsucht alle sections und gibt den letzten ts_ms zurück, bei dem
+    tuples[*][col_idx] == target_value war. (col_idx: 1 oder 2)
     """
-    data_sections = payload.get("data", [])
-    if not isinstance(data_sections, list):
+    last_ts_ms = None
+    for section in sections:
+        for t in _iter_section_tuples(section):
+            if len(t) <= col_idx:
+                continue
+            ts_ms = t[0]
+            v = _cast_to_int(t[col_idx])
+            if v is None:
+                continue
+            if v == target_value:
+                try:
+                    ts_ms = int(ts_ms)
+                except Exception:
+                    continue
+                if (last_ts_ms is None) or (ts_ms > last_ts_ms):
+                    last_ts_ms = ts_ms
+    return last_ts_ms
+
+def _debug_sample(sections, col_idx, target_value):
+    if not DEBUG:
         return
+    # zeige die letzten ~10 Punkte der gewählten Spalte
+    recent = []
+    for section in sections:
+        for t in _iter_section_tuples(section):
+            if len(t) > col_idx:
+                recent.append((t[0], t[col_idx]))
+    recent = recent[-10:]
+    print(f"[DEBUG] gewählte Spalte: {col_idx}; TARGET={target_value}")
+    print(f"[DEBUG] letzte Punkte (ts_ms, value):")
+    for ts, v in recent:
+        print(f"    {ts}, {v}")
 
-    for section in data_sections:
-        tuples = section.get("tuples", [])
-        if not isinstance(tuples, list) or not tuples:
-            continue
-
-        val_idx = _detect_value_index(section)
-
-        if DEBUG:
-            print(f"[DEBUG] value index gewählt: {val_idx}")
-
-        for t in tuples:
-            if isinstance(t, (list, tuple)) and len(t) > val_idx:
-                yield t[0], t[val_idx]
-
-# =========================
-# Kernfunktion
-# =========================
 def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VALUE, max_minutes=MAX_MINUTES):
     """
     Lädt die letzten max_minutes und liefert:
       - Minuten seit letztem Auftreten von target_value
-      - oder max_minutes (4320), falls nicht vorhanden.
+      - oder max_minutes, falls nicht vorhanden.
     """
     try:
         payload = get_vals(uuid, f"-{max_minutes}min")
@@ -116,25 +93,23 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
             print(f"[DEBUG] fetch error: {e}")
         return max_minutes
 
-    last_ts_ms = None
-    last_val = None
+    sections = payload.get("data", [])
+    if not isinstance(sections, list) or not sections:
+        if DEBUG:
+            print("[DEBUG] payload['data'] leer oder kein Listentyp")
+        return max_minutes
 
-    for ts_ms, val in iter_points_vz_v03(payload):
-        try:
-            is_target = int(float(val)) == int(target_value)
-        except Exception:
-            continue
-        if not is_target:
-            continue
+    # 1) Versuch mit der konfigurierten Spalte
+    _debug_sample(sections, VALUE_COLUMN_INDEX, target_value)
+    last_ts_ms = _find_last_match_in_sections(sections, VALUE_COLUMN_INDEX, target_value)
 
-        try:
-            ts_ms = int(ts_ms)
-        except Exception:
-            continue
-
-        if (last_ts_ms is None) or (ts_ms > last_ts_ms):
-            last_ts_ms = ts_ms
-            last_val = val
+    # 2) Optional: Fallback auf die andere Spalte (1 -> 2, 2 -> 1)
+    if last_ts_ms is None and AUTO_FALLBACK_TO_OTHER_COLUMN and VALUE_COLUMN_INDEX in (1, 2):
+        other = 2 if VALUE_COLUMN_INDEX == 1 else 1
+        if DEBUG:
+            print(f"[DEBUG] kein Treffer in Spalte {VALUE_COLUMN_INDEX}, versuche Spalte {other}")
+            _debug_sample(sections, other, target_value)
+        last_ts_ms = _find_last_match_in_sections(sections, other, target_value)
 
     if last_ts_ms is None:
         if DEBUG:
@@ -146,14 +121,14 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
     now_utc = datetime.now(timezone.utc)
     diff_min = int((now_utc - last_dt).total_seconds() // 60)
 
-    if DEBUG:
-        print(f"[DEBUG] letzter Treffer: ts={last_ts_ms} ({last_dt.isoformat()}), val={last_val}, diff_min={diff_min}")
-
-    # Clamp in [0, max_minutes]
     if diff_min < 0:
         diff_min = 0
     elif diff_min > max_minutes:
         diff_min = max_minutes
+
+    if DEBUG:
+        print(f"[DEBUG] letzter Treffer: ts={last_ts_ms} ({last_dt.isoformat()}), diff_min={diff_min}")
+
     return diff_min
 
 # =========================
@@ -162,5 +137,3 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
 if __name__ == "__main__":
     minutes = minutes_since_last_target()
     print(minutes)
-
-
