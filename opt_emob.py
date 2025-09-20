@@ -36,7 +36,7 @@ def get_vals(uuid: str, duration: str) -> Any:
         return json.loads(r.text)
 
 
-def get_vals_t(uuid, duration="-0min"):
+def get_vals_t(uuid, duration):
     # Daten von vz lesen. 
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     return req.json()
