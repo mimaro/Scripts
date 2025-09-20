@@ -26,7 +26,7 @@ DEBUG = True           # bei Bedarf True
 EMOB_CONS_MAX = 20
 
 # =========================
-# Fetch
+# Letzter Zeitpunkt Kabel Einstecken abrufen
 # =========================
 def get_vals(uuid: str, duration: str) -> Any:
     url = VZ_GET_URL.format(uuid, duration)
@@ -39,25 +39,6 @@ def get_vals(uuid: str, duration: str) -> Any:
     except Exception:
         return json.loads(r.text)
 
-
-def vz_get(uuid: str, duration: str):
-    """HTTP-Getter: holt JSON für eine fertige Duration wie '-15min'."""
-    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
-    r.raise_for_status()
-    return r.json()
-
-
-def energy_kwh_from_power(uuid: str, minutes: int) -> float:
-    payload = vz_get(uuid, duration=f"-{int(minutes)}min")
-    data = payload.get("data", [])
-    tuples = data.get("tuples", []) if isinstance(data, dict) else (data[0].get("tuples", []) if data else [])
-    # kWh = Σ(W) / (60*1000) = Σ(W) / 60000
-    return sum(float(t[1]) for t in tuples) / 60000.0
-
-
-# =========================
-# Normalisierung & Parser
-# =========================
 def _normalize_sections(payload: Any):
     """
     Liefert eine Liste von 'Sections', in der jede Section ein Dict mit 'tuples' enthält.
@@ -216,6 +197,98 @@ def minutes_since_last_target(uuid: str,
         print(f"[DEBUG] letzter Treffer: {last_dt.isoformat()}Z, diff_min={diff_min}")
 
     return diff_min
+
+
+
+# =========================
+# Energie seit letzten Einstecken abrufen
+# =========================
+
+def vz_get(uuid: str, duration: str):
+    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
+    r.raise_for_status()
+    return r.json()
+
+def parse_minutes(minutes) -> int:
+    """
+    Normalisiert 'minutes' zu einem positiven int in [0, MAX_MINUTES].
+    Akzeptiert z.B.: 273, "273", "-273", "-273min", "273min".
+    """
+    if isinstance(minutes, (int, float)):
+        m = int(minutes)
+    elif isinstance(minutes, str):
+        m = 0
+        m_str = "".join(re.findall(r"-?\d+", minutes))  # erste Zahl extrahieren
+        if m_str:
+            m = int(m_str)
+    else:
+        m = 0
+
+    if m < 0:
+        m = -m  # wir brauchen die Größe; das Minus kommt erst im duration-String
+    if m > MAX_MINUTES:
+        m = MAX_MINUTES
+    return m
+
+def energy_kwh_from_power(uuid: str, minutes) -> float:
+    """
+    Robuste Integration eines Leistungs-Kanals (W) über 'minutes' Minuten -> kWh.
+    Nutzt Trapezregel (für ungleichmäßige Abstände).
+    Erwartetes Format:
+      {"data":{"tuples":[[ts_ms, value_W, (quality)], ...]}} oder
+      {"data":[{"tuples":[...]}]}
+    """
+    m = parse_minutes(minutes)
+    payload = vz_get(uuid, duration=f"-{m}min")
+
+    data = payload.get("data", [])
+    # 'data' kann dict ODER list sein
+    if isinstance(data, dict):
+        tuples = data.get("tuples", [])
+    elif isinstance(data, list):
+        tuples = []
+        for section in data:
+            tuples.extend(section.get("tuples", []))
+    else:
+        tuples = []
+
+    if not tuples:
+        return 0.0
+
+    # sortieren zur Sicherheit
+    tuples.sort(key=lambda t: t[0])
+
+    # Trapezregel: Wh = Σ 0.5*(P_i + P_{i-1}) * Δt[h]; kWh = Wh/1000
+    energy_Wh = 0.0
+    prev_ts = None
+    prev_p  = None
+    for tup in tuples:
+        ts_ms = int(tup[0])
+        p_w   = float(tup[1])
+        if prev_ts is not None:
+            dt_h = (ts_ms - prev_ts) / 1000.0 / 3600.0
+            energy_Wh += 0.5 * (prev_p + p_w) * dt_h
+        prev_ts = ts_ms
+        prev_p  = p_w
+
+    return energy_Wh / 1000.0  # -> kWh
+
+def energy_kwh_from_power_simple(uuid: str, minutes) -> float:
+    """
+    Einfache Formel, NUR korrekt wenn genau 1 Messpunkt pro Minute (Durchschnittsleistung) vorhanden ist:
+      kWh = Σ(W) / 60000
+    """
+    m = parse_minutes(minutes)
+    payload = vz_get(uuid, duration=f"-{m}min")
+    data = payload.get("data", [])
+    tuples = (
+        data.get("tuples", [])
+        if isinstance(data, dict)
+        else (data[0].get("tuples", []) if data else [])
+    )
+    return sum(float(t[1]) for t in tuples) / 60000.0
+
+
 
 # =========================
 # CLI / Main
