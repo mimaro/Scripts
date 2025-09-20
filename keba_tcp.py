@@ -30,7 +30,8 @@ UUID = {
     "I_bil": "b95b68e0-6e8e-11ee-b0f1-f53999b676d0",
     "Error": "a23a3510-6ea6-11ee-a52a-650ae6b78585",
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
-    "PV_Prod": "0ece9080-6732-11ee-92bb-d5c31bcb9442"
+    "PV_Prod": "0ece9080-6732-11ee-92bb-d5c31bcb9442",
+    "Cable_State": "58163cf0-95ff-11f0-b79d-252564addda6"
 }
 
 #Network KEBA
@@ -44,6 +45,7 @@ server_port_sel = 1502
 
 #Register KEBA
 charge_state= 1000
+cable_state  =1004
 error_code = 1006
 char_curr_1 = 1008
 active_p = 1020
@@ -95,6 +97,11 @@ def main():
     char_state_unpars = client_keba.read_holding_registers(charge_state, 2, unit=1)
     char_state_pars = BinaryPayloadDecoder.fromRegisters(char_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
     char_state_val = char_state_pars.decode_32bit_uint()
+
+    # Read Cable State
+    cable_state_unpars = client_keba.read_holding_registers(cable_state, 2, unit=1)
+    cable_state_pars = BinaryPayloadDecoder.fromRegisters(cable_state_unpars.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+    cable_state_val = cable_state_pars.decode_32bit_uint()
 
     # Read current phase 1
     curr_i_unpars = client_keba.read_holding_registers(char_curr_1, 2, unit=1)
@@ -236,9 +243,12 @@ def main():
     write_vals(UUID["I_bil"], val_bil_i)
     write_vals(UUID["Error"], error_val)
     write_vals(UUID["Switch"], switch_state)
+    write_vals(UUID["Cable_State"], cable_state_val)
 
+    
     # Schreibe Rückmeldung Terminal
     print(f"Charge State: {char_state_val}")
+    print(f"Cable State: {cable_state_val}")
     print(f"Switch State: {switch_state}")
     print(f"Actual Charging Current 1: {curr_i_val}")
     print(f"Actual max. Charging Current: {curr_i_max_val}")
