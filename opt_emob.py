@@ -82,15 +82,12 @@ def payload_values(payload):
             if v is not None:
                 yield v
 
-
-netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]/60
-
 def find_duration_for_state_3():
     # Gehe in 15-Min-Schritten von jetzt bis 4320 Min zurück
     for minutes in range(0, MAX_MIN + 1, STEP):
         duration = f"-{minutes}min"
         try:
-            data = get_vals(UUID["Cable_State"], duration)["data"]
+            data = get_vals(UUID["Cable_State"], duration)["data"]["average"]
         except Exception:
             # Bei transienten Fehlern einfach nächsten Schritt versuchen
             continue
