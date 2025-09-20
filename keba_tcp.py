@@ -44,8 +44,8 @@ server_ip_sel = "192.168.178.40"
 server_port_sel = 1502
 
 #Register KEBA
-charge_state= 1000
-cable_state  =1004
+charge_state = 1000
+cable_state = 1004
 error_code = 1006
 char_curr_1 = 1008
 active_p = 1020
