@@ -50,7 +50,7 @@ def get_vals(uuid, duration="-0min"):
 
 UUID = "58163cf0-95ff-11f0-b79d-252564addda6"
 MAX_MIN = 4320
-STEP = 15
+STEP = 1
 
 def payload_values(payload):
     """
