@@ -39,6 +39,13 @@ def get_vals(uuid: str, duration: str) -> Any:
         return json.loads(r.text)
 
 
+def vz_get(uuid: str, duration: str):
+    """HTTP-Getter: holt JSON für eine fertige Duration wie '-15min'."""
+    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
+    r.raise_for_status()
+    return r.json()
+
+
 def energy_kwh_from_power(uuid: str, minutes: int) -> float:
     payload = vz_get(uuid, duration=f"-{int(minutes)}min")
     data = payload.get("data", [])
