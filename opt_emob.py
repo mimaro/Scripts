@@ -39,10 +39,13 @@ def get_vals(uuid: str, duration: str) -> Any:
         return json.loads(r.text)
 
 
-def get_vals_t(uuid, duration):
-    # Daten von vz lesen. 
-    req = requests.get(VZ_GET_URL.format(uuid, duration))
-    return req.json()
+def get_vals_t(uuid, minutes):
+    payload = get_vals_t(uuid, duration=f"-{int(minutes)}min")
+    data = payload.get("data", [])
+    tuples = data.get("tuples", []) if isinstance(data, dict) else (data[0].get("tuples", []) if data else [])
+    # kWh = sum(W) / 60000  (weil 1 min = 1/60 h und /1000 für kWh)
+    return sum(float(t[1]) for t in tuples) / 60000.0
+
 
 # =========================
 # Normalisierung & Parser
@@ -242,7 +245,7 @@ def main():
             last_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc).isoformat()
             print(last_dt)
 
-    emob_cons = get_vals_t(UUIDS["Emob_Cons"], duration=minutes_val)["data"]["consumption"]
+    emob_cons = get_vals_t(UUIDS["Emob_Cons"], duration=minutes_val)
     print(emob_cons)
 
 
