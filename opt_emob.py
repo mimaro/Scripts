@@ -1,106 +1,107 @@
 import requests
-import json
-import pprint
-import datetime
-import logging
-import pytz
-import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
-#######################################################################################################
-# Format URLs
+# Behalte dein lokales Volkszähler-Endpoint-Template
 VZ_GET_URL = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
-SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&formatted=0' 
 
-########################################################################################################
-
-
-
-#######################################################################################################
-# Configuration
-UUID = {
+UUIDS = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
-    "Cable_State": "58163cf0-95ff-11f0-b79d-252564addda6"
-    
+    "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
 }
 
+MAX_MIN = 4320  # 72h
 
-###########################################################################################################
+def get_vals(uuid, duration="-4320min"):
+    """Daten von Volkszähler lesen."""
+    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
+    r.raise_for_status()
+    return r.json()
 
-def get_vals(uuid, duration="-0min"):
-    # Daten von vz lesen. 
-    req = requests.get(VZ_GET_URL.format(uuid, duration))
-    return req.json()
-
-def write_vals(uuid, val):
-    # Daten auf vz schreiben.
-    poststring = VZ_POST_URL.format(uuid, val)
-    #logging.info("Poststring {}".format(poststring))
-    postreq = requests.post(poststring)
-    #logging.info("Ok? {}".format(postreq.ok))
-
-VZ_GET_URL = "https://example.tld/api/data/{}/{}"
-
-def get_vals(uuid, duration="-0min"):
-    # Daten von vz lesen.
-    req = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
-    req.raise_for_status()
-    return req.json()
-
-UUID = "58163cf0-95ff-11f0-b79d-252564addda6"
-MAX_MIN = 4320
-STEP = 1
-
-def payload_values(payload):
+def _iter_points(payload):
     """
-    Extrahiert Werte robust aus möglichen JSON-Formaten:
-    - Liste von Dicts: [{"timestamp": "...", "value": 3}, ...]
-    - Dict mit 'value'
-    - Dict mit 'data': [...]
-    - Direkt-Liste von Werten
+    Liefert (timestamp, value)-Tupel aus typischen Volkszähler-Antworten.
+    Erwartet i. d. R.: {"data": [[ts, val], ...], ...}
+    Unterstützt aber auch Varianten mit Dicts.
     """
-    if isinstance(payload, list):
-        for item in payload:
-            if isinstance(item, dict):
-                yield item.get("value", None)
-            else:
-                yield item
-    elif isinstance(payload, dict):
-        if "value" in payload:
-            yield payload["value"]
-        if "data" in payload and isinstance(payload["data"], list):
-            for item in payload["data"]:
-                if isinstance(item, dict):
-                    yield item.get("value", None)
-                else:
-                    yield item
-    else:
-        # Unbekanntes Format -> nichts liefern
-        if hasattr(payload, "get"):
-            v = payload.get("value")  # defensiv
-            if v is not None:
-                yield v
+    data = payload.get("data", payload)
 
-def find_duration_for_state_3():
-    # Gehe in 15-Min-Schritten von jetzt bis 4320 Min zurück
-    for minutes in range(0, MAX_MIN + 1, STEP):
-        duration = f"-{minutes}min"
+    if isinstance(data, list):
+        for item in data:
+            # Standard: [timestamp, value]
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                yield item[0], item[1]
+            elif isinstance(item, dict):
+                ts = item.get("timestamp") or item.get("ts")
+                val = item.get("value")
+                if ts is not None and val is not None:
+                    yield ts, val
+    elif isinstance(data, dict):
+        # Einzelnes Dict
+        ts = data.get("timestamp") or data.get("ts")
+        val = data.get("value")
+        if ts is not None and val is not None:
+            yield ts, val
+
+def _parse_ts(ts):
+    """Timestamp robust nach UTC-Datetime parsen (Epoch s/ms oder ISO-8601)."""
+    if isinstance(ts, (int, float)):
+        sec = ts / 1000.0 if ts > 1e12 else float(ts)  # ms -> s
+        return datetime.fromtimestamp(sec, tz=timezone.utc)
+    if isinstance(ts, str):
+        # Versuche ISO-8601
         try:
-            data = get_vals(UUID["Cable_State"], duration)["data"]
-            print(data)
+            return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(timezone.utc)
         except Exception:
-            # Bei transienten Fehlern einfach nächsten Schritt versuchen
+            pass
+        # Fallback: numerisch
+        try:
+            num = float(ts)
+            sec = num / 1000.0 if num > 1e12 else num
+            return datetime.fromtimestamp(sec, tz=timezone.utc)
+        except Exception:
+            pass
+    return None
+
+def minutes_since_last_value(uuid, target_value=3, max_minutes=MAX_MIN):
+    """
+    Lädt 72h Daten und liefert:
+      - Minuten seit letztem Auftreten von target_value
+      - oder max_minutes (4320), falls nicht vorhanden.
+    """
+    try:
+        payload = get_vals(uuid, f"-{max_minutes}min")
+    except Exception:
+        # Bei Fehlern konservativ max zurückgeben
+        return max_minutes
+
+    last_ts = None
+    for ts_raw, val in _iter_points(payload):
+        # robust auf int/float/string normalisieren
+        try:
+            is_target = int(float(val)) == int(target_value)
+        except Exception:
+            continue
+        if not is_target:
             continue
 
-        # Prüfen, ob irgendwo in den zuletzt 'minutes' Minuten ein Wert 3 vorkam
-        if any(v == 1 for v in payload_values(data)):
-            return minutes
+        ts = _parse_ts(ts_raw)
+        if ts is None:
+            continue
+        if (last_ts is None) or (ts > last_ts):
+            last_ts = ts
 
-    # Kein Status 3 innerhalb von 72h gefunden
-    return MAX_MIN
+    if last_ts is None:
+        return max_minutes
+
+    now = datetime.now(timezone.utc)
+    diff_min = int((now - last_ts).total_seconds() // 60)
+    # Clamp in [0, max_minutes]
+    if diff_min < 0:
+        diff_min = 0
+    if diff_min > max_minutes:
+        diff_min = max_minutes
+    return diff_min
 
 if __name__ == "__main__":
-    value = find_duration_for_state_3()
-    # Als reinen Minuten-Wert ausgeben
+    value = minutes_since_last_value(UUIDS["Cable_State"], target_value=1, max_minutes=4320)
     print(value)
