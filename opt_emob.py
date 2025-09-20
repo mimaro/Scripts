@@ -93,7 +93,7 @@ def find_duration_for_state_3():
             continue
 
         # Prüfen, ob irgendwo in den zuletzt 'minutes' Minuten ein Wert 3 vorkam
-        if any(v == 3 for v in payload_values(data)):
+        if any(v == 1 for v in payload_values(data)):
             return minutes
 
     # Kein Status 3 innerhalb von 72h gefunden
