@@ -88,6 +88,7 @@ def find_duration_for_state_3():
         duration = f"-{minutes}min"
         try:
             data = get_vals(UUID["Cable_State"], duration)["data"]
+            print(data)
         except Exception:
             # Bei transienten Fehlern einfach nächsten Schritt versuchen
             continue
