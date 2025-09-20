@@ -33,6 +33,12 @@ def get_vals(uuid: str, duration: str) -> Any:
     except Exception:
         return json.loads(r.text)
 
+
+def get_vals_t(uuid, duration="-0min"):
+    # Daten von vz lesen. 
+    req = requests.get(VZ_GET_URL.format(uuid, duration))
+    return req.json()
+
 # =========================
 # Normalisierung & Parser
 # =========================
