@@ -14,10 +14,10 @@ UUIDS = {
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
 }
 MAX_MINUTES = 4320      # 72h Lookback
-TARGET_VALUE = 3        # <- Standard (kann per CLI überschrieben werden)
+TARGET_VALUE = 1        # <- Standard (kann per CLI überschrieben werden)
 VALUE_COLUMN_INDEX = 1  # primäre Spalte (1 oder 2); wir prüfen bei Bedarf beide
 AUTO_FALLBACK_TO_OTHER_COLUMN = True
-DEBUG = False           # bei Bedarf True
+DEBUG = True           # bei Bedarf True
 
 # =========================
 # Fetch
