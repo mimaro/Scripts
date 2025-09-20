@@ -31,7 +31,8 @@ UUID = {
     "Kosten_b_d_kum":  "bc2da4a0-8ceb-11f0-9f6d-095b9044f5b8",
     "Kosten_n_s_kum":  "c9a41ad0-8ceb-11f0-9adc-c72a0562776f",
     "Kosten_n_d_kum": "c17d6230-8ceb-11f0-a44e-950dce954c9a",
-    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb"
+    "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
+    "Cable_State": "58163cf0-95ff-11f0-b79d-252564addda6"
     
 }
 
