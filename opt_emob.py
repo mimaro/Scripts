@@ -39,7 +39,7 @@ def get_vals(uuid: str, duration: str) -> Any:
         return json.loads(r.text)
 
 
-def get_vals_t(uuid, minutes):
+def get_vals_t(uuid, duration):
     payload = get_vals_t(uuid, duration=f"-{int(minutes)}min")
     data = payload.get("data", [])
     tuples = data.get("tuples", []) if isinstance(data, dict) else (data[0].get("tuples", []) if data else [])
