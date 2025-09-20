@@ -53,36 +53,66 @@ def write_vals(uuid, val):
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
 
-def last_state_3_minutes():
-    UUID = "58163cf0-95ff-11f0-b79d-252564addda6"
-    # 72 Stunden = 4320 Minuten
-    MAX_MINUTES = 4320  
+VZ_GET_URL = "https://example.tld/api/data/{}/{}"
 
-    # Daten abrufen
-    data = get_data(UUID, "-4320min")
+def get_vals(uuid, duration="-0min"):
+    # Daten von vz lesen.
+    req = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
+    req.raise_for_status()
+    return req.json()
 
-    # Aktuelle Zeit (UTC)
-    now = datetime.now(timezone.utc)
+UUID = "58163cf0-95ff-11f0-b79d-252564addda6"
+MAX_MIN = 4320
+STEP = 15
 
-    # Annahme: Datenstruktur z.B. [{"timestamp": "2025-09-20T12:34:56Z", "value": 3}, ...]
-    # Falls deine API ein anderes Format liefert, musst du Key-Namen anpassen
-    last_3_time = None
-    for entry in data:
-        value = entry.get("value")
-        if value == 3:
-            # ISO8601-String in UTC-Datetime umwandeln
-            ts = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
-            if (last_3_time is None) or (ts > last_3_time):
-                last_3_time = ts
-
-    if last_3_time is None:
-        # Kein Status 3 in den letzten 72h
-        return MAX_MINUTES
+def payload_values(payload):
+    """
+    Extrahiert Werte robust aus möglichen JSON-Formaten:
+    - Liste von Dicts: [{"timestamp": "...", "value": 3}, ...]
+    - Dict mit 'value'
+    - Dict mit 'data': [...]
+    - Direkt-Liste von Werten
+    """
+    if isinstance(payload, list):
+        for item in payload:
+            if isinstance(item, dict):
+                yield item.get("value", None)
+            else:
+                yield item
+    elif isinstance(payload, dict):
+        if "value" in payload:
+            yield payload["value"]
+        if "data" in payload and isinstance(payload["data"], list):
+            for item in payload["data"]:
+                if isinstance(item, dict):
+                    yield item.get("value", None)
+                else:
+                    yield item
     else:
-        diff_minutes = int((now - last_3_time).total_seconds() // 60)
-        # Begrenzen auf max. 4320 min
-        return min(diff_minutes, MAX_MINUTES)
+        # Unbekanntes Format -> nichts liefern
+        if hasattr(payload, "get"):
+            v = payload.get("value")  # defensiv
+            if v is not None:
+                yield v
+
+def find_duration_for_state_3():
+    # Gehe in 15-Min-Schritten von jetzt bis 4320 Min zurück
+    for minutes in range(0, MAX_MIN + 1, STEP):
+        duration = f"-{minutes}min"
+        try:
+            data = get_vals(UUID, duration)
+        except Exception:
+            # Bei transienten Fehlern einfach nächsten Schritt versuchen
+            continue
+
+        # Prüfen, ob irgendwo in den zuletzt 'minutes' Minuten ein Wert 3 vorkam
+        if any(v == 3 for v in payload_values(data)):
+            return minutes
+
+    # Kein Status 3 innerhalb von 72h gefunden
+    return MAX_MIN
 
 if __name__ == "__main__":
-    minutes_since_last_3 = last_state_3_minutes()
-    print(minutes_since_last_3)
+    value = find_duration_for_state_3()
+    # Als reinen Minuten-Wert ausgeben
+    print(value)
