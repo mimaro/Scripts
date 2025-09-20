@@ -10,7 +10,9 @@ UUIDS = {
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
 }
 MAX_MINUTES   = 4320          # 72h
-TARGET_VALUE  = 1             # <— hier zentral setzen (z.B. 3; in deinem Beispiel ist der Wert 1)
+TARGET_VALUE  = 1            # <- zentral: gesuchter Status (z.B. 3)
+
+DEBUG = True  # bei Bedarf True setzen, um Diagnose-Infos zu sehen
 
 # =========================
 # Fetch
@@ -21,8 +23,50 @@ def get_vals(uuid, duration=f"-{MAX_MINUTES}min"):
     return r.json()
 
 # =========================
-# Parser für dein Schema
+# Hilfen: Spalten-Erkennung & Iteration
 # =========================
+def _detect_value_index(section):
+    """
+    Bestimmt, ob in section['tuples'] die Spalte 1 oder 2 der eigentliche 'value' ist,
+    indem der jeweilige Spaltenmittelwert mit section['average'] verglichen wird.
+    Fallback ist Index 1.
+    """
+    tuples = section.get("tuples", [])
+    if not tuples:
+        return 1
+
+    avg = section.get("average", None)
+    if avg is None:
+        return 1
+
+    def col_avg(idx):
+        vals = []
+        for t in tuples:
+            if isinstance(t, (list, tuple)) and len(t) > idx:
+                try:
+                    vals.append(float(t[idx]))
+                except Exception:
+                    pass
+        return (sum(vals) / len(vals)) if vals else None
+
+    a1 = col_avg(1)
+    a2 = col_avg(2)
+
+    try:
+        avg = float(avg)
+    except Exception:
+        return 1
+
+    if a1 is None and a2 is None:
+        return 1
+    if a1 is None:
+        return 2
+    if a2 is None:
+        return 1
+
+    # wähle die Spalte, deren Durchschnitt näher an 'average' liegt
+    return 1 if abs(a1 - avg) <= abs(a2 - avg) else 2
+
 def iter_points_vz_v03(payload):
     """
     Erwartetes Format (Version 0.3):
@@ -30,14 +74,13 @@ def iter_points_vz_v03(payload):
       "version": "0.3",
       "data": [
         {
-          "tuples": [[ts_ms, value, quality], ...],
-          "uuid": "...",
+          "tuples": [[ts_ms, col1, col2], ...],
+          "average": <float|int>,
           ...
-        },
-        ...
+        }
       ]
     }
-    Gibt (timestamp_ms, value) über ALLE Reihen in payload["data"] zurück.
+    Gibt (timestamp_ms, value) zurück – wobei 'value' dynamisch aus Spalte 1 oder 2 kommt.
     """
     data_sections = payload.get("data", [])
     if not isinstance(data_sections, list):
@@ -45,11 +88,21 @@ def iter_points_vz_v03(payload):
 
     for section in data_sections:
         tuples = section.get("tuples", [])
-        for t in tuples:
-            # t: [timestamp_ms, value, quality] (quality optional)
-            if isinstance(t, (list, tuple)) and len(t) >= 2:
-                yield t[0], t[1]
+        if not isinstance(tuples, list) or not tuples:
+            continue
 
+        val_idx = _detect_value_index(section)
+
+        if DEBUG:
+            print(f"[DEBUG] value index gewählt: {val_idx}")
+
+        for t in tuples:
+            if isinstance(t, (list, tuple)) and len(t) > val_idx:
+                yield t[0], t[val_idx]
+
+# =========================
+# Kernfunktion
+# =========================
 def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VALUE, max_minutes=MAX_MINUTES):
     """
     Lädt die letzten max_minutes und liefert:
@@ -58,10 +111,14 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
     """
     try:
         payload = get_vals(uuid, f"-{max_minutes}min")
-    except Exception:
+    except Exception as e:
+        if DEBUG:
+            print(f"[DEBUG] fetch error: {e}")
         return max_minutes
 
     last_ts_ms = None
+    last_val = None
+
     for ts_ms, val in iter_points_vz_v03(payload):
         try:
             is_target = int(float(val)) == int(target_value)
@@ -77,14 +134,20 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
 
         if (last_ts_ms is None) or (ts_ms > last_ts_ms):
             last_ts_ms = ts_ms
+            last_val = val
 
     if last_ts_ms is None:
+        if DEBUG:
+            print("[DEBUG] kein Target-Wert innerhalb des Fensters gefunden")
         return max_minutes
 
     # ts_ms ist Epoch in Millisekunden -> UTC
     last_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc)
     now_utc = datetime.now(timezone.utc)
     diff_min = int((now_utc - last_dt).total_seconds() // 60)
+
+    if DEBUG:
+        print(f"[DEBUG] letzter Treffer: ts={last_ts_ms} ({last_dt.isoformat()}), val={last_val}, diff_min={diff_min}")
 
     # Clamp in [0, max_minutes]
     if diff_min < 0:
@@ -97,6 +160,7 @@ def minutes_since_last_target(uuid=UUIDS["Cable_State"], target_value=TARGET_VAL
 # Ausführung
 # =========================
 if __name__ == "__main__":
-    value = minutes_since_last_target()
-    print(value)
+    minutes = minutes_since_last_target()
+    print(minutes)
+
 
