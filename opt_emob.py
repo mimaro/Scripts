@@ -237,7 +237,7 @@ def main():
             last_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc).isoformat()
             print(last_dt)
 
-    emob_cons = get_vals_t(UUID["Emob_Cons"], duration=minutes)["data"]["conspumtion"]
+    emob_cons = get_vals_t(UUIDS["Emob_Cons"], duration=minutes)["data"]["conspumtion"]
     print(emob_cons)
 
 
