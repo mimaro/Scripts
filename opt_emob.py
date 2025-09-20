@@ -39,7 +39,7 @@ def get_vals(uuid: str, duration: str) -> Any:
         return json.loads(r.text)
 
 
-def energy_kwh_from_power_simple(uuid: str, minutes: int) -> float:
+def energy_kwh_from_power(uuid: str, minutes: int) -> float:
     payload = vz_get(uuid, duration=f"-{int(minutes)}min")
     data = payload.get("data", [])
     tuples = data.get("tuples", []) if isinstance(data, dict) else (data[0].get("tuples", []) if data else [])
