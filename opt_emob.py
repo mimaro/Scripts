@@ -228,6 +228,7 @@ def main():
     minutes = minutes_since_last_target(args.uuid, args.target, args.window)
     print(minutes)
     minutes_val = f"-{int(minutes)}min"
+    print(minutes_val)
     
     if args.show_ts and minutes < args.window:
         # Zeitpunkt erneut bestimmen (nutzt die gleiche Logik)
