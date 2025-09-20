@@ -52,3 +52,37 @@ def write_vals(uuid, val):
     #logging.info("Poststring {}".format(poststring))
     postreq = requests.post(poststring)
     #logging.info("Ok? {}".format(postreq.ok))
+
+def last_state_3_minutes():
+    UUID = "58163cf0-95ff-11f0-b79d-252564addda6"
+    # 72 Stunden = 4320 Minuten
+    MAX_MINUTES = 4320  
+
+    # Daten abrufen
+    data = get_data(UUID, "-4320min")
+
+    # Aktuelle Zeit (UTC)
+    now = datetime.now(timezone.utc)
+
+    # Annahme: Datenstruktur z.B. [{"timestamp": "2025-09-20T12:34:56Z", "value": 3}, ...]
+    # Falls deine API ein anderes Format liefert, musst du Key-Namen anpassen
+    last_3_time = None
+    for entry in data:
+        value = entry.get("value")
+        if value == 3:
+            # ISO8601-String in UTC-Datetime umwandeln
+            ts = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
+            if (last_3_time is None) or (ts > last_3_time):
+                last_3_time = ts
+
+    if last_3_time is None:
+        # Kein Status 3 in den letzten 72h
+        return MAX_MINUTES
+    else:
+        diff_minutes = int((now - last_3_time).total_seconds() // 60)
+        # Begrenzen auf max. 4320 min
+        return min(diff_minutes, MAX_MINUTES)
+
+if __name__ == "__main__":
+    minutes_since_last_3 = last_state_3_minutes()
+    print(minutes_since_last_3)
