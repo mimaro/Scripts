@@ -20,23 +20,10 @@ SUNSET_URL = 'https://api.sunrise-sunset.org/json?lat=47.386479&lng=8.252473&for
 #######################################################################################################
 # Configuration
 UUID = {
-    "Brutto_Energie": "85ffa8d0-683e-11ee-9486-113294e4804d",
-    "Netto_Energie": "8d8af7c0-8c8a-11f0-9d28-a9c875202312",
-    "Preis_dyn": "a1547420-8c87-11f0-ab9a-bd73b64c1942",
-    "Kosten_b_d": "72161320-8c87-11f0-873f-79e6590634b2",
-    "Kosten_b_s": "42e29fa0-8c87-11f0-a699-831fc5906f38",
-    "Kosten_n_d": "18f74440-8c8c-11f0-948b-013fcbd37465",
-    "Kosten_n_s": "132713a0-8c8c-11f0-96f2-dfda5706e0e8",
-    "Kosten_b_s_kum": "b4540e10-8ceb-11f0-b3fc-35adf2b97e3c",
-    "Kosten_b_d_kum":  "bc2da4a0-8ceb-11f0-9f6d-095b9044f5b8",
-    "Kosten_n_s_kum":  "c9a41ad0-8ceb-11f0-9adc-c72a0562776f",
-    "Kosten_n_d_kum": "c17d6230-8ceb-11f0-a44e-950dce954c9a",
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
     "Cable_State": "58163cf0-95ff-11f0-b79d-252564addda6"
     
 }
-
-
 
 
 ###########################################################################################################
@@ -95,12 +82,15 @@ def payload_values(payload):
             if v is not None:
                 yield v
 
+
+netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]/60
+
 def find_duration_for_state_3():
     # Gehe in 15-Min-Schritten von jetzt bis 4320 Min zurück
     for minutes in range(0, MAX_MIN + 1, STEP):
         duration = f"-{minutes}min"
         try:
-            data = get_vals(UUID, duration)
+            data = get_vals(UUID["Cable_State"], duration)["data"]
         except Exception:
             # Bei transienten Fehlern einfach nächsten Schritt versuchen
             continue
