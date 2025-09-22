@@ -16,8 +16,7 @@ except Exception:
 
 # -----------------------------------------------------------------------------------
 # Volkszähler Endpoints
-VZ_GET_URL  = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
-VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&value={}"
+VZ_BASE_URL = "http://192.168.178.49/middleware.php"
 # -----------------------------------------------------------------------------------
 
 # UUIDs in Volkszähler (prüfen!)
@@ -35,14 +34,24 @@ LOCAL_TZ    = "Europe/Zurich"
 
 
 # ===================== Volkszähler =====================
-def get_vals(uuid: str, duration: str = "-0min"):
-    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
-    r.raise_for_status()
-    return r.json()
-
 def write_vals(uuid: str, val: float) -> None:
-    url = VZ_POST_URL.format(uuid, val)
-    r = requests.post(url, timeout=10)
+    """
+    Wert als FLOAT an Volkszähler posten.
+    - Immer in float konvertieren
+    - Mit Dezimalpunkt formatieren (6 Nachkommastellen)
+    - Als Query-Parameter senden (operation=add, value=<float>)
+    """
+    try:
+        v = float(val)
+    except Exception as e:
+        raise ValueError(f"Wert für UUID {uuid} ist nicht als float interpretierbar: {val!r}") from e
+
+    # Feste Punktnotation, 6 Nachkommastellen
+    value_str = f"{v:.6f}"
+
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"operation": "add", "value": value_str}
+    r = requests.post(url, params=params, timeout=10)
     if not r.ok:
         raise RuntimeError(f"VZ-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
@@ -97,7 +106,7 @@ def read_weather_next_ttt(weather_csv: str, hour_end_local: datetime) -> Tuple[f
             except Exception:
                 continue
 
-            # exakte Übereinstimmung
+            # exakte Übereinstimmung ±30s
             if abs((dt_utc - target_end_utc).total_seconds()) <= 30:
                 best_row, best_dt_utc = row, dt_utc
                 break
@@ -140,7 +149,7 @@ def read_pv_next_energy(pv_csv_path: str, hour_end_local: datetime) -> Tuple[flo
         r = csv.DictReader(f)
         fields = r.fieldnames or []
 
-        # Welche Zeitspalte?
+        # Zeitspalte
         if "time_iso" in fields:
             target_dt_local = hour_end_local - timedelta(minutes=30)
             time_col = "time_iso"
@@ -150,12 +159,12 @@ def read_pv_next_energy(pv_csv_path: str, hour_end_local: datetime) -> Tuple[flo
         else:
             raise RuntimeError("Weder 'time_iso' noch 'date_time' in PV-CSV gefunden.")
 
-        # Welche Energiespalte?
+        # Energie-/Leistungsspalte
         energy_col = None
         if "pv_total_energy_kwh" in fields:
             energy_col = "pv_total_energy_kwh"
         elif "pv_total_power_kw" in fields:
-            energy_col = "pv_total_power_kw"  # wir interpretieren das als kWh für 1h
+            energy_col = "pv_total_power_kw"  # interpretieren als kWh für 1h
         else:
             raise RuntimeError("Weder 'pv_total_energy_kwh' noch 'pv_total_power_kw' im PV-CSV gefunden.")
 
@@ -167,12 +176,10 @@ def read_pv_next_energy(pv_csv_path: str, hour_end_local: datetime) -> Tuple[flo
             except Exception:
                 continue
 
-            # exakte Übereinstimmung ±30s
             if abs((dt_utc - target_dt_utc).total_seconds()) <= 30:
                 chosen_row, chosen_dt_utc = row, dt_utc
                 break
 
-            # Fallback: erste Zeit >= target
             if dt_utc >= target_dt_utc:
                 if chosen_dt_utc is None or dt_utc < chosen_dt_utc:
                     chosen_row, chosen_dt_utc = row, dt_utc
@@ -185,10 +192,8 @@ def read_pv_next_energy(pv_csv_path: str, hour_end_local: datetime) -> Tuple[flo
     except Exception as e:
         raise RuntimeError(f"PV-Wert konnte nicht gelesen werden ({energy_col}): {e}") from e
 
-    # Falls nur Leistung vorlag, interpretieren wir für 1h als kWh (Wert * 1h).
-    pv_kwh = round(val, 6) if energy_col == "pv_total_energy_kwh" else round(val * 1.0, 6)
-
-    return pv_kwh, chosen_dt_utc.astimezone(tz)
+    pv_kwh = val if energy_col == "pv_total_energy_kwh" else val * 1.0  # 1h
+    return float(pv_kwh), chosen_dt_utc.astimezone(tz)
 
 
 # ===================== Main =====================
@@ -200,11 +205,11 @@ def main() -> int:
         t_aktuell, weather_dt_utc = read_weather_next_ttt(WEATHER_CSV, hour_end_local)
         pv_aktuell, pv_time_local = read_pv_next_energy(PV_CSV_MAIN, hour_end_local)
 
-        # Rundung/Formatierung
-        t_out = round(t_aktuell, 2)    # °C
-        pv_out = round(pv_aktuell, 3)  # kWh
+        # Float-Format für VZ
+        t_out = float(f"{float(t_aktuell):.6f}")   # garantiert float, punktbasiert
+        pv_out = float(f"{float(pv_aktuell):.6f}")
 
-        # Lokale JSON-Ablage (Debug/Verlauf)
+        # Lokale JSON-Ablage (Debug)
         out = {
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "hour_end_local": hour_end_local.isoformat(),
@@ -216,7 +221,7 @@ def main() -> int:
         with open(OUT_JSON, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
 
-        # → Volkszähler schreiben
+        # → Volkszähler schreiben (float)
         write_vals(UUID["T_outdoor_forecast"], t_out)
         write_vals(UUID["P_PV_forecast"], pv_out)
 
