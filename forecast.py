@@ -224,7 +224,7 @@ def main() -> int:
         # → Volkszähler schreiben (float)
         write_vals(UUID["T_outdoor_forecast"], t_out)
         write_vals(UUID["P_PV_forecast"], pv_out)
-
+        
         print(f"OK – geschrieben: T_outdoor_forecast={t_out} °C, P_PV_forecast={pv_out} kWh")
         print(f"(Details auch in {OUT_JSON})")
         return 0
