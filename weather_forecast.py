@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SRF Meteo API v2 – aktuelle Stunde + nächste 48h (Hägglingen, PLZ 5607)
+SRF Meteo API v2 – vergangene Stunde + aktuelle Stunde + nächste 48h (Hägglingen, PLZ 5607)
 
 Sicherheitsfeatures:
 - Keine Secrets im Code.
@@ -9,13 +9,14 @@ Sicherheitsfeatures:
 - Verweigert unsichere Env-Dateirechte.
 - Forecast-Calls ohne Redirect-Folgen (allow_redirects=False).
 
-Änderungen gem. Anleitung:
+Token-Aufruf:
 - Token-URL inkl. grant_type als Query-Parameter, Basic-Auth mit base64(ClientId:ClientSecret).
 - Token-Request ohne Body (nur Header), allow_redirects=True für Kompatibilität.
 
 NEU:
-- Es wird zusätzlich die **aktuelle Stunde** berücksichtigt:
-  Fenster = [Ende der aktuellen Stunde (nächste volle Stunde), +48h]  → bis zu 49 Einträge.
+- Zusätzlich wird die **vergangene Stunde** berücksichtigt:
+  Fenster = [Ende der vergangenen Stunde, Ende der aktuellen Stunde + 48h]  → bis zu 50 Einträge.
+- Zeitzone ist explizit **Europe/Zurich** (LOCAL-TZ Handling via zoneinfo).
 """
 
 import base64
@@ -88,7 +89,7 @@ def load_env_file_secure(path: str) -> Dict[str, str]:
 def get_credentials() -> Tuple[str, str]:
     """
     Bevorzugt Umgebungsvariablen SRG_CLIENT_ID / SRG_CLIENT_SECRET.
-    Falls nicht gesetzt: versucht ~/.srg-meteo.env (nur beim manuellen Start sinnvoll).
+    Falls nicht gesetzt: versucht ~/.srg-meteo.env.
     Für systemd wird empfohlen, /etc/srf-meteo.env mit EnvironmentFile zu nutzen.
     """
     client_id = (os.environ.get("SRG_CLIENT_ID") or "").strip().strip('"').strip("'")
@@ -203,16 +204,22 @@ def parse_dt(dt_str: str) -> datetime:
         dt = dt.replace(tzinfo=ZoneInfo(TZ) if ZoneInfo else timezone.utc)
     return dt.astimezone(timezone.utc)
 
-def filter_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def filter_prev_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Liefert Einträge von **Ende der aktuellen Stunde** (nächste volle Stunde, lokal) bis +48h.
-    Das umfasst die laufende Stunde **plus** die folgenden 48 Stunden → bis zu 49 Zeilen.
+    Liefert Einträge von **Ende der vergangenen Stunde** bis **Ende der aktuellen + 48h** (lokale Zeit: Europe/Zurich).
+    Umfasst: vergangene Stunde + laufende Stunde + 48 weitere → bis zu 50 Zeilen.
     """
     tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
     now_local = datetime.now(tz)
-    current_hour_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    current_hour_end_utc = current_hour_end_local.astimezone(timezone.utc)
-    window_end_utc = current_hour_end_utc + timedelta(hours=48)
+
+    # Ende der aktuellen Stunde (nächste volle)
+    current_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+    prev_end_local = current_end_local - timedelta(hours=1)
+    window_end_local = current_end_local + timedelta(hours=48)
+
+    # In UTC vergleichen
+    prev_end_utc = prev_end_local.astimezone(timezone.utc)
+    window_end_utc = window_end_local.astimezone(timezone.utc)
 
     selected: List[Dict[str, Any]] = []
     for row in hours:
@@ -224,7 +231,7 @@ def filter_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         except Exception:
             _debug(f"Konnte date_time nicht parsen: {dt_str!r}")
             continue
-        if current_hour_end_utc <= dt_utc <= window_end_utc:
+        if prev_end_utc <= dt_utc <= window_end_utc:
             selected.append(row)
 
     selected.sort(key=lambda r: parse_dt(r["date_time"]))
@@ -254,20 +261,21 @@ def main() -> int:
         _debug(f"Geopunkt: {PLACE_NAME} {ZIP} → lat={lat:.4f}, lon={lon:.4f} → geolocationId='{geo_id}'")
         hours = get_hourly_forecast(token, geo_id)
 
-        # NEU: aktuelle Stunde + nächste 48h
-        hours_cur_48 = filter_current_plus_48h(hours)
+        # NEU: vergangene Stunde + aktuelle + nächste 48h
+        hours_prev_cur_48 = filter_prev_current_plus_48h(hours)
 
         payload = {
             "place": {"name": PLACE_NAME, "zip": ZIP, "geolocation_id": geo_id, "lat": round(lat, 4), "lon": round(lon, 4)},
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "note": "Enthält die laufende Stunde (Ende = nächste volle Stunde) + die folgenden 48 Stunden.",
+            "note": "Enthält die vergangene Stunde, die laufende Stunde (Ende = nächste volle) und die folgenden 48 Stunden.",
+            "timezone": TZ,
             "source": f"{API_BASE}/forecastpoint/{geo_id}",
-            "count": len(hours_cur_48),
-            "hours": hours_cur_48,
+            "count": len(hours_prev_cur_48),
+            "hours": hours_prev_cur_48,
         }
         write_json(JSON_OUT, payload)
-        write_csv(CSV_OUT, hours_cur_48)
-        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT} (Stunden: {len(hours_cur_48)})")
+        write_csv(CSV_OUT, hours_prev_cur_48)
+        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT} (Stunden: {len(hours_prev_cur_48)})")
         return 0
 
     except ApiError as e:
@@ -282,3 +290,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
