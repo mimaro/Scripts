@@ -427,7 +427,7 @@ def main():
     emob_cons_kwh = energy_kwh_from_power(args.energy_uuid, minutes=minutes_val)
     print(f"{emob_cons_kwh:.3f} kWh")
 
-    test = get_vals(UUID["Emob_Cons"], duration="-35min")["data"]["consumption"]
+    test = get_vals(UUIDS["Emob_Cons"], duration="-35min")["data"]["consumption"]
     print(test)
 
 if __name__ == "__main__":
