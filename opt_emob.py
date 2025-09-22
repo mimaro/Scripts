@@ -282,21 +282,34 @@ def _energy_debug_overview(tuples: List[list]):
 def energy_kwh_from_power(uuid: str, minutes) -> float:
     """
     Robuste Integration eines Leistungs-Kanals (W) über 'minutes' Minuten -> kWh.
-    Nutzt Trapezregel (für ungleichmäßige Abstände).
-    Erwartetes Format:
-      {"data":{"tuples":[[ts_ms, value_W, (quality)], ...]}} oder
-      {"data":[{"tuples":[...]}]}
+    Priorität:
+      1) Backend-Aggregat 'consumption' (Wh)
+      2) Backend-Aggregat 'average' (W) * (to-from)
+      3) Trapezregel über tuples (falls >=2 Punkte)
     """
     m = parse_minutes(minutes)
     if m == 0:
-        _print_debug("[DEBUG] ENERGY: Fenster-Minuten = 0 -> kWh=0. (Ist das beabsichtigt?)")
+        _print_debug("[DEBUG] ENERGY: Fenster-Minuten = 0 -> kWh=0.")
         return 0.0
 
-    duration = f"-{m}min"
-    payload = vz_get(uuid, duration=duration)
+    payload = vz_get(uuid, duration=f"-{m}min")
     _debug_payload_shape(payload, "energy-payload")
 
     data = payload.get("data", [])
+    # für direkten Zugriff auf Aggregatsfelder
+    data_obj = data if isinstance(data, dict) else (data[0] if isinstance(data, list) and data else {})
+
+    # --- 1) Direkt: consumption (Wh) ---
+    if isinstance(data_obj, dict) and "consumption" in data_obj and data_obj["consumption"] is not None:
+        try:
+            cons_wh = float(data_obj["consumption"])
+            kwh = cons_wh / 1000.0
+            _print_debug(f"[DEBUG] ENERGY: benutze consumption={cons_wh} Wh -> {kwh:.6f} kWh")
+            return kwh
+        except Exception as e:
+            _print_debug(f"[DEBUG] ENERGY: consumption parse error: {e}")
+
+    # Tuples vorbereiten (für 2) und 3))
     if isinstance(data, dict):
         tuples = data.get("tuples", [])
     elif isinstance(data, list):
@@ -305,36 +318,42 @@ def energy_kwh_from_power(uuid: str, minutes) -> float:
             tuples.extend(section.get("tuples", []))
     else:
         tuples = []
-
-    # Sortieren / Aufbereiten
     tuples = [t for t in tuples if isinstance(t, (list, tuple)) and len(t) >= 2]
-    tuples.sort(key=lambda t: int(t[0]) )
-
+    tuples.sort(key=lambda t: int(t[0]))
     _energy_debug_overview(tuples)
 
-    if not tuples:
-        _print_debug("[DEBUG] ENERGY: keine tuples -> kWh=0.")
-        return 0.0
+    # --- 2) Fallback: average (W) * (to-from) ---
+    if isinstance(data_obj, dict) and all(k in data_obj for k in ("average", "from", "to")):
+        try:
+            avg_w = float(data_obj["average"])
+            dt_h  = (int(data_obj["to"]) - int(data_obj["from"])) / 3600000.0
+            kwh = (avg_w * dt_h) / 1000.0  # Wh -> kWh
+            _print_debug(f"[DEBUG] ENERGY: benutze average={avg_w} W, dt_h={dt_h:.6f} h -> {kwh:.6f} kWh")
+            return kwh
+        except Exception as e:
+            _print_debug(f"[DEBUG] ENERGY: average/from/to parse error: {e}")
 
-    # Trapezregel
-    energy_Wh = 0.0
-    prev_ts = None
-    prev_p  = None
-    for tup in tuples:
-        ts_ms = int(tup[0])
-        p_w   = float(tup[1])
-        if prev_ts is not None:
-            dt_h = (ts_ms - prev_ts) / 1000.0 / 3600.0
-            area = 0.5 * (prev_p + p_w) * dt_h  # Wh
-            energy_Wh += area
-            if TRACE_ENERGY:
-                _print_debug(f"[TRACE] ts={fmt_ts(prev_ts)}→{fmt_ts(ts_ms)} dt_h={dt_h:.6f} prev_p={prev_p:.3f} p={p_w:.3f} add_Wh={area:.6f}")
-        prev_ts = ts_ms
-        prev_p  = p_w
+    # --- 3) Trapezregel (nur wenn >= 2 Punkte) ---
+    if len(tuples) >= 2:
+        energy_Wh = 0.0
+        prev_ts = None
+        prev_p  = None
+        for ts_ms, p_w, *rest in tuples:
+            ts_ms = int(ts_ms); p_w = float(p_w)
+            if prev_ts is not None:
+                dt_h = (ts_ms - prev_ts) / 3600000.0
+                area_Wh = 0.5 * (prev_p + p_w) * dt_h
+                energy_Wh += area_Wh
+                if TRACE_ENERGY:
+                    _print_debug(f"[TRACE] ts={fmt_ts(prev_ts)}→{fmt_ts(ts_ms)} dt_h={dt_h:.6f} prev_p={prev_p:.3f} p={p_w:.3f} add_Wh={area_Wh:.6f}")
+            prev_ts, prev_p = ts_ms, p_w
+        kwh = energy_Wh / 1000.0
+        _print_debug(f"[DEBUG] ENERGY: Trapezregel -> {kwh:.6f} kWh")
+        return kwh
 
-    kwh = energy_Wh / 1000.0
-    _print_debug(f"[DEBUG] ENERGY: Ergebnis -> {kwh:.6f} kWh (Wh={energy_Wh:.3f})")
-    return kwh
+    _print_debug("[DEBUG] ENERGY: keine verwertbaren Daten -> 0 kWh")
+    return 0.0
+
 
 def energy_kwh_from_power_simple(uuid: str, minutes) -> float:
     """
