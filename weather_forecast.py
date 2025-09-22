@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import base64
+import csv
+import json
+import os
+import sys
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    from zoneinfo import ZoneInfo
+except Exception:
+    ZoneInfo = None
+
+import requests
+
+# --- Deine Zugangsdaten (Defaults) ---
+# Du kannst sie per Umgebungsvariablen SRG_CLIENT_ID / SRG_CLIENT_SECRET überschreiben.
+DEFAULT_CONSUMER_KEY = "hQrCbAh4GScBAyxzXa0Aw1mI839afV1f"   # = client_id
+DEFAULT_CONSUMER_SECRET = "FhVPGPJEbm8g1AYG"                 # = client_secret
+
+API_BASE = "https://api.srgssr.ch/srf-meteo/v2"
+OAUTH_TOKEN_URL = "https://api.srgssr.ch/oauth/v1/accesstoken"
+
+OUTPUT_DIR = "/home/pi/Scripts"
+JSON_OUT = os.path.join(OUTPUT_DIR, "haegglingen_5607_48h.json")
+CSV_OUT  = os.path.join(OUTPUT_DIR, "haegglingen_5607_48h.csv")
+
+ZIP = 5607
+PLACE_NAME = "Hägglingen"
+TZ = "Europe/Zurich"
+
+CSV_COLUMNS = [
+    "date_time","TTT_C","TTL_C","TTH_C","TTTFEEL_C","PROBPCP_PERCENT","RRR_MM",
+    "RELHUM_PERCENT","DEWPOINT_C","FF_KMH","FX_KMH","DD_DEG","SUN_MIN",
+    "FRESHSNOW_MM","FRESHSNOW_CM","PRESSURE_HPA","IRRADIANCE_WM2",
+    "symbol_code","symbol24_code","cur_color",
+]
+
+class ApiError(RuntimeError):
+    pass
+
+def _debug(msg: str) -> None:
+    print(f"[SRF-API] {msg}", file=sys.stderr)
+
+def get_access_token(client_id: str, client_secret: str) -> str:
+    """OAuth2 Client-Credentials: POST body grant_type=client_credentials + Basic Auth."""
+    auth_raw = f"{client_id}:{client_secret}".encode("utf-8")
+    auth_b64 = base64.b64encode(auth_raw).decode("ascii")
+    headers = {
+        "Authorization": f"Basic {auth_b64}",
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Cache-Control": "no-cache",
+    }
+    data = {"grant_type": "client_credentials"}
+    _debug("Hole Access Token...")
+    r = requests.post(OAUTH_TOKEN_URL, headers=headers, data=data, timeout=20)
+    if not r.ok:
+        raise ApiError(f"Token-Request fehlgeschlagen: HTTP {r.status_code} – {r.text}")
+    payload = r.json()
+    token = payload.get("access_token") or payload.get("accessToken")
+    if not token:
+        raise ApiError(f"Kein access_token in Antwort: {payload}")
+    return token
+
+def api_get(path: str, token: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    url = f"{API_BASE}{path}"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    r = requests.get(url, headers=headers, params=params or {}, timeout=30)
+    if not r.ok:
+        raise ApiError(f"GET {url} fehlgeschlagen: HTTP {r.status_code} – {r.text}")
+    return r.json()
+
+def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tuple[float, float, str]:
+    res = api_get("/geolocationNames", token, params={"zip": zip_code, "limit": 20})
+    items: List[Dict[str, Any]] = []
+    if isinstance(res, list):
+        items = res
+    elif isinstance(res, dict):
+        for key in ("items", "data", "results"):
+            if key in res and isinstance(res[key], list):
+                items = res[key]
+                break
+        if not items and "geolocation" in res:
+            items = [res]
+    if not items:
+        raise ApiError(f"Keine geolocationNames für PLZ {zip_code} gefunden: {res}")
+
+    best = None
+    for it in items:
+        nm = (it.get("name") or it.get("default_name") or "").strip().lower()
+        if nm == name.lower():
+            best = it
+            break
+    if best is None:
+        best = items[0]
+        _debug(f"Exakte Übereinstimmung '{name}' nicht gefunden – verwende: {best.get('name') or best.get('default_name')}")
+
+    geo = best.get("geolocation") or {}
+    lat = float(geo.get("lat"))
+    lon = float(geo.get("lon"))
+    geolocation_id = f"{lat:.4f},{lon:.4f}"  # API erwartet <lat>,<lon> (4 Nachkommastellen)
+    return lat, lon, geolocation_id
+
+def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]:
+    res = api_get(f"/forecastpoint/{geolocation_id}", token)
+    hours = res.get("hours") or res.get("data", {}).get("hours")
+    if not isinstance(hours, list):
+        raise ApiError(f"Unerwartetes Forecast-Format: {res}")
+    return hours
+
+def parse_dt(dt_str: str) -> datetime:
+    if dt_str.endswith("Z"):
+        return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
+    try:
+        dt = datetime.fromisoformat(dt_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ZoneInfo(TZ) if ZoneInfo else timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        raise
+
+def filter_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    now_local = datetime.now(ZoneInfo(TZ)) if ZoneInfo else datetime.now(timezone.utc)
+    end_local = now_local + timedelta(hours=48)
+    now_utc = now_local.astimezone(timezone.utc)
+    end_utc = end_local.astimezone(timezone.utc)
+
+    out: List[Dict[str, Any]] = []
+    for r in hours:
+        dt_str = r.get("date_time")
+        if not dt_str:
+            continue
+        try:
+            dt_utc = parse_dt(dt_str)
+        except Exception:
+            _debug(f"Konnte date_time nicht parsen: {dt_str!r}")
+            continue
+        if now_utc < dt_utc <= end_utc:
+            out.append(r)
+    out.sort(key=lambda rr: parse_dt(rr["date_time"]))
+    return out
+
+def write_json(path: str, data: Any) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def write_csv(path: str, rows: List[Dict[str, Any]]) -> None:
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r.get(k) for k in CSV_COLUMNS})
+
+def ensure_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+def main() -> int:
+    ensure_dir(OUTPUT_DIR)
+
+    # Env override möglich, sonst deine Defaults:
+    client_id = os.environ.get("SRG_CLIENT_ID", DEFAULT_CONSUMER_KEY)
+    client_secret = os.environ.get("SRG_CLIENT_SECRET", DEFAULT_CONSUMER_SECRET)
+
+    # Achtung: nichts Sensibles loggen
+    _debug(f"Benutze client_id (gekürzt): {client_id[:6]}…")
+
+    try:
+        token = get_access_token(client_id, client_secret)
+        lat, lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
+        _debug(f"Geopunkt: {PLACE_NAME} {ZIP} → lat={lat:.4f}, lon={lon:.4f} → geolocationId='{geo_id}'")
+        hours = get_hourly_forecast(token, geo_id)
+        hours48 = filter_next_48h(hours)
+
+        payload = {
+            "place": {"name": PLACE_NAME, "zip": ZIP, "geolocation_id": geo_id, "lat": round(lat, 4), "lon": round(lon, 4)},
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "source": f"{API_BASE}/forecastpoint/{geo_id}",
+            "count": len(hours48),
+            "hours": hours48,
+        }
+        write_json(JSON_OUT, payload)
+        write_csv(CSV_OUT, hours48)
+        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT}")
+        return 0
+
+    except ApiError as e:
+        print(f"API-Fehler: {e}", file=sys.stderr)
+        return 1
+    except requests.RequestException as e:
+        print(f"Netzwerkfehler: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Unerwarteter Fehler: {e}", file=sys.stderr)
+        return 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())
