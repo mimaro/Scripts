@@ -17,7 +17,7 @@ VZ_GET_URL_BETWEEN = BASE_URL + "/data/{}.json?from={}&to={}"   # from & to
 UUIDS = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
     "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",
-    "Emob_Cons":     "85ffa8d0-683e-11ee-9486-113294e4804d"   # Leistungs-/Energiekanal
+    "Emob_Cons":     "6cb255a0-6e5f-11ee-b899-c791d8058d25"   # Leistungs-/Energiekanal
 }
 
 MAX_MINUTES = 4320      # 72h Lookback für die Suche nach dem letzten 1er
