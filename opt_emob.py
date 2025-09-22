@@ -13,10 +13,8 @@ VZ_GET_URL = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
 UUIDS = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
-    "Emob_Cons": 	"85ffa8d0-683e-11ee-9486-113294e4804d"
+    "Emob_Cons": 	"6cb255a0-6e5f-11ee-b899-c791d8058d25"
 }
-
-#"6cb255a0-6e5f-11ee-b899-c791d8058d25"
 
 MAX_MINUTES = 4320      # 72h Lookback
 TARGET_VALUE = 1        # <- Standard (kann per CLI überschrieben werden)
