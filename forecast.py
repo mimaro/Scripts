@@ -207,7 +207,7 @@ def main() -> int:
 
         # Float-Format für VZ
         t_out = float(f"{float(t_aktuell):.6f}")   # garantiert float, punktbasiert
-        pv_out = float(f"{float(pv_aktuell):.6f}")
+        pv_out = float(f"{float(pv_aktuell):.6f}")/60
 
         # Lokale JSON-Ablage (Debug)
         out = {
