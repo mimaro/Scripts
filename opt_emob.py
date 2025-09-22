@@ -22,7 +22,7 @@ TARGET_VALUE = 1        # <- Standard (kann per CLI überschrieben werden)
 VALUE_COLUMN_INDEX = 1  # primäre Spalte (1 oder 2); wir prüfen bei Bedarf beide
 AUTO_FALLBACK_TO_OTHER_COLUMN = True
 DEBUG = True            # bei Bedarf True
-TRACE_ENERGY = False    # Trapezregel-Trace
+TRACE_ENERGY = True    # Trapezregel-Trace
 EMOB_CONS_MAX = 20      # (unbenutzt, nur Beispiel-Grenze)
 
 # =========================
