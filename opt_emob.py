@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timezone
 import json
 import argparse
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Iterable, List, Tuple, Optional
 import statistics
 
 # =========================
@@ -147,7 +147,7 @@ def _sections_time_range(sections) -> Tuple[int, int, int]:
 # =========================
 # Letzten Zeitpunkt finden, an dem target==1 war
 # =========================
-def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> int | None:
+def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optional[int]:
     """
     Sucht in den letzten 'lookback_min' Minuten den letzten Zeitpunkt (Epoch ms),
     an dem der Kanal den target_value hatte. Nutzt ggf. Fallback-Spalte.
