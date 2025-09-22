@@ -221,7 +221,12 @@ def main() -> int:
         print(f"  TTT_C (nächste volle Stunde): {out['weather']['TTT_C']} °C")
         print(f"  PV-Ertrag (nächste volle Stunde): {out['pv']['pv_total_energy_kwh']} kWh")
         return 0
+        
+        write_vals(UUID["T_outdoor_forecast"], (t_aktuell))
+        write_vals(UUID["T_PV_forecast"], (p_aktuell))
 
+
+    
     except Exception as e:
         print(f"Fehler: {e}", file=os.sys.stderr)
         return 1
