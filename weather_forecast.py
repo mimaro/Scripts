@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python34
 # -*- coding: utf-8 -*-
 """
 SRF Meteo API v2 – 48h-Stundenwerte für Hägglingen (PLZ 5607)
