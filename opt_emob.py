@@ -11,7 +11,7 @@ import statistics
 # Konfiguration
 # =========================
 BASE_URL = "http://192.168.178.49/middleware.php"
-VZ_GET_URL_FROM = BASE_URL + "/data/{}.json?from={}"            # duration ersetzt {from}
+VZ_GET_URL_FROM = BASE_URL + "/data/{}.json?from={}"            # from als Dauer/ISO/ms
 VZ_GET_URL_BETWEEN = BASE_URL + "/data/{}.json?from={}&to={}"   # from & to
 
 UUIDS = {
@@ -49,6 +49,9 @@ def _summary_stats(vals: List[float]) -> str:
         return f"n={len(vals)}, min={min(vals):.3f}, p25={q[0]:.3f}, median={statistics.median(vals):.3f}, p75={q[-1]:.3f}, max={max(vals):.3f}, mean={statistics.fmean(vals):.3f}"
     except Exception:
         return f"n={len(vals)}, min={min(vals):.3f}, max={max(vals):.3f}, mean≈{sum(vals)/len(vals):.3f}"
+
+def _utc_now():
+    return datetime.now(timezone.utc)
 
 # =========================
 # HTTP
@@ -167,9 +170,10 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
         _d("[DEBUG] Keine sections/tuples gefunden.")
         return None
 
+    last_ts_ms = None
+
     # Primärspalte
     _debug_sample(sections, VALUE_COLUMN_INDEX, "Primärversuch")
-    last_ts_ms = None
     for section in sections:
         for t in _iter_section_tuples(section):
             if len(t) > VALUE_COLUMN_INDEX and _cast_to_int(t[VALUE_COLUMN_INDEX]) == target_value:
@@ -309,7 +313,7 @@ def main():
     parser.add_argument("--lookback", type=int, default=MAX_MINUTES, help="Suchfenster in Minuten für target==1 (Default: 4320)")
     parser.add_argument("--debug", action="store_true", help="Debug-Ausgaben")
     parser.add_argument("--trace-energy", action="store_true", help="Trapez-Trace")
-    parser.add_argument("--show-ts", action="store_true", help="Startzeitpunkt ISO ausgeben")
+    parser.add_argument("--show-ts", action="store_true", help="Startzeitpunkt ISO und ms ausgeben")
     args = parser.parse_args()
 
     global DEBUG, TRACE_ENERGY
@@ -319,20 +323,38 @@ def main():
     # 1) Letzten Zeitpunkt ermitteln, an dem der State target==1 war
     last_ts = find_last_ts_equal(args.state_uuid, args.target, args.lookback)
     if last_ts is None:
+        # Genau wie früher: 0 Minuten + "-0min" + 0.000 kWh
+        print("0")
+        print("-0min")
+        if args.show_ts:
+            print("n/a")
         print("0")
         print("0.000 kWh")
         _d("[DEBUG] Abbruch: kein Startzeitpunkt gefunden.")
         return
 
+    # 2) "Seit wann" wieder korrekt ausgeben (Minuten & -<min>min)
+    last_dt = datetime.fromtimestamp(last_ts / 1000.0, tz=timezone.utc)
+    now_utc = _utc_now()
+    diff_min = int((now_utc - last_dt).total_seconds() // 60)
+    if diff_min < 0:
+        diff_min = 0
+
+    # -> identische Reihenfolge wie im alten Skript
+    print(str(diff_min))
+    print(f"-{diff_min}min")
+
+    # Optional: Startzeit zusätzlich ausgeben
     if args.show_ts:
         print(fmt_ts(last_ts))
 
-    # 2) Energie von last_ts bis now über Emob_Cons
+    # 3) Energie von last_ts bis now über Emob_Cons
     kwh = energy_kwh_from_power_between(args.energy_uuid, last_ts, to="now")
 
-    # 3) Ausgabe
-    # Optional zusätzlich den ms-Wert ausgeben, wenn gewünscht:
-    print(last_ts)
+    # 4) Optional zusätzlich den Roh-Timestamp (ms) mit ausgeben – wie in deinem letzten Lauf sichtbar
+    print(str(last_ts))
+
+    # 5) Endergebnis
     print(f"{kwh:.3f} kWh")
 
 if __name__ == "__main__":
