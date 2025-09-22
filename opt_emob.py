@@ -4,7 +4,8 @@ import requests
 from datetime import datetime, timezone
 import json
 import argparse
-from typing import Any, Iterable
+from typing import Any, Iterable, List, Tuple
+import statistics
 
 # =========================
 # Konfiguration
@@ -13,41 +14,63 @@ VZ_GET_URL = "http://192.168.178.49/middleware.php/data/{}.json?from={}"
 UUIDS = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
     "Cable_State":  "58163cf0-95ff-11f0-b79d-252564addda6",
-    "Emob_Cons": 	"6cb255a0-6e5f-11ee-b899-c791d8058d25"
+    "Emob_Cons":    "85ffa8d0-683e-11ee-9486-113294e4804d"
 }
 
 MAX_MINUTES = 4320      # 72h Lookback
 TARGET_VALUE = 1        # <- Standard (kann per CLI überschrieben werden)
 VALUE_COLUMN_INDEX = 1  # primäre Spalte (1 oder 2); wir prüfen bei Bedarf beide
 AUTO_FALLBACK_TO_OTHER_COLUMN = True
-DEBUG = True           # bei Bedarf True
-EMOB_CONS_MAX = 20
+DEBUG = True            # bei Bedarf True
+TRACE_ENERGY = False    # Trapezregel-Trace
+EMOB_CONS_MAX = 20      # (unbenutzt, nur Beispiel-Grenze)
 
 # =========================
-# Letzter Zeitpunkt Kabel Einstecken abrufen
+# Helpers (Debug)
+# =========================
+def fmt_ts(ms: int) -> str:
+    try:
+        dt = datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc)
+        return dt.isoformat().replace("+00:00", "Z")
+    except Exception:
+        return str(ms)
+
+def _print_debug(msg: str):
+    if DEBUG:
+        print(msg)
+
+def _summary_stats(vals: List[float]) -> str:
+    if not vals:
+        return "n=0"
+    try:
+        return (f"n={len(vals)}, min={min(vals):.3f}, p25={statistics.quantiles(vals, n=4)[0]:.3f}, "
+                f"median={statistics.median(vals):.3f}, p75={statistics.quantiles(vals, n=4)[-1]:.3f}, "
+                f"max={max(vals):.3f}, mean={statistics.fmean(vals):.3f}")
+    except Exception:
+        return f"n={len(vals)}, min={min(vals):.3f}, max={max(vals):.3f}, mean≈{sum(vals)/len(vals):.3f}"
+
+# =========================
+# HTTP / Payload
 # =========================
 def get_vals(uuid: str, duration: str) -> Any:
     url = VZ_GET_URL.format(uuid, duration)
     r = requests.get(url, timeout=10, headers={"Accept": "application/json"})
-    if DEBUG:
-        print(f"[DEBUG] GET {url} -> {r.status_code}")
+    _print_debug(f"[DEBUG] GET {url} -> {r.status_code}, bytes={len(r.content)}")
     r.raise_for_status()
     try:
         return r.json()
     except Exception:
         return json.loads(r.text)
 
+def vz_get(uuid: str, duration: str):
+    url = VZ_GET_URL.format(uuid, duration)
+    r = requests.get(url, timeout=10, headers={"Accept": "application/json"})
+    _print_debug(f"[DEBUG] GET {url} -> {r.status_code}, bytes={len(r.content)}")
+    r.raise_for_status()
+    return r.json()
+
 def _normalize_sections(payload: Any):
-    """
-    Liefert eine Liste von 'Sections', in der jede Section ein Dict mit 'tuples' enthält.
-    Unterstützt u.a.:
-      - {"version":"0.3","data":{"tuples":[...]}}
-      - {"version":"0.3","data":[{"tuples":[...]}]}
-      - {"tuples":[...]}
-      - [{"tuples":[...]}]
-      - [[ts, v, ...], ...]
-    """
-    # Direktliste von tuples?
+    # (unverändert, nur kleine Debug-Erweiterungen)
     if isinstance(payload, list):
         if payload and isinstance(payload[0], (list, tuple)):
             return [{"tuples": payload}]
@@ -69,7 +92,6 @@ def _normalize_sections(payload: Any):
             return []
         if "tuples" in payload and isinstance(payload["tuples"], list):
             return [payload]
-        # heuristisch: suche eine List-Value, die wie tuples aussieht
         for _, v in payload.items():
             if isinstance(v, list) and v and isinstance(v[0], (list, tuple)):
                 return [{"tuples": v}]
@@ -77,9 +99,6 @@ def _normalize_sections(payload: Any):
     return []
 
 def _iter_section_tuples(section: dict) -> Iterable[list]:
-    """
-    Gibt alle tuples einer Section zurück: [ts_ms, c1, c2, ...]
-    """
     tuples = section.get("tuples", [])
     if isinstance(tuples, list):
         for t in tuples:
@@ -92,11 +111,53 @@ def _cast_to_int(val):
     except Exception:
         return None
 
+def _debug_payload_shape(payload: Any, label: str = "payload"):
+    _print_debug(f"[DEBUG] {label} type: {type(payload).__name__}")
+    if isinstance(payload, dict):
+        _print_debug(f"[DEBUG] {label} keys: {list(payload.keys())}")
+    elif isinstance(payload, list):
+        _print_debug(f"[DEBUG] {label} len: {len(payload)}; first type: {type(payload[0]).__name__ if payload else 'n/a'}")
+    head = json.dumps(payload, ensure_ascii=False)[:600]
+    _print_debug(f"[DEBUG] {label} head: {head}{'...' if len(head)==600 else ''}")
+
+def _debug_sample(sections, col_idx, label):
+    recent = []
+    for section in sections:
+        for t in _iter_section_tuples(section):
+            if len(t) > col_idx:
+                recent.append((t[0], t[col_idx]))
+    recent = recent[-10:]
+    _print_debug(f"[DEBUG] {label} – Spalte {col_idx}, letzte Punkte (ts_ms, val):")
+    for ts, v in recent:
+        _print_debug(f"    {ts} ({fmt_ts(int(ts))}), {v}")
+
+def _scan_matches(sections, col_idx: int, target_value: int) -> List[int]:
+    hits: List[int] = []
+    for section in sections:
+        for t in _iter_section_tuples(section):
+            if len(t) > col_idx and _cast_to_int(t[col_idx]) == target_value:
+                try:
+                    hits.append(int(t[0]))
+                except Exception:
+                    pass
+    return hits
+
+def _sections_time_range(sections) -> Tuple[int, int, int]:
+    ts_all: List[int] = []
+    for s in sections:
+        for t in _iter_section_tuples(s):
+            try:
+                ts_all.append(int(t[0]))
+            except Exception:
+                pass
+    if not ts_all:
+        return (0, 0, 0)
+    return (len(ts_all), min(ts_all), max(ts_all))
+
+# =========================
+# Kernfunktion
+# =========================
 def _find_last_match_in_sections(sections, col_idx: int, target_value: int):
-    """
-    Durchsucht alle Sections und gibt den letzten ts_ms zurück, bei dem
-    tuples[*][col_idx] == target_value war. (col_idx: 1 oder 2)
-    """
     last_ts_ms = None
     for section in sections:
         for t in _iter_section_tuples(section):
@@ -113,33 +174,6 @@ def _find_last_match_in_sections(sections, col_idx: int, target_value: int):
                 last_ts_ms = ts_ms
     return last_ts_ms
 
-def _debug_payload_shape(payload):
-    if not DEBUG:
-        return
-    print(f"[DEBUG] payload type: {type(payload).__name__}")
-    if isinstance(payload, dict):
-        print(f"[DEBUG] payload keys: {list(payload.keys())}")
-    elif isinstance(payload, list):
-        print(f"[DEBUG] payload len: {len(payload)}; first type: {type(payload[0]).__name__ if payload else 'n/a'}")
-    head = json.dumps(payload, ensure_ascii=False)[:600]
-    print(f"[DEBUG] payload head: {head}{'...' if len(head)==600 else ''}")
-
-def _debug_sample(sections, col_idx, label):
-    if not DEBUG:
-        return
-    recent = []
-    for section in sections:
-        for t in _iter_section_tuples(section):
-            if len(t) > col_idx:
-                recent.append((t[0], t[col_idx]))
-    recent = recent[-10:]
-    print(f"[DEBUG] {label} – Spalte {col_idx}, letzte Punkte (ts_ms, val):")
-    for ts, v in recent:
-        print(f"    {ts}, {v}")
-
-# =========================
-# Kernfunktion
-# =========================
 def minutes_since_last_target(uuid: str,
                               target_value: int,
                               max_minutes: int = MAX_MINUTES) -> int:
@@ -150,185 +184,14 @@ def minutes_since_last_target(uuid: str,
     try:
         payload = get_vals(uuid, f"-{max_minutes}min")
     except Exception as e:
-        if DEBUG:
-            print(f"[DEBUG] fetch error: {e}")
+        _print_debug(f"[DEBUG] fetch error: {e}")
         return max_minutes
 
-    _debug_payload_shape(payload)
+    _debug_payload_shape(payload, "state-payload")
     sections = _normalize_sections(payload)
-    if DEBUG:
-        print(f"[DEBUG] sections erkannt: {len(sections)}")
-        if sections:
-            print(f"[DEBUG] first section keys: {list(sections[0].keys())}")
+    _print_debug(f"[DEBUG] sections erkannt: {len(sections)}")
+    if sections:
+        _print_debug(f"[DEBUG] first section keys: {list(sections[0].keys())}")
 
     if not sections:
-        if DEBUG:
-            print("[DEBUG] Keine sections/tuples gefunden.")
-        return max_minutes
-
-    # 1) Versuch mit der konfigurierten Spalte
-    _debug_sample(sections, VALUE_COLUMN_INDEX, "Primärversuch")
-    last_ts_ms = _find_last_match_in_sections(sections, VALUE_COLUMN_INDEX, target_value)
-
-    # 2) Optionaler Fallback auf die andere Spalte (1 <-> 2)
-    if last_ts_ms is None and AUTO_FALLBACK_TO_OTHER_COLUMN and VALUE_COLUMN_INDEX in (1, 2):
-        other = 2 if VALUE_COLUMN_INDEX == 1 else 1
-        _debug_sample(sections, other, "Fallbackversuch")
-        last_ts_ms = _find_last_match_in_sections(sections, other, target_value)
-
-    if last_ts_ms is None:
-        if DEBUG:
-            print("[DEBUG] kein Target-Wert innerhalb des Fensters gefunden")
-        return max_minutes
-
-    # ts_ms ist Epoch in ms -> UTC
-    last_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc)
-    now_utc = datetime.now(timezone.utc)
-    diff_min = int((now_utc - last_dt).total_seconds() // 60)
-
-    if diff_min < 0:
-        diff_min = 0
-    elif diff_min > max_minutes:
-        diff_min = max_minutes
-
-    if DEBUG:
-        print(f"[DEBUG] letzter Treffer: {last_dt.isoformat()}Z, diff_min={diff_min}")
-
-    return diff_min
-
-
-
-# =========================
-# Energie seit letzten Einstecken abrufen
-# =========================
-
-def vz_get(uuid: str, duration: str):
-    r = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
-    r.raise_for_status()
-    return r.json()
-
-def parse_minutes(minutes) -> int:
-    """
-    Normalisiert 'minutes' zu einem positiven int in [0, MAX_MINUTES].
-    Akzeptiert z.B.: 273, "273", "-273", "-273min", "273min".
-    """
-    if isinstance(minutes, (int, float)):
-        m = int(minutes)
-    elif isinstance(minutes, str):
-        m = 0
-        m_str = "".join(re.findall(r"-?\d+", minutes))  # erste Zahl extrahieren
-        if m_str:
-            m = int(m_str)
-    else:
-        m = 0
-
-    if m < 0:
-        m = -m  # wir brauchen die Größe; das Minus kommt erst im duration-String
-    if m > MAX_MINUTES:
-        m = MAX_MINUTES
-    return m
-
-def energy_kwh_from_power(uuid: str, minutes) -> float:
-    """
-    Robuste Integration eines Leistungs-Kanals (W) über 'minutes' Minuten -> kWh.
-    Nutzt Trapezregel (für ungleichmäßige Abstände).
-    Erwartetes Format:
-      {"data":{"tuples":[[ts_ms, value_W, (quality)], ...]}} oder
-      {"data":[{"tuples":[...]}]}
-    """
-    m = parse_minutes(minutes)
-    payload = vz_get(uuid, duration=f"-{m}min")
-
-    data = payload.get("data", [])
-    # 'data' kann dict ODER list sein
-    if isinstance(data, dict):
-        tuples = data.get("tuples", [])
-    elif isinstance(data, list):
-        tuples = []
-        for section in data:
-            tuples.extend(section.get("tuples", []))
-    else:
-        tuples = []
-
-    if not tuples:
-        return 0.0
-
-    # sortieren zur Sicherheit
-    tuples.sort(key=lambda t: t[0])
-
-    # Trapezregel: Wh = Σ 0.5*(P_i + P_{i-1}) * Δt[h]; kWh = Wh/1000
-    energy_Wh = 0.0
-    prev_ts = None
-    prev_p  = None
-    for tup in tuples:
-        ts_ms = int(tup[0])
-        p_w   = float(tup[1])
-        if prev_ts is not None:
-            dt_h = (ts_ms - prev_ts) / 1000.0 / 3600.0
-            energy_Wh += 0.5 * (prev_p + p_w) * dt_h
-        prev_ts = ts_ms
-        prev_p  = p_w
-
-    return energy_Wh / 1000.0  # -> kWh
-
-def energy_kwh_from_power_simple(uuid: str, minutes) -> float:
-    """
-    Einfache Formel, NUR korrekt wenn genau 1 Messpunkt pro Minute (Durchschnittsleistung) vorhanden ist:
-      kWh = Σ(W) / 60000
-    """
-    m = parse_minutes(minutes)
-    payload = vz_get(uuid, duration=f"-{m}min")
-    data = payload.get("data", [])
-    tuples = (
-        data.get("tuples", [])
-        if isinstance(data, dict)
-        else (data[0].get("tuples", []) if data else [])
-    )
-    return sum(float(t[1]) for t in tuples) / 60000.0
-
-
-
-# =========================
-# CLI / Main
-# =========================
-def main():
-    parser = argparse.ArgumentParser(description="Minuten seit letztem Auftreten eines Zielwerts (Cable_State).")
-    parser.add_argument("--target", type=int, default=TARGET_VALUE,
-                        help="Zielwert, der gesucht wird (Default: 3). Für Tests z.B. --target 1")
-    parser.add_argument("--uuid", type=str, default=UUIDS["Cable_State"],
-                        help="UUID, Default: Cable_State")
-    parser.add_argument("--window", type=int, default=MAX_MINUTES,
-                        help="Suchfenster in Minuten (Default: 4320)")
-    parser.add_argument("--debug", action="store_true", help="Debug-Ausgaben aktivieren")
-    parser.add_argument("--show-ts", action="store_true",
-                        help="Zusätzlich den ISO-Zeitpunkt des letzten Treffers ausgeben")
-    args = parser.parse_args()
-
-    global DEBUG
-    DEBUG = args.debug
-
-    minutes = minutes_since_last_target(args.uuid, args.target, args.window)
-    print(minutes)
-    minutes_val = f"-{int(minutes)}min"
-    print(minutes_val)
-    
-    if args.show_ts and minutes < args.window:
-        # Zeitpunkt erneut bestimmen (nutzt die gleiche Logik)
-        payload = get_vals(args.uuid, f"-{args.window}min")
-        sections = _normalize_sections(payload)
-        last_ts_ms = _find_last_match_in_sections(sections, VALUE_COLUMN_INDEX, args.target)
-        if last_ts_ms is None and AUTO_FALLBACK_TO_OTHER_COLUMN and VALUE_COLUMN_INDEX in (1, 2):
-            other = 2 if VALUE_COLUMN_INDEX == 1 else 1
-            last_ts_ms = _find_last_match_in_sections(sections, other, args.target)
-        if last_ts_ms is not None:
-            last_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc).isoformat()
-            print(last_dt)
-
-    emob_cons_kwh = energy_kwh_from_power(UUIDS["Emob_Cons"], minutes=minutes_val)
-    print(f"{emob_cons_kwh:.3f} kWh")
-   
-
-
-if __name__ == "__main__":
-    main()
-
+        _print_debug("[DEBUG] Keine sections/tuples gefunden.")
