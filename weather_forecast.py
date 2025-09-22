@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-SRF Meteo API v2 – 48h-Stundenwerte für Hägglingen (PLZ 5607)
+SRF Meteo API v2 – aktuelle Stunde + nächste 48h (Hägglingen, PLZ 5607)
 
 Sicherheitsfeatures:
 - Keine Secrets im Code.
@@ -11,7 +11,11 @@ Sicherheitsfeatures:
 
 Änderungen gem. Anleitung:
 - Token-URL inkl. grant_type als Query-Parameter, Basic-Auth mit base64(ClientId:ClientSecret).
-- Token-Request ohne Body (nur Header), allow_redirects=True für Kompatibilität mit der offiziellen Endpoint-Implementierung.
+- Token-Request ohne Body (nur Header), allow_redirects=True für Kompatibilität.
+
+NEU:
+- Es wird zusätzlich die **aktuelle Stunde** berücksichtigt:
+  Fenster = [Ende der aktuellen Stunde (nächste volle Stunde), +48h]  → bis zu 49 Einträge.
 """
 
 import base64
@@ -85,10 +89,8 @@ def get_credentials() -> Tuple[str, str]:
     """
     Bevorzugt Umgebungsvariablen SRG_CLIENT_ID / SRG_CLIENT_SECRET.
     Falls nicht gesetzt: versucht ~/.srg-meteo.env (nur beim manuellen Start sinnvoll).
-    Für systemd wird empfohlen, /etc/srf-meteo.env mit EnvironmentFile zu nutzen
-    (diese Datei liest NUR systemd als root, nicht dieses Skript).
+    Für systemd wird empfohlen, /etc/srf-meteo.env mit EnvironmentFile zu nutzen.
     """
-    # Stripping schützt vor versehentlichen Quotes/Whitespace
     client_id = (os.environ.get("SRG_CLIENT_ID") or "").strip().strip('"').strip("'")
     client_secret = (os.environ.get("SRG_CLIENT_SECRET") or "").strip().strip('"').strip("'")
 
@@ -107,9 +109,9 @@ def get_credentials() -> Tuple[str, str]:
     if not client_id or not client_secret:
         msg = (
             "SRG_CLIENT_ID / SRG_CLIENT_SECRET nicht gefunden.\n"
-            "Setze sie als Umgebungsvariablen ODER lege eine Datei ~/.srg-meteo.env mit chmod 600 an:\n"
+            "Setze sie als Umgebungsvariablen ODER lege ~/.srg-meteo.env (chmod 600) an:\n"
             '  echo \'SRG_CLIENT_ID=…\nSRG_CLIENT_SECRET=…\n\' > ~/.srg-meteo.env && chmod 600 ~/.srg-meteo.env\n\n'
-            "Hinweis: Für systemd nutze ein root-only /etc/srf-meteo.env und EnvironmentFile= (siehe Anleitung)."
+            "Für systemd: /etc/srf-meteo.env (root-only) via EnvironmentFile= in der Unit."
         )
         print(msg, file=sys.stderr)
         sys.exit(2)
@@ -133,7 +135,6 @@ def get_access_token(client_id: str, client_secret: str) -> str:
         "Cache-Control": "no-cache",
     }
     _debug("Hole Access Token…")
-    # Redirects erlaubt (kompatibel); nur Basic-Auth, kein Bearer, daher geringes Risiko
     r = requests.post(OAUTH_TOKEN_URL, headers=headers, timeout=20, allow_redirects=True)
     if not r.ok:
         raise ApiError(f"Token-Request fehlgeschlagen: HTTP {r.status_code} – {r.text}")
@@ -150,7 +151,6 @@ def api_get(path: str, token: str, params: Optional[Dict[str, Any]] = None) -> D
         "Accept": "application/json",
         "User-Agent": "srf-weather-haegglingen/1.0",
     }
-    # Bei Bearer-Calls keine Redirects folgen (defensiv)
     r = requests.get(url, headers=headers, params=params or {}, timeout=30, allow_redirects=False)
     if not r.ok:
         raise ApiError(f"GET {url} fehlgeschlagen: HTTP {r.status_code} – {r.text}")
@@ -195,7 +195,7 @@ def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]
     return hours
 
 def parse_dt(dt_str: str) -> datetime:
-    # robust gegen '...Z' und naive Zeiten
+    """date_time (Ende der Stunde) -> aware UTC"""
     if dt_str.endswith("Z"):
         return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
     dt = datetime.fromisoformat(dt_str)
@@ -203,15 +203,20 @@ def parse_dt(dt_str: str) -> datetime:
         dt = dt.replace(tzinfo=ZoneInfo(TZ) if ZoneInfo else timezone.utc)
     return dt.astimezone(timezone.utc)
 
-def filter_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    now_local = datetime.now(ZoneInfo(TZ)) if ZoneInfo else datetime.now(timezone.utc)
-    end_local = now_local + timedelta(hours=48)
-    now_utc = now_local.astimezone(timezone.utc)
-    end_utc = end_local.astimezone(timezone.utc)
+def filter_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Liefert Einträge von **Ende der aktuellen Stunde** (nächste volle Stunde, lokal) bis +48h.
+    Das umfasst die laufende Stunde **plus** die folgenden 48 Stunden → bis zu 49 Zeilen.
+    """
+    tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+    now_local = datetime.now(tz)
+    current_hour_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+    current_hour_end_utc = current_hour_end_local.astimezone(timezone.utc)
+    window_end_utc = current_hour_end_utc + timedelta(hours=48)
 
-    out: List[Dict[str, Any]] = []
-    for r in hours:
-        dt_str = r.get("date_time")
+    selected: List[Dict[str, Any]] = []
+    for row in hours:
+        dt_str = row.get("date_time")
         if not dt_str:
             continue
         try:
@@ -219,10 +224,11 @@ def filter_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         except Exception:
             _debug(f"Konnte date_time nicht parsen: {dt_str!r}")
             continue
-        if now_utc < dt_utc <= end_utc:
-            out.append(r)
-    out.sort(key=lambda rr: parse_dt(rr["date_time"]))
-    return out
+        if current_hour_end_utc <= dt_utc <= window_end_utc:
+            selected.append(row)
+
+    selected.sort(key=lambda r: parse_dt(r["date_time"]))
+    return selected
 
 def write_json(path: str, data: Any) -> None:
     with open(path, "w", encoding="utf-8") as f:
@@ -247,18 +253,21 @@ def main() -> int:
         lat, lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
         _debug(f"Geopunkt: {PLACE_NAME} {ZIP} → lat={lat:.4f}, lon={lon:.4f} → geolocationId='{geo_id}'")
         hours = get_hourly_forecast(token, geo_id)
-        hours48 = filter_next_48h(hours)
+
+        # NEU: aktuelle Stunde + nächste 48h
+        hours_cur_48 = filter_current_plus_48h(hours)
 
         payload = {
             "place": {"name": PLACE_NAME, "zip": ZIP, "geolocation_id": geo_id, "lat": round(lat, 4), "lon": round(lon, 4)},
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "note": "Enthält die laufende Stunde (Ende = nächste volle Stunde) + die folgenden 48 Stunden.",
             "source": f"{API_BASE}/forecastpoint/{geo_id}",
-            "count": len(hours48),
-            "hours": hours48,
+            "count": len(hours_cur_48),
+            "hours": hours_cur_48,
         }
         write_json(JSON_OUT, payload)
-        write_csv(CSV_OUT, hours48)
-        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT}")
+        write_csv(CSV_OUT, hours_cur_48)
+        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT} (Stunden: {len(hours_cur_48)})")
         return 0
 
     except ApiError as e:
