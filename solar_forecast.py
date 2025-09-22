@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PV-Ertragsforecast: aktuelle Stunde + nächste 48h (insgesamt bis zu 49 Stundenpunkte)
+PV-Ertragsforecast aus CSV: nutzt exakt die Zeitpunkte des Input-CSV (Spalte 'date_time')
 
-Eingabe:  /home/pi/Scripts/haegglingen_5607_48h.json  (aus srf_weather_haegglingen.py)
-Ausgabe:  /home/pi/Scripts/pv_yield_48h.json  und  /home/pi/Scripts/pv_yield_48h.csv
+Eingabe:  /home/pi/Scripts/haegglingen_5607_48h.csv  (aus srf_weather_haegglingen.py)
+Ausgaben: /home/pi/Scripts/pv_yield_48h.json  und  /home/pi/Scripts/pv_yield_48h.csv
 
-Berechnung:
-- POA-Abschätzung aus GHI (IRRADIANCE_WM2) mit einfacher Geometrie (Ausrichtung/Neigung).
+Berechnung (pro Zeile/Stunde):
+- Zeitendpunkt 'date_time' aus CSV wird 1:1 übernommen (Format unverändert).
+- Mittelpunktszeit = date_time_end - 30 min (in Europe/Zurich) für Sonnenstand/Geometrie.
+- POA-Abschätzung aus GHI (IRRADIANCE_WM2) mit einfacher Geometrie (Tilt/Azimut).
 - Modultemperatur: T_mod ≈ T_amb + (NOCT-20)/800 * POA
-- Tempkoeffizient: -0.4 %/K → P = kWp * (POA/1000) * (1 + gamma*(T_mod-25))
+- Tempkoeffizient: -0.4 % / K → P = kWp * (POA/1000) * (1 + gamma*(T_mod-25))
 - Stundenenergie ≈ P_kW * 1 h
-- Zeitstempel: Mittelpunktszeit der Stunde (date_time_end - 30 min).
-- Auswahlfenster: ab Ende der laufenden Stunde (nächste volle Stunde) inkl. dieser bis +48h danach.
-
-Konfiguration unten anpassen (Neigung, Azimut, kWp je Teilanlage).
 """
 
 import csv
@@ -22,18 +20,22 @@ import json
 import math
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 try:
-    from zoneinfo import ZoneInfo  # Py 3.9+
+    from zoneinfo import ZoneInfo  # Python 3.9+
 except Exception:
     ZoneInfo = None
 
-# ----------- zentrale KONFIGURATION ------------
-INPUT_JSON   = "/home/pi/Scripts/haegglingen_5607_48h.json"
+# ------------- zentrale KONFIGURATION -------------
+INPUT_CSV    = "/home/pi/Scripts/haegglingen_5607_48h.csv"
 OUTPUT_JSON  = "/home/pi/Scripts/pv_yield_48h.json"
 OUTPUT_CSV   = "/home/pi/Scripts/pv_yield_48h.csv"
-LOCAL_TZ     = "Europe/Zurich"  # Ausgabe-Zone
+LOCAL_TZ     = "Europe/Zurich"  # Zeitzone für Mittelpunktszeit
+
+# Standort Hägglingen (falls nicht separat angegeben)
+LAT = 47.3870
+LON = 8.2500
 
 # Azimut: 0°=Nord, 90°=Ost, 180°=Süd, 270°=West
 CONFIG = {
@@ -44,15 +46,24 @@ CONFIG = {
         {"name": "west", "tilt_deg": 30.0, "azimuth_deg": 270.0, "power_kwp": 5.0},
     ],
 }
-# -----------------------------------------------
+# --------------------------------------------------
 
 
-def parse_dt(dt_str: str) -> datetime:
-    """ISO-8601 robust nach UTC wandeln (SRF date_time ist Ende des Stundenintervalls)."""
-    if dt_str.endswith("Z"):
-        return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
-    dt = datetime.fromisoformat(dt_str)
-    return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+def ensure_tz() -> Optional[ZoneInfo]:
+    return ZoneInfo(LOCAL_TZ) if ZoneInfo else None
+
+
+def parse_iso_to_utc(s: str) -> datetime:
+    """CSV-ISO-Zeit robust nach UTC (aware) wandeln."""
+    s = s.strip()
+    if s.endswith("Z"):
+        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    else:
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            tz = ensure_tz() or timezone.utc
+            dt = dt.replace(tzinfo=tz)
+    return dt.astimezone(timezone.utc)
 
 
 def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[str, float]:
@@ -75,7 +86,6 @@ def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[s
     time_offset = eq_time + 4.0 * lon_deg - 60.0 * tz_hours
     tst = hr * 60.0 + time_offset
     ha_deg = (tst / 4.0) - 180.0
-    # wrap
     while ha_deg < -180.0:
         ha_deg += 360.0
     while ha_deg > 180.0:
@@ -131,16 +141,25 @@ def pv_power_kw(poa_wm2: float, t_mod_c: float, p_stc_kwp: float, temp_coeff_per
     return max(0.0, p)
 
 
-def load_input(path: str) -> Dict[str, Any]:
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Eingabedatei nicht gefunden: {path}")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+def read_weather_rows(csv_path: str) -> List[Dict[str, Any]]:
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Eingabedatei nicht gefunden: {csv_path}")
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        # Pflichtspalten prüfen
+        for col in ("date_time", "IRRADIANCE_WM2", "TTT_C"):
+            if col not in r.fieldnames:
+                raise RuntimeError(f"Spalte '{col}' fehlt im CSV.")
+        rows = list(r)
+    return rows
 
 
-def write_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) -> None:
-    """Flacht die Teilanlagenwerte für die CSV-Ausgabe auf Spaltenebene ab."""
-    base_cols = ["time_iso", "ghi_wm2", "ambient_c", "sun_elevation_deg", "sun_azimuth_deg"]
+def write_pv_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) -> None:
+    """
+    Schreibt CSV mit exakt denselben Zeitpunkten wie Input:
+      - 'date_time' wird 1:1 aus dem Wetter-CSV übernommen (Format unverändert).
+    """
+    base_cols = ["date_time", "ghi_wm2", "ambient_c", "sun_elevation_deg", "sun_azimuth_deg"]
     per_arr_cols = []
     for name in array_names:
         per_arr_cols += [
@@ -169,51 +188,34 @@ def write_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) -> 
 
 
 def main() -> int:
-    data = load_input(INPUT_JSON)
-    hours: List[Dict[str, Any]] = data.get("hours") or []
-    place = data.get("place") or {}
-    lat = float(place.get("lat", 47.3870))  # Fallback: Hägglingen
-    lon = float(place.get("lon", 8.2500))
-
-    if not hours:
-        print("Keine Stundenwerte in der Eingabedatei gefunden.", file=sys.stderr)
-        return 1
-
-    tz = ZoneInfo(LOCAL_TZ) if ZoneInfo else None
-    now_local = datetime.now(tz) if tz else datetime.now(timezone.utc)
-    # Ende der aktuellen Stunde (nächste volle Stunde, lokale Zeit)
-    current_hour_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    current_hour_end_utc = current_hour_end_local.astimezone(timezone.utc)
-
-    # Auswahlfenster: [Ende aktuelle Stunde, Ende aktuelle + 48h]
-    window_end_utc = current_hour_end_utc + timedelta(hours=48)
-
-    # Parse alle Stunden-Endzeiten (UTC) und filtere auf Fenster
-    parsed: List[Dict[str, Any]] = []
-    for row in hours:
-        dt_end_utc = parse_dt(row["date_time"])
-        if current_hour_end_utc <= dt_end_utc <= window_end_utc:
-            parsed.append({"raw": row, "dt_end_utc": dt_end_utc})
-
-    # Sortieren nach Endzeit
-    parsed.sort(key=lambda r: r["dt_end_utc"])
+    tz = ensure_tz()
+    weather_rows = read_weather_rows(INPUT_CSV)
 
     results: List[Dict[str, Any]] = []
 
-    for item in parsed:
-        row = item["raw"]
-        dt_end_utc = item["dt_end_utc"]
+    for row in weather_rows:
+        # 1) Zeit aus Input übernehmen
+        dt_end_str = row["date_time"]                # unverändert behalten
+        dt_end_utc = parse_iso_to_utc(dt_end_str)    # für Rechenzwecke
         dt_mid_utc = dt_end_utc - timedelta(minutes=30)
-        dt_local = dt_mid_utc.astimezone(tz) if tz else dt_mid_utc
+        dt_mid_local = dt_mid_utc.astimezone(tz) if tz else dt_mid_utc
 
-        ghi = float(row.get("IRRADIANCE_WM2", 0) or 0)
-        amb = float(row.get("TTT_C", 0) or 0)
+        # 2) Werte aus CSV
+        try:
+            ghi = float(row.get("IRRADIANCE_WM2", 0) or 0)
+        except Exception:
+            ghi = 0.0
+        try:
+            amb = float(row.get("TTT_C", 0) or 0)
+        except Exception:
+            amb = 0.0
 
-        # Sonnenstand zur Mittelpunktszeit
-        sp = solar_position(dt_local, lat, lon)
+        # 3) Sonnenstand zur Mittelpunktszeit in Europe/Zurich
+        sp = solar_position(dt_mid_local, LAT, LON)
         elev = sp["elevation_deg"]
         az = sp["azimuth_deg"]
 
+        # 4) PV pro Teilanlage
         total_power_kw = 0.0
         parts: Dict[str, Any] = {}
 
@@ -223,7 +225,7 @@ def main() -> int:
             paz  = float(arr["azimuth_deg"])
             pkwp = float(arr["power_kwp"])
 
-            poa = plane_of_array_from_ghi(ghi, elev, az, tilt, paz)
+            poa  = plane_of_array_from_ghi(ghi, elev, az, tilt, paz)
             tmod = module_temperature(amb, poa, CONFIG["noct_c"])
             pkw  = pv_power_kw(poa, tmod, pkwp, CONFIG["temp_coeff_per_K"])
             ekwh = pkw * 1.0  # 1 Stunde
@@ -236,9 +238,9 @@ def main() -> int:
                 "e_kwh": round(ekwh, 3),
             }
 
-        # Standardmäßig erwarten wir "east" und "west" – die CSV baut aber dynamisch aus CONFIG["arrays"].
+        # 5) Datensatz mit exakt dem Input-Zeitformat
         record = {
-            "time_iso": dt_local.isoformat(),
+            "date_time": dt_end_str,               # 1:1 aus CSV übernommen
             "ghi_wm2": round(ghi, 1),
             "ambient_c": round(amb, 1),
             "sun_elevation_deg": round(elev, 2),
@@ -246,31 +248,30 @@ def main() -> int:
             "pv_total_power_kw": round(total_power_kw, 3),
             "pv_total_energy_kwh": round(total_power_kw * 1.0, 3),
         }
-        # Teilanlagen unter ihren Namen anfügen (z. B. "east", "west")
         for name, part in parts.items():
             record[name] = part
 
         results.append(record)
 
-    # Speichern (JSON)
+    # JSON schreiben
     out_payload = {
-        "source": INPUT_JSON,
+        "source": INPUT_CSV,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "note": "Enthält die aktuelle Stunde (Ende = nächste volle Stunde) + die nächsten 48 Stunden.",
-        "location": {"lat": lat, "lon": lon, "tz": LOCAL_TZ},
+        "location": {"lat": LAT, "lon": LON, "tz": LOCAL_TZ},
         "config": CONFIG,
         "count_hours": len(results),
         "hours": results,
+        "note": "Zeitpunkte ('date_time') stammen 1:1 aus dem Input-CSV; Sonnenstand bei Mittelpunktszeit (date_time - 30 min) in Europe/Zurich.",
     }
     os.makedirs(os.path.dirname(OUTPUT_JSON), exist_ok=True)
     with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
         json.dump(out_payload, f, ensure_ascii=False, indent=2)
 
-    # Speichern (CSV) – Spalten aus den in CONFIG definierten Teilanlagen gebildet
+    # CSV schreiben (mit identischen Zeitpunkten/Strings)
     array_names = [a["name"] for a in CONFIG["arrays"]]
-    write_csv(OUTPUT_CSV, results, array_names)
+    write_pv_csv(OUTPUT_CSV, results, array_names)
 
-    print(f"OK – PV-Ertragsforecast gespeichert: {OUTPUT_JSON} und {OUTPUT_CSV} (Stunden: {len(results)})")
+    print(f"OK – PV-Ertragsforecast gespeichert: {OUTPUT_JSON} und {OUTPUT_CSV} (Zeilen: {len(results)})")
     return 0
 
 
