@@ -113,8 +113,8 @@ def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[s
 
     az = math.atan2(
         math.sin(ha),
-        math.cos(ha) * math.sin(lat) - math.tan(decl) * math.cos(lat),
-    )
+        math.cos(ha) * math.sin(lat) - math.tan(decl) * math.cos(lat,
+    ))
     az_deg = (math.degrees(az) + 180.0) % 360.0
     return {"elevation_deg": math.degrees(alpha), "azimuth_deg": az_deg}
 
@@ -346,7 +346,7 @@ def main() -> int:
     array_names = [a["name"] for a in CONFIG["arrays"]]
     write_pv_csv(OUTPUT_CSV, results, array_names)
 
-    # >>> Neu: PV-Leistung der aktuellen Stunde in der Konsole ausgeben
+    # >>> Neu: Werte der aktuellen Stunde in der Konsole ausgeben
     try:
         hour_end_local = next_full_hour_local()
         hour_start_local = hour_end_local - timedelta(hours=1)
@@ -371,15 +371,40 @@ def main() -> int:
                     best_row, best_dt_utc = r, dt_utc
 
         if best_row:
+            # PV-Leistung
             pv_power_kw = float(best_row.get("pv_total_power_kw", 0.0))
+
+            # GHI (Globalstrahlung) aus Datensatz
+            ghi_now = float(best_row.get("ghi_wm2", 0.0))
+
+            # Einstrahlung auf die gesamte PV-Fläche:
+            # Summe(POA_Wm2_i * Fläche_i) = Gesamt-Einstrahlungsleistung in W
+            total_area = sum(float(a.get("area_m2", 0.0)) for a in CONFIG["arrays"]) or 0.0
+            poa_total_w = 0.0
+            for arr in CONFIG["arrays"]:
+                name = arr["name"]
+                area = float(arr.get("area_m2", 0.0))
+                part = best_row.get(name, {}) or {}
+                poa_i = float(part.get("poa_wm2", 0.0))
+                poa_total_w += poa_i * area  # W
+
+            poa_avg_wm2 = (poa_total_w / total_area) if total_area > 0 else 0.0
+
+            # Konsole
             print(
-                f"PV-Leistung (aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}"
-                f"–{hour_end_local.strftime('%H:%M')} {LOCAL_TZ}): {pv_power_kw:.3f} kW"
+                f"Aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}–"
+                f"{hour_end_local.strftime('%H:%M')} ({LOCAL_TZ})"
             )
+            print(f"  GHI (Globalstrahlung): {ghi_now:.1f} W/m²")
+            print(
+                f"  Einstrahlung auf gesamte PV-Fläche: {poa_total_w:.0f} W "
+                f"({poa_total_w/1000.0:.2f} kW, Ø {poa_avg_wm2:.1f} W/m² über {total_area:.1f} m²)"
+            )
+            print(f"  PV-Leistung (Modell): {pv_power_kw:.3f} kW")
         else:
-            print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine PV-Leistung ausgegeben.")
+            print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine Werte ausgegeben.")
     except Exception as e:
-        print(f"Hinweis: Konnte PV-Leistung der aktuellen Stunde nicht ermitteln: {e}")
+        print(f"Hinweis: Konnte Werte der aktuellen Stunde nicht ermitteln: {e}")
 
     print(
         "OK – PV-Ertragsforecast gespeichert: "
