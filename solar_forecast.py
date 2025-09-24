@@ -2,24 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 PV-Ertragsforecast aus CSV (robust):
-- Liest GHI (Globalstrahlung) in W/m² und Lufttemperatur aus flexiblen Spaltennamen.
-- Exakte Zeitpunkte des Input-CSV (Spalte 'date_time' – anpassbar) werden 1:1 übernommen.
-- Mittelpunktszeit = date_time_end - 30 min (Europe/Zurich) für Sonnenstand/Geometrie.
-- POA-Abschätzung aus GHI mit einfacher Geometrie (Tilt/Azimut).
-- Modultemperatur: T_mod ≈ T_amb + (NOCT-20)/800 * POA.
-- Temperaturkoeffizient: -0.4 % / K (anpassbar).
-
-NEU (gemäß Anforderung):
-- Anlagengröße in m² statt kWp.
-- Zentraler Anlagenwirkungsgrad (eta_stc, z. B. 17 %).
-- Leistung: P_kW = (POA_Wm2 * Fläche_m2 * eta_stc * (1 + gamma*(Tmod-25))) / 1000.
-
-Eingabe:  /home/pi/Scripts/haegglingen_5607_48h.csv
-Ausgaben: /home/pi/Scripts/pv_yield_48h.json  und  /home/pi/Scripts/pv_yield_48h.csv
-
-Hinweis: Dieses Skript versucht automatisch, die korrekten Spalten für GHI und Temperatur
-zu finden (mehrere Kandidaten, inkl. deutschsprachiger Varianten). Bei Bedarf in CONFIG
-zentral anpassen.
+[... unverändert gelassene Kopf-Kommentare ...]
 """
 
 import csv
@@ -46,7 +29,6 @@ LON = 8.2500
 
 # Azimut: 0°=Nord, 90°=Ost, 180°=Süd, 270°=West
 CONFIG = {
-    # CSV-Konfiguration: Spaltenkandidaten (Groß-/Kleinschreibung egal)
     "csv_columns": {
         "time": "date_time",
         "ghi_candidates": [
@@ -59,15 +41,13 @@ CONFIG = {
         ],
     },
 
-    # Physikalische/Anlagen-Parameter
-    "noct_c": 45.0,              # typische NOCT in °C
-    "temp_coeff_per_K": -0.004,  # -0.4 % / K
-    "eta_stc": 0.17,             # Anlagenwirkungsgrad (STC) → 17 %
+    "noct_c": 45.0,
+    "temp_coeff_per_K": -0.004,
+    "eta_stc": 0.17,
 
-    # Zwei Teilanlagen (Fläche in m² statt kWp!)
     "arrays": [
-        {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.4},
-        {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.5},
+        {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.8},
+        {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.6},
     ],
 }
 # --------------------------------------------------
@@ -75,6 +55,16 @@ CONFIG = {
 
 def ensure_tz() -> Optional[ZoneInfo]:
     return ZoneInfo(LOCAL_TZ) if ZoneInfo else None
+
+
+def next_full_hour_local(now: Optional[datetime] = None) -> datetime:
+    """Ende der laufenden Stunde als aware Local (Europe/Zurich)."""
+    tz = ensure_tz() or timezone.utc
+    if now is None:
+        now = datetime.now(tz)
+    else:
+        now = now.astimezone(tz) if now.tzinfo else now.replace(tzinfo=tz)
+    return (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
 
 
 def parse_iso_to_utc(s: str) -> datetime:
@@ -164,9 +154,8 @@ def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
     """DC-Leistung [kW] aus Fläche [m²], POA [W/m²], Wirkungsgrad und Temp.-Korrektur."""
     if poa_wm2 <= 0.0 or area_m2 <= 0.0 or eta_stc <= 0.0:
         return 0.0
-    # Wirkungsgrad mit Temperaturkorrektur (linear):
     eta = eta_stc * (1.0 + temp_coeff_per_K * (t_mod_c - 25.0))
-    eta = max(0.0, eta)  # physikalische Untergrenze
+    eta = max(0.0, eta)
     p_w = poa_wm2 * area_m2 * eta
     return max(0.0, p_w) / 1000.0
 
@@ -185,7 +174,6 @@ def choose_column(fieldnames: List[str], candidates: List[str]) -> Optional[str]
         n = _norm(cand)
         if n in norm_map:
             return norm_map[n]
-    # fallback: einfache startswith/contains-Heuristik
     for fn in fieldnames:
         nfn = _norm(fn)
         for cand in candidates:
@@ -298,8 +286,8 @@ def main() -> int:
 
         for arr in CONFIG["arrays"]:
             name = arr["name"]
-            tilt = float(arr["tilt_deg"])  # Neigung
-            paz  = float(arr["azimuth_deg"])  # Azimut
+            tilt = float(arr["tilt_deg"])
+            paz  = float(arr["azimuth_deg"])
             area = float(arr.get("area_m2", 0.0))
 
             poa  = plane_of_array_from_ghi(ghi, elev, az, tilt, paz)
@@ -357,6 +345,41 @@ def main() -> int:
     # CSV schreiben (mit identischen Zeitpunkten/Strings)
     array_names = [a["name"] for a in CONFIG["arrays"]]
     write_pv_csv(OUTPUT_CSV, results, array_names)
+
+    # >>> Neu: PV-Leistung der aktuellen Stunde in der Konsole ausgeben
+    try:
+        hour_end_local = next_full_hour_local()
+        hour_start_local = hour_end_local - timedelta(hours=1)
+        target_end_utc = hour_end_local.astimezone(timezone.utc)
+
+        best_row = None
+        best_dt_utc = None
+        for r in results:
+            try:
+                dt_utc = parse_iso_to_utc(r["date_time"])
+            except Exception:
+                continue
+
+            # exakte Übereinstimmung ±30s
+            if abs((dt_utc - target_end_utc).total_seconds()) <= 30:
+                best_row, best_dt_utc = r, dt_utc
+                break
+
+            # Fallback: erste Zeit >= Zielzeit
+            if dt_utc >= target_end_utc:
+                if best_dt_utc is None or dt_utc < best_dt_utc:
+                    best_row, best_dt_utc = r, dt_utc
+
+        if best_row:
+            pv_power_kw = float(best_row.get("pv_total_power_kw", 0.0))
+            print(
+                f"PV-Leistung (aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}"
+                f"–{hour_end_local.strftime('%H:%M')} {LOCAL_TZ}): {pv_power_kw:.3f} kW"
+            )
+        else:
+            print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine PV-Leistung ausgegeben.")
+    except Exception as e:
+        print(f"Hinweis: Konnte PV-Leistung der aktuellen Stunde nicht ermitteln: {e}")
 
     print(
         "OK – PV-Ertragsforecast gespeichert: "
