@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PV-Ertragsforecast aus CSV: nutzt exakt die Zeitpunkte des Input-CSV (Spalte 'date_time')
+PV-Ertragsforecast aus CSV (robust):
+- Liest GHI (Globalstrahlung) in W/m² und Lufttemperatur aus flexiblen Spaltennamen.
+- Exakte Zeitpunkte des Input-CSV (Spalte 'date_time' – anpassbar) werden 1:1 übernommen.
+- Mittelpunktszeit = date_time_end - 30 min (Europe/Zurich) für Sonnenstand/Geometrie.
+- POA-Abschätzung aus GHI mit einfacher Geometrie (Tilt/Azimut).
+- Modultemperatur: T_mod ≈ T_amb + (NOCT-20)/800 * POA.
+- Temperaturkoeffizient: -0.4 % / K (anpassbar).
 
-Eingabe:  /home/pi/Scripts/haegglingen_5607_48h.csv  (aus srf_weather_haegglingen.py)
+NEU (gemäß Anforderung):
+- Anlagengröße in m² statt kWp.
+- Zentraler Anlagenwirkungsgrad (eta_stc, z. B. 17 %).
+- Leistung: P_kW = (POA_Wm2 * Fläche_m2 * eta_stc * (1 + gamma*(Tmod-25))) / 1000.
+
+Eingabe:  /home/pi/Scripts/haegglingen_5607_48h.csv
 Ausgaben: /home/pi/Scripts/pv_yield_48h.json  und  /home/pi/Scripts/pv_yield_48h.csv
 
-Berechnung (pro Zeile/Stunde):
-- Zeitendpunkt 'date_time' aus CSV wird 1:1 übernommen (Format unverändert).
-- Mittelpunktszeit = date_time_end - 30 min (in Europe/Zurich) für Sonnenstand/Geometrie.
-- POA-Abschätzung aus GHI (IRRADIANCE_WM2) mit einfacher Geometrie (Tilt/Azimut).
-- Modultemperatur: T_mod ≈ T_amb + (NOCT-20)/800 * POA
-- Tempkoeffizient: -0.4 % / K → P = kWp * (POA/1000) * (1 + gamma*(T_mod-25))
-- Stundenenergie ≈ P_kW * 1 h
+Hinweis: Dieses Skript versucht automatisch, die korrekten Spalten für GHI und Temperatur
+zu finden (mehrere Kandidaten, inkl. deutschsprachiger Varianten). Bei Bedarf in CONFIG
+zentral anpassen.
 """
 
 import csv
@@ -20,7 +27,7 @@ import json
 import math
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
@@ -39,11 +46,28 @@ LON = 8.2500
 
 # Azimut: 0°=Nord, 90°=Ost, 180°=Süd, 270°=West
 CONFIG = {
+    # CSV-Konfiguration: Spaltenkandidaten (Groß-/Kleinschreibung egal)
+    "csv_columns": {
+        "time": "date_time",
+        "ghi_candidates": [
+            "IRRADIANCE_WM2", "GHI_WM2", "GHI", "GLOBAL_IRRADIANCE_WM2",
+            "GLOBALSTRAHLUNG_W_M2", "GLOBALSTRAHLUNG", "RAD_GLOB_WM2",
+            "SHORTWAVE_RADIATION_W_M2", "SWGDN"
+        ],
+        "temp_candidates": [
+            "TTT_C", "T2M_C", "TEMP_C", "T_AIR_C", "TA_C", "AIR_TEMPERATURE_C"
+        ],
+    },
+
+    # Physikalische/Anlagen-Parameter
     "noct_c": 45.0,              # typische NOCT in °C
     "temp_coeff_per_K": -0.004,  # -0.4 % / K
+    "eta_stc": 0.17,             # Anlagenwirkungsgrad (STC) → 17 %
+
+    # Zwei Teilanlagen (Fläche in m² statt kWp!)
     "arrays": [
-        {"name": "east", "tilt_deg": 30.0, "azimuth_deg": 90.0,  "power_kwp": 5.0},
-        {"name": "west", "tilt_deg": 30.0, "azimuth_deg": 270.0, "power_kwp": 5.0},
+        {"name": "east", "tilt_deg": 30.0, "azimuth_deg": 90.0,  "area_m2": 30.0},
+        {"name": "west", "tilt_deg": 30.0, "azimuth_deg": 270.0, "area_m2": 30.0},
     ],
 }
 # --------------------------------------------------
@@ -135,30 +159,89 @@ def module_temperature(amb_c: float, poa_wm2: float, noct_c: float) -> float:
     return amb_c + (noct_c - 20.0) / 800.0 * max(0.0, poa_wm2)
 
 
-def pv_power_kw(poa_wm2: float, t_mod_c: float, p_stc_kwp: float, temp_coeff_per_K: float) -> float:
-    """DC-Leistung in kW (STC-Skalierung + Temperaturkoeffizient)."""
-    p = p_stc_kwp * (max(0.0, poa_wm2) / 1000.0) * (1.0 + temp_coeff_per_K * (t_mod_c - 25.0))
-    return max(0.0, p)
+def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
+                          eta_stc: float, temp_coeff_per_K: float) -> float:
+    """DC-Leistung [kW] aus Fläche [m²], POA [W/m²], Wirkungsgrad und Temp.-Korrektur."""
+    if poa_wm2 <= 0.0 or area_m2 <= 0.0 or eta_stc <= 0.0:
+        return 0.0
+    # Wirkungsgrad mit Temperaturkorrektur (linear):
+    eta = eta_stc * (1.0 + temp_coeff_per_K * (t_mod_c - 25.0))
+    eta = max(0.0, eta)  # physikalische Untergrenze
+    p_w = poa_wm2 * area_m2 * eta
+    return max(0.0, p_w) / 1000.0
 
 
-def read_weather_rows(csv_path: str) -> List[Dict[str, Any]]:
+# ---------- CSV-Helfer ----------
+
+def _norm(s: str) -> str:
+    return "".join(ch for ch in s.strip().lower() if ch.isalnum() or ch == "_")
+
+
+def choose_column(fieldnames: List[str], candidates: List[str]) -> Optional[str]:
+    if not fieldnames:
+        return None
+    norm_map = {_norm(fn): fn for fn in fieldnames}
+    for cand in candidates:
+        n = _norm(cand)
+        if n in norm_map:
+            return norm_map[n]
+    # fallback: einfache startswith/contains-Heuristik
+    for fn in fieldnames:
+        nfn = _norm(fn)
+        for cand in candidates:
+            nc = _norm(cand)
+            if nfn.startswith(nc) or nc in nfn:
+                return fn
+    return None
+
+
+def to_float(val: Any, default: float = 0.0) -> float:
+    if val is None:
+        return default
+    if isinstance(val, (float, int)):
+        return float(val)
+    s = str(val).strip().replace(",", ".")
+    try:
+        return float(s)
+    except Exception:
+        return default
+
+
+def read_weather_rows(csv_path: str) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Eingabedatei nicht gefunden: {csv_path}")
     with open(csv_path, newline="", encoding="utf-8") as f:
         r = csv.DictReader(f)
-        # Pflichtspalten prüfen
-        for col in ("date_time", "IRRADIANCE_WM2", "TTT_C"):
-            if col not in r.fieldnames:
-                raise RuntimeError(f"Spalte '{col}' fehlt im CSV.")
-        rows = list(r)
-    return rows
+        fields = r.fieldnames or []
+        if not fields:
+            raise RuntimeError("CSV hat keine Kopfzeile/Spalten.")
 
+        cols_cfg = CONFIG["csv_columns"]
+        time_col = cols_cfg.get("time", "date_time")
+        ghi_col = choose_column(fields, cols_cfg.get("ghi_candidates", []))
+        t_col   = choose_column(fields, cols_cfg.get("temp_candidates", []))
+
+        missing = []
+        if time_col not in fields:
+            missing.append(time_col)
+        if not ghi_col:
+            missing.append("<GHI-Spalte>")
+        if not t_col:
+            missing.append("<Temp-Spalte>")
+        if missing:
+            raise RuntimeError(
+                "Pflichtspalten fehlen oder wurden nicht gefunden: " + ", ".join(missing) +
+                f".\nVorhandene Spalten: {fields}"
+            )
+
+        rows_raw = list(r)
+        colmap = {"time": time_col, "ghi": ghi_col, "temp": t_col}
+        return rows_raw, colmap
+
+
+# ---------- Output CSV ----------
 
 def write_pv_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) -> None:
-    """
-    Schreibt CSV mit exakt denselben Zeitpunkten wie Input:
-      - 'date_time' wird 1:1 aus dem Wetter-CSV übernommen (Format unverändert).
-    """
     base_cols = ["date_time", "ghi_wm2", "ambient_c", "sun_elevation_deg", "sun_azimuth_deg"]
     per_arr_cols = []
     for name in array_names:
@@ -189,45 +272,45 @@ def write_pv_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) 
 
 def main() -> int:
     tz = ensure_tz()
-    weather_rows = read_weather_rows(INPUT_CSV)
+    weather_rows, colmap = read_weather_rows(INPUT_CSV)
 
     results: List[Dict[str, Any]] = []
 
     for row in weather_rows:
-        # 1) Zeit aus Input übernehmen
-        dt_end_str = row["date_time"]                # unverändert behalten
-        dt_end_utc = parse_iso_to_utc(dt_end_str)    # für Rechenzwecke
+        # 1) Zeit aus Input übernehmen (Format unverändert)
+        dt_end_str = row[colmap["time"]]
+        dt_end_utc = parse_iso_to_utc(dt_end_str)
         dt_mid_utc = dt_end_utc - timedelta(minutes=30)
         dt_mid_local = dt_mid_utc.astimezone(tz) if tz else dt_mid_utc
 
         # 2) Werte aus CSV
-        try:
-            ghi = float(row.get("IRRADIANCE_WM2", 0) or 0)
-        except Exception:
-            ghi = 0.0
-        try:
-            amb = float(row.get("TTT_C", 0) or 0)
-        except Exception:
-            amb = 0.0
+        ghi = to_float(row.get(colmap["ghi"]))
+        amb = to_float(row.get(colmap["temp"]))
 
         # 3) Sonnenstand zur Mittelpunktszeit in Europe/Zurich
         sp = solar_position(dt_mid_local, LAT, LON)
         elev = sp["elevation_deg"]
         az = sp["azimuth_deg"]
 
-        # 4) PV pro Teilanlage
+        # 4) PV pro Teilanlage (Fläche & Wirkungsgrad)
         total_power_kw = 0.0
         parts: Dict[str, Any] = {}
 
         for arr in CONFIG["arrays"]:
             name = arr["name"]
-            tilt = float(arr["tilt_deg"])
-            paz  = float(arr["azimuth_deg"])
-            pkwp = float(arr["power_kwp"])
+            tilt = float(arr["tilt_deg"])  # Neigung
+            paz  = float(arr["azimuth_deg"])  # Azimut
+            area = float(arr.get("area_m2", 0.0))
 
             poa  = plane_of_array_from_ghi(ghi, elev, az, tilt, paz)
             tmod = module_temperature(amb, poa, CONFIG["noct_c"])
-            pkw  = pv_power_kw(poa, tmod, pkwp, CONFIG["temp_coeff_per_K"])
+            pkw  = pv_power_kw_from_area(
+                poa_wm2=poa,
+                t_mod_c=tmod,
+                area_m2=area,
+                eta_stc=CONFIG["eta_stc"],
+                temp_coeff_per_K=CONFIG["temp_coeff_per_K"],
+            )
             ekwh = pkw * 1.0  # 1 Stunde
 
             total_power_kw += pkw
@@ -259,9 +342,13 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "location": {"lat": LAT, "lon": LON, "tz": LOCAL_TZ},
         "config": CONFIG,
+        "selected_columns": colmap,
         "count_hours": len(results),
         "hours": results,
-        "note": "Zeitpunkte ('date_time') stammen 1:1 aus dem Input-CSV; Sonnenstand bei Mittelpunktszeit (date_time - 30 min) in Europe/Zurich.",
+        "note": (
+            "Zeitpunkte ('date_time') stammen 1:1 aus dem Input-CSV; "
+            "Sonnenstand bei Mittelpunktszeit (date_time - 30 min) in Europe/Zurich."
+        ),
     }
     os.makedirs(os.path.dirname(OUTPUT_JSON), exist_ok=True)
     with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
@@ -271,7 +358,11 @@ def main() -> int:
     array_names = [a["name"] for a in CONFIG["arrays"]]
     write_pv_csv(OUTPUT_CSV, results, array_names)
 
-    print(f"OK – PV-Ertragsforecast gespeichert: {OUTPUT_JSON} und {OUTPUT_CSV} (Zeilen: {len(results)})")
+    print(
+        "OK – PV-Ertragsforecast gespeichert: "
+        f"{OUTPUT_JSON} und {OUTPUT_CSV} (Zeilen: {len(results)})\n"
+        f"Benutzte Spalten → Zeit: '{colmap['time']}', GHI: '{colmap['ghi']}', T: '{colmap['temp']}'"
+    )
     return 0
 
 
