@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 SRF Meteo API v2 – vergangene Stunde + aktuelle Stunde + nächste 48h (Hägglingen, PLZ 5607)
-
-Sicherheitsfeatures:
-- Keine Secrets im Code.
-- Lädt SRG_CLIENT_ID und SRG_CLIENT_SECRET aus Env oder aus ~/.srg-meteo.env (600, Besitzer = aktueller User).
-- Verweigert unsichere Env-Dateirechte.
-- Forecast-Calls ohne Redirect-Folgen (allow_redirects=False).
-
-Token-Aufruf:
-- Token-URL inkl. grant_type als Query-Parameter, Basic-Auth mit base64(ClientId:ClientSecret).
-- Token-Request ohne Body (nur Header), allow_redirects=True für Kompatibilität.
-
-NEU:
-- Zusätzlich wird die **vergangene Stunde** berücksichtigt:
-  Fenster = [Ende der vergangenen Stunde, Ende der aktuellen Stunde + 48h]  → bis zu 50 Einträge.
-- Zeitzone ist explizit **Europe/Zurich** (LOCAL-TZ Handling via zoneinfo).
+[... gekürzt ...]
 """
 
 import base64
@@ -36,7 +22,6 @@ except Exception:
 import requests
 
 API_BASE = "https://api.srgssr.ch/srf-meteo/v2"
-# grant_type als Query-Parameter wie in der Anleitung
 OAUTH_TOKEN_URL = "https://api.srgssr.ch/oauth/v1/accesstoken?grant_type=client_credentials"
 
 OUTPUT_DIR = "/home/pi/Scripts"
@@ -67,7 +52,6 @@ def mask(s: str) -> str:
     return (s[:2] + "…" + s[-2:]) if len(s) > 6 else "…" * len(s)
 
 def load_env_file_secure(path: str) -> Dict[str, str]:
-    """Liest KEY=VALUE aus path, erlaubt nur Modus 600 und Besitzer = aktueller User."""
     env: Dict[str, str] = {}
     if not os.path.exists(path):
         return env
@@ -87,11 +71,6 @@ def load_env_file_secure(path: str) -> Dict[str, str]:
     return env
 
 def get_credentials() -> Tuple[str, str]:
-    """
-    Bevorzugt Umgebungsvariablen SRG_CLIENT_ID / SRG_CLIENT_SECRET.
-    Falls nicht gesetzt: versucht ~/.srg-meteo.env.
-    Für systemd wird empfohlen, /etc/srf-meteo.env mit EnvironmentFile zu nutzen.
-    """
     client_id = (os.environ.get("SRG_CLIENT_ID") or "").strip().strip('"').strip("'")
     client_secret = (os.environ.get("SRG_CLIENT_SECRET") or "").strip().strip('"').strip("'")
 
@@ -121,12 +100,6 @@ def get_credentials() -> Tuple[str, str]:
     return client_id, client_secret
 
 def get_access_token(client_id: str, client_secret: str) -> str:
-    """
-    OAuth2 Client-Credentials – exakt nach Anleitung:
-    - grant_type als Query-Param in der URL
-    - Authorization: Basic base64(ClientId:ClientSecret)
-    - kein Body erforderlich
-    """
     auth_raw = f"{client_id}:{client_secret}".encode("utf-8")
     auth_b64 = base64.b64encode(auth_raw).decode("ascii")
     headers = {
@@ -185,7 +158,7 @@ def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tu
     geo = best.get("geolocation") or {}
     lat = float(geo.get("lat"))
     lon = float(geo.get("lon"))
-    geolocation_id = f"{lat:.4f},{lon:.4f}"  # API erwartet <lat>,<lon> (4 Nachkommastellen)
+    geolocation_id = f"{lat:.4f},{lon:.4f}"
     return lat, lon, geolocation_id
 
 def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]:
@@ -205,19 +178,11 @@ def parse_dt(dt_str: str) -> datetime:
     return dt.astimezone(timezone.utc)
 
 def filter_prev_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Liefert Einträge von **Ende der vergangenen Stunde** bis **Ende der aktuellen + 48h** (lokale Zeit: Europe/Zurich).
-    Umfasst: vergangene Stunde + laufende Stunde + 48 weitere → bis zu 50 Zeilen.
-    """
     tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
     now_local = datetime.now(tz)
-
-    # Ende der aktuellen Stunde (nächste volle)
     current_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
     prev_end_local = current_end_local - timedelta(hours=1)
     window_end_local = current_end_local + timedelta(hours=48)
-
-    # In UTC vergleichen
     prev_end_utc = prev_end_local.astimezone(timezone.utc)
     window_end_utc = window_end_local.astimezone(timezone.utc)
 
@@ -251,6 +216,17 @@ def write_csv(path: str, rows: List[Dict[str, Any]]) -> None:
 def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
+# --- kleine Hilfe ---
+def _to_float(val, default=None):
+    try:
+        if val is None:
+            return default
+        if isinstance(val, (int, float)):
+            return float(val)
+        return float(str(val).replace(",", "."))
+    except Exception:
+        return default
+
 def main() -> int:
     ensure_dir(OUTPUT_DIR)
     client_id, client_secret = get_credentials()
@@ -261,7 +237,7 @@ def main() -> int:
         _debug(f"Geopunkt: {PLACE_NAME} {ZIP} → lat={lat:.4f}, lon={lon:.4f} → geolocationId='{geo_id}'")
         hours = get_hourly_forecast(token, geo_id)
 
-        # NEU: vergangene Stunde + aktuelle + nächste 48h
+        # vergangene Stunde + aktuelle + nächste 48h
         hours_prev_cur_48 = filter_prev_current_plus_48h(hours)
 
         payload = {
@@ -275,6 +251,53 @@ def main() -> int:
         }
         write_json(JSON_OUT, payload)
         write_csv(CSV_OUT, hours_prev_cur_48)
+
+        # >>> NEU: aktuelle Außentemperatur & Globalstrahlung der laufenden Stunde ausgeben
+        try:
+            tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+            now_local = datetime.now(tz)
+            hour_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+            hour_start_local = hour_end_local - timedelta(hours=1)
+            target_end_utc = hour_end_local.astimezone(timezone.utc)
+
+            best_row = None
+            best_dt_utc = None
+            for r in hours_prev_cur_48:
+                dt_str = r.get("date_time")
+                if not dt_str:
+                    continue
+                try:
+                    dt_utc = parse_dt(dt_str)
+                except Exception:
+                    continue
+
+                if abs((dt_utc - target_end_utc).total_seconds()) <= 30:
+                    best_row, best_dt_utc = r, dt_utc
+                    break
+                if dt_utc >= target_end_utc:
+                    if best_dt_utc is None or dt_utc < best_dt_utc:
+                        best_row, best_dt_utc = r, dt_utc
+
+            if best_row:
+                temp_c = _to_float(best_row.get("TTT_C"))
+                # Globalstrahlung: vorrangig IRRADIANCE_WM2; sonst einfache Fallbacks
+                ghi = (
+                    _to_float(best_row.get("IRRADIANCE_WM2")) or
+                    _to_float(best_row.get("GHI_WM2")) or
+                    _to_float(best_row.get("GHI"))
+                )
+
+                print(
+                    f"Aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}–"
+                    f"{hour_end_local.strftime('%H:%M')} ({TZ})"
+                )
+                print(f"  Außentemperatur: {temp_c:.1f} °C" if temp_c is not None else "  Außentemperatur: n/a")
+                print(f"  Globalstrahlung: {ghi:.1f} W/m²" if ghi is not None else "  Globalstrahlung: n/a")
+            else:
+                print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine Werte ausgegeben.")
+        except Exception as e:
+            print(f"Hinweis: Konnte aktuelle Temperatur/Globalstrahlung nicht ermitteln: {e}")
+
         print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT} (Stunden: {len(hours_prev_cur_48)})")
         return 0
 
@@ -290,4 +313,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
