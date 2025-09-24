@@ -66,8 +66,8 @@ CONFIG = {
 
     # Zwei Teilanlagen (Fläche in m² statt kWp!)
     "arrays": [
-        {"name": "east", "tilt_deg": 30.0, "azimuth_deg": 90.0,  "area_m2": 30.0},
-        {"name": "west", "tilt_deg": 30.0, "azimuth_deg": 270.0, "area_m2": 30.0},
+        {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.4},
+        {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.5},
     ],
 }
 # --------------------------------------------------
