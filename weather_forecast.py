@@ -1,35 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-SRF Meteo API v2 – vergangene Stunde + aktuelle Stunde + nächste 48h (Hägglingen, PLZ 5607)
+SRF Meteo 48h → Volkszähler
+- Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
+- Wählt genau die nächsten 48 Stunden ab der nächsten vollen Stunde (Europe/Zurich)
+- Schreibt pro Stunde TTT_C in UUID_T_OUTDOOR und IRRADIANCE_WM2 in UUID_P_PV
+- Nutzt Volkszähler-Middleware-API mit ts (ms seit 1970-01-01 UTC) und value
 
-Sicherheitsfeatures:
-- Keine Secrets im Code.
-- Lädt SRG_CLIENT_ID und SRG_CLIENT_SECRET aus Env oder aus ~/.srg-meteo.env (600, Besitzer = aktueller User).
-- Verweigert unsichere Env-Dateirechte.
-- Forecast-Calls ohne Redirect-Folgen (allow_redirects=False).
-
-Token-Aufruf:
-- Token-URL inkl. grant_type als Query-Parameter, Basic-Auth mit base64(ClientId:ClientSecret).
-- Token-Request ohne Body (nur Header), allow_redirects=True für Kompatibilität.
-
-Zeiträume:
-- Fenster = [Ende der vergangenen Stunde, Ende der aktuellen Stunde + 48h] (lokal Europe/Zurich).
-- Konsolenausgabe: Außentemperatur (TTT_C) und Globalstrahlung (IRRADIANCE_WM2, W/m²) der laufenden Stunde.
-
-Hinweis Einheiten:
-- IRRADIANCE_WM2 ist laut API „Global irradiance“ (Einheit W/m²). Keine kW/m²-Skalierung!
+Konfiguration via Umgebungsvariablen (optional):
+  SRG_CLIENT_ID, SRG_CLIENT_SECRET     OAuth für SRF Meteo
+  SRF_ZIP=5607, SRF_PLACE="Hägglingen"
+  LOCAL_TZ="Europe/Zurich"
+  VZ_BASE_URL="http://<host>/middleware.php"
+  UUID_T_OUTDOOR_FORECAST="<uuid>"
+  UUID_P_PV_FORECAST="<uuid>"
+  DRY_RUN=1  → nur ausgeben, nicht schreiben
+  DEBUG=1    → zusätzliche Logausgaben
 """
 
 import base64
-import csv
-import json
-import math
 import os
 import stat
 import sys
-from datetime import datetime, timedelta, timezone
+import json
 from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timedelta, timezone
 
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
@@ -38,31 +34,33 @@ except Exception:
 
 import requests
 
+# ============================== CONFIG ========================================
 API_BASE = "https://api.srgssr.ch/srf-meteo/v2"
-# grant_type als Query-Parameter wie in der Anleitung
 OAUTH_TOKEN_URL = "https://api.srgssr.ch/oauth/v1/accesstoken?grant_type=client_credentials"
 
-OUTPUT_DIR = "/home/pi/Scripts"
-JSON_OUT = os.path.join(OUTPUT_DIR, "haegglingen_5607_48h.json")
-CSV_OUT  = os.path.join(OUTPUT_DIR, "haegglingen_5607_48h.csv")
+# Standort / Zeitzone
+ZIP = int(os.environ.get("SRF_ZIP", "5607"))
+PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")
+TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 
-ZIP = 5607
-PLACE_NAME = "Hägglingen"
-TZ = "Europe/Zurich"
+# Volkszähler
+# Hinweis: Wenn dein Volkszähler anders erreichbar ist, passe VZ_BASE_URL an.
+VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
+UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
+UUID_P_PV = os.environ.get("UUID_P_PV_FORECAST", "abcf6600-97c1-11f0-9348-db517d4efb8f")
 
-CSV_COLUMNS = [
-    "date_time","TTT_C","TTL_C","TTH_C","TTTFEEL_C","PROBPCP_PERCENT","RRR_MM",
-    "RELHUM_PERCENT","DEWPOINT_C","FF_KMH","FX_KMH","DD_DEG","SUN_MIN",
-    "FRESHSNOW_MM","FRESHSNOW_CM","PRESSURE_HPA","IRRADIANCE_WM2",
-    "symbol_code","symbol24_code","cur_color",
-]
+# Sonstiges
+USER_AGENT = "srf-weather-vz/1.0"
+DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
+TIMEOUT = 30  # Sekunden für HTTP-Requests
 
+# ============================== UTILS =========================================
 class ApiError(RuntimeError):
     pass
 
 def _debug(msg: str) -> None:
     if os.environ.get("DEBUG"):
-        print(f"[SRF-API] {msg}", file=sys.stderr)
+        print(f"[DEBUG] {msg}", file=sys.stderr)
 
 def mask(s: str) -> str:
     if not s:
@@ -91,9 +89,8 @@ def load_env_file_secure(path: str) -> Dict[str, str]:
 
 def get_credentials() -> Tuple[str, str]:
     """
-    Bevorzugt Umgebungsvariablen SRG_CLIENT_ID / SRG_CLIENT_SECRET.
-    Falls nicht gesetzt: versucht ~/.srg-meteo.env.
-    Für systemd wird empfohlen, /etc/srf-meteo.env mit EnvironmentFile zu nutzen.
+    Bevorzugt SRG_CLIENT_ID / SRG_CLIENT_SECRET aus Env.
+    Falls nicht gesetzt: versucht ~/.srg-meteo.env (chmod 600).
     """
     client_id = (os.environ.get("SRG_CLIENT_ID") or "").strip().strip('"').strip("'")
     client_secret = (os.environ.get("SRG_CLIENT_SECRET") or "").strip().strip('"').strip("'")
@@ -114,8 +111,7 @@ def get_credentials() -> Tuple[str, str]:
         msg = (
             "SRG_CLIENT_ID / SRG_CLIENT_SECRET nicht gefunden.\n"
             "Setze sie als Umgebungsvariablen ODER lege ~/.srg-meteo.env (chmod 600) an:\n"
-            '  echo \'SRG_CLIENT_ID=…\nSRG_CLIENT_SECRET=…\n\' > ~/.srg-meteo.env && chmod 600 ~/.srg-meteo.env\n\n'
-            "Für systemd: /etc/srf-meteo.env (root-only) via EnvironmentFile= in der Unit."
+            "  echo 'SRG_CLIENT_ID=…\\nSRG_CLIENT_SECRET=…' > ~/.srg-meteo.env && chmod 600 ~/.srg-meteo.env\n"
         )
         print(msg, file=sys.stderr)
         sys.exit(2)
@@ -125,25 +121,22 @@ def get_credentials() -> Tuple[str, str]:
 
 def get_access_token(client_id: str, client_secret: str) -> str:
     """
-    OAuth2 Client-Credentials – exakt nach Anleitung:
-    - grant_type als Query-Param in der URL
-    - Authorization: Basic base64(ClientId:ClientSecret)
-    - kein Body erforderlich
+    OAuth2 Client-Credentials:
+      - grant_type als Query-Param
+      - Basic Auth: base64(client_id:client_secret)
     """
     auth_raw = f"{client_id}:{client_secret}".encode("utf-8")
     auth_b64 = base64.b64encode(auth_raw).decode("ascii")
     headers = {
         "Authorization": f"Basic {auth_b64}",
         "Accept": "application/json",
-        "User-Agent": "srf-weather-haegglingen/1.0",
+        "User-Agent": USER_AGENT,
         "Cache-Control": "no-cache",
     }
-    _debug("Hole Access Token…")
-    r = requests.post(OAUTH_TOKEN_URL, headers=headers, timeout=20, allow_redirects=True)
+    r = requests.post(OAUTH_TOKEN_URL, headers=headers, timeout=TIMEOUT, allow_redirects=True)
     if not r.ok:
         raise ApiError(f"Token-Request fehlgeschlagen: HTTP {r.status_code} – {r.text}")
-    payload = r.json()
-    token = (payload.get("access_token") or "").strip()
+    token = (r.json().get("access_token") or "").strip()
     if not token:
         raise ApiError(f"Kein gültiges access_token in Antwort: {r.text}")
     return token
@@ -153,14 +146,15 @@ def api_get(path: str, token: str, params: Optional[Dict[str, Any]] = None) -> D
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/json",
-        "User-Agent": "srf-weather-haegglingen/1.0",
+        "User-Agent": USER_AGENT,
     }
-    r = requests.get(url, headers=headers, params=params or {}, timeout=30, allow_redirects=False)
+    r = requests.get(url, headers=headers, params=params or {}, timeout=TIMEOUT, allow_redirects=False)
     if not r.ok:
         raise ApiError(f"GET {url} fehlgeschlagen: HTTP {r.status_code} – {r.text}")
     return r.json()
 
 def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tuple[float, float, str]:
+    """Findet Geopunkt via PLZ; nimmt den mit Name==PLACE_NAME oder ersten Treffer."""
     res = api_get("/geolocationNames", token, params={"zip": zip_code, "limit": 20})
     items: List[Dict[str, Any]] = []
     if isinstance(res, list):
@@ -188,7 +182,7 @@ def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tu
     geo = best.get("geolocation") or {}
     lat = float(geo.get("lat"))
     lon = float(geo.get("lon"))
-    geolocation_id = f"{lat:.4f},{lon:.4f}"  # API erlaubt '[lat],[lon]' mit 4 Nachkommastellen
+    geolocation_id = f"{lat:.4f},{lon:.4f}"  # API verlangt "[lat],[lon]"
     return lat, lon, geolocation_id
 
 def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]:
@@ -199,191 +193,99 @@ def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]
     return hours
 
 def parse_dt(dt_str: str) -> datetime:
-    """date_time (Ende der Stunde) -> aware UTC."""
+    """SRF 'date_time' (Ende der Stunde) → aware UTC datetime."""
     if dt_str.endswith("Z"):
         return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
     dt = datetime.fromisoformat(dt_str)
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=ZoneInfo(TZ) if ZoneInfo else timezone.utc)
+        tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+        dt = dt.replace(tzinfo=tz)
     return dt.astimezone(timezone.utc)
 
-def filter_prev_current_plus_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def select_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Liefert Einträge von Ende der vergangenen Stunde bis Ende der aktuellen + 48h (lokale Zeit: Europe/Zurich).
+    Wählt genau die nächsten 48 Stunden (Ende der Stunde), beginnend ab Ende der laufenden Stunde (lokal).
     """
     tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
     now_local = datetime.now(tz)
-    current_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    prev_end_local = current_end_local - timedelta(hours=1)
-    window_end_local = current_end_local + timedelta(hours=48)
-    prev_end_utc = prev_end_local.astimezone(timezone.utc)
-    window_end_utc = window_end_local.astimezone(timezone.utc)
+    start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+    end_local = start_local + timedelta(hours=48)
+    start_utc = start_local.astimezone(timezone.utc)
+    end_utc = end_local.astimezone(timezone.utc)
 
-    selected: List[Dict[str, Any]] = []
-    for row in hours:
-        dt_str = row.get("date_time")
+    rows = []
+    for r in hours:
+        dt_str = r.get("date_time")
         if not dt_str:
             continue
         try:
             dt_utc = parse_dt(dt_str)
         except Exception:
-            _debug(f"Konnte date_time nicht parsen: {dt_str!r}")
             continue
-        if prev_end_utc <= dt_utc <= window_end_utc:
-            selected.append(row)
+        if start_utc <= dt_utc <= end_utc:
+            rows.append((dt_utc, r))
 
-    selected.sort(key=lambda r: parse_dt(r["date_time"]))
-    return selected
+    rows.sort(key=lambda t: t[0])
+    if len(rows) > 48:
+        rows = rows[:48]
+    return [r for (_, r) in rows]
 
-def write_json(path: str, data: Any) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+# -------------------------- Volkszähler ---------------------------------------
+def vz_write(uuid: str, value: float, ts_ms: int) -> None:
+    """
+    Schreibt einen Wert in die Volkszähler-Middleware mit explizitem Timestamp (ms, UTC).
+    """
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
+    if DRY_RUN:
+        print(f"DRY_RUN: POST {url} params={params}")
+        return
+    r = requests.post(url, params=params, timeout=15)
+    if not r.ok:
+        raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-def write_csv(path: str, rows: List[Dict[str, Any]]) -> None:
-    with open(path, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
-        w.writeheader()
-        for r in rows:
-            w.writerow({k: r.get(k) for k in CSV_COLUMNS})
-
-def ensure_dir(path: str) -> None:
-    os.makedirs(path, exist_ok=True)
-
-# ---- Numerik/Helpers ---------------------------------------------------------
-
-def _to_float(val, default=None) -> Optional[float]:
-    try:
-        if val is None:
-            return default
-        if isinstance(val, (int, float)):
-            return float(val)
-        s = str(val).strip()
-        if s == "":
-            return default
-        return float(s.replace(",", "."))
-    except Exception:
-        return default
-
-def _get_ci(d: Dict[str, Any], key: str, default=None):
-    """Case-insensitive Feldsuche (flach)."""
-    if key in d:
-        return d[key]
-    key_up = key.upper()
-    for k, v in d.items():
-        if isinstance(k, str) and k.upper() == key_up:
-            return v
-    return default
-
-def _solar_elevation_deg(dt_local: datetime, lat_deg: float, lon_deg: float) -> float:
-    """Einfache Sonnenstandsberechnung (nur zur Plausibilisierung)."""
-    doy = int(dt_local.timetuple().tm_yday)
-    hr = dt_local.hour + dt_local.minute / 60.0 + dt_local.second / 3600.0
-    tz_hours = dt_local.utcoffset().total_seconds() / 3600.0 if dt_local.utcoffset() else 0.0
-
-    gamma = 2.0 * math.pi / 365.0 * (doy - 1 + (hr - 12) / 24.0)
-    eq_time = 229.18 * (
-        0.000075 + 0.001868 * math.cos(gamma) - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma) - 0.040849 * math.sin(2 * gamma)
-    )
-    decl = (
-        0.006918 - 0.399912 * math.cos(gamma) + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma) + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma) + 0.001480 * math.sin(3 * gamma)
-    )
-    time_offset = eq_time + 4.0 * lon_deg - 60.0 * tz_hours
-    tst = hr * 60.0 + time_offset
-    ha_deg = (tst / 4.0) - 180.0
-    while ha_deg < -180.0:
-        ha_deg += 360.0
-    while ha_deg > 180.0:
-        ha_deg -= 360.0
-    ha = math.radians(ha_deg)
-    lat = math.radians(lat_deg)
-    sin_alpha = math.sin(lat) * math.sin(decl) + math.cos(lat) * math.cos(decl) * math.cos(ha)
-    sin_alpha = max(-1.0, min(1.0, sin_alpha))
-    return math.degrees(math.asin(sin_alpha))
-
-# -----------------------------------------------------------------------------
-
+# ============================== MAIN ==========================================
 def main() -> int:
-    ensure_dir(OUTPUT_DIR)
-    client_id, client_secret = get_credentials()
-
     try:
+        client_id, client_secret = get_credentials()
         token = get_access_token(client_id, client_secret)
         lat, lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
-        _debug(f"Geopunkt: {PLACE_NAME} {ZIP} → lat={lat:.4f}, lon={lon:.4f} → geolocationId='{geo_id}'")
         hours = get_hourly_forecast(token, geo_id)
+        next48 = select_next_48h(hours)
 
-        # vergangene Stunde + aktuelle + nächste 48h
-        hours_prev_cur_48 = filter_prev_current_plus_48h(hours)
+        if len(next48) == 0:
+            print("Keine Forecastdaten für die nächsten 48 h gefunden.", file=sys.stderr)
+            return 2
 
-        payload = {
-            "place": {"name": PLACE_NAME, "zip": ZIP, "geolocation_id": geo_id, "lat": round(lat, 4), "lon": round(lon, 4)},
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "note": "Enthält die vergangene Stunde, die laufende Stunde (Ende = nächste volle) und die folgenden 48 Stunden.",
-            "timezone": TZ,
-            "source": f"{API_BASE}/forecastpoint/{geo_id}",
-            "count": len(hours_prev_cur_48),
-            "hours": hours_prev_cur_48,
-        }
-        write_json(JSON_OUT, payload)
-        write_csv(CSV_OUT, hours_prev_cur_48)
+        print(f"Schreibe {len(next48)} Stunden (ab nächster voller Stunde, TZ={TZ}) nach Volkszähler…")
+        count_T = count_I = 0
 
-        # ---- Konsolenausgabe: aktuelle Stunde (Ende = nächste volle) ----
-        tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
-        now_local = datetime.now(tz)
-        hour_end_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-        hour_start_local = hour_end_local - timedelta(hours=1)
-        target_end_utc = hour_end_local.astimezone(timezone.utc)
+        for row in next48:
+            # SRF date_time bezeichnet das STUNDENENDE
+            dt_utc = parse_dt(row.get("date_time"))
+            ts_ms = int(dt_utc.timestamp() * 1000)
 
-        # Zeile für das Ende der aktuellen Stunde suchen
-        best_row = None
-        best_dt_utc = None
-        for r in hours_prev_cur_48:
-            dt_str = r.get("date_time")
-            if not dt_str:
-                continue
+            # Temperatur (°C)
+            ttt = row.get("TTT_C")
             try:
-                dt_utc = parse_dt(dt_str)
-            except Exception:
-                continue
+                if ttt is not None:
+                    t_val = float(str(ttt).replace(",", "."))
+                    vz_write(UUID_T_OUTDOOR, t_val, ts_ms)
+                    count_T += 1
+            except Exception as e:
+                print(f"Warnung: TTT_C für {dt_utc.isoformat()} konnte nicht geschrieben werden: {e}", file=sys.stderr)
 
-            if abs((dt_utc - target_end_utc).total_seconds()) <= 30:
-                best_row, best_dt_utc = r, dt_utc
-                break
-            if dt_utc >= target_end_utc:
-                if best_dt_utc is None or dt_utc < best_dt_utc:
-                    best_row, best_dt_utc = r, dt_utc
+            # Globalstrahlung (W/m²)
+            irr = row.get("IRRADIANCE_WM2")
+            try:
+                if irr is not None:
+                    i_val = float(str(irr).replace(",", "."))
+                    vz_write(UUID_P_PV, i_val, ts_ms)
+                    count_I += 1
+            except Exception as e:
+                print(f"Warnung: IRRADIANCE_WM2 für {dt_utc.isoformat()} konnte nicht geschrieben werden: {e}", file=sys.stderr)
 
-        if best_row:
-            temp_c = _to_float(_get_ci(best_row, "TTT_C"))
-            # Globalstrahlung exakt als W/m² (keine kW/m²-Skalierung!)
-            irr_wm2 = _to_float(_get_ci(best_row, "IRRADIANCE_WM2"))
-
-            # Sonnenhöhe zur Stundenmitte (nur zur Plausibilisierung der Globalstrahlung)
-            hour_mid_local = hour_end_local - timedelta(minutes=30)
-            sun_el = _solar_elevation_deg(hour_mid_local, lat, lon)
-
-            print(
-                f"Aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}–"
-                f"{hour_end_local.strftime('%H:%M')} ({TZ})"
-            )
-            print(f"  Außentemperatur: {temp_c:.1f} °C" if temp_c is not None else "  Außentemperatur: n/a")
-            if irr_wm2 is not None:
-                print(f"  Globalstrahlung: {irr_wm2:.0f} W/m²")
-            else:
-                print("  Globalstrahlung: n/a (Feld IRRADIANCE_WM2 fehlt)")
-
-            if irr_wm2 == 0 and sun_el <= 0.0:
-                print("  Hinweis: Sonnenhöhe ≤ 0° → Nacht / keine direkte Einstrahlung (0 W/m² plausibel).")
-            elif irr_wm2 == 0 and sun_el > 0.0 and os.environ.get("DEBUG"):
-                _debug(f"IRRADIANCE_WM2=0 bei Sonnenhöhe {sun_el:.1f}°. Verfügbare Keys: {sorted(best_row.keys())}")
-
-        else:
-            print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine Werte ausgegeben.")
-
-        print(f"OK – gespeichert: {JSON_OUT} und {CSV_OUT} (Stunden: {len(hours_prev_cur_48)})")
+        print(f"OK – geschrieben: T_outdoor_forecast={count_T} Werte, P_PV_forecast={count_I} Werte.")
         return 0
 
     except ApiError as e:
