@@ -159,34 +159,69 @@ def _iter_section_tuples(section: dict) -> Iterable[list]:
 
 
 # =========================
-# 1) Letzten Wechsel „1 → !=1“ finden (Wert in Spalte 1)
+# 1) Letzten Wechsel „target → !=target“ finden (Rohwert in Spalte 1)
 # =========================
-def _val_from_tuple(t: list) -> Optional[int]:
+def _value_from_tuple_raw(t: list):
     """
-    Interpretiert die **zweite** Spalte (Index 1) als Wert.
-    Akzeptiert 0/1, floats, 'true'/'false'. Gibt 0/1 zurück.
+    Liefert den ROHwert aus Spalte 1 (Index 1).
+    - Zahlen bleiben Zahlen (float)
+    - 'true'/'false' -> 1/0
+    - Strings, die nicht als Zahl parsebar sind, bleiben Strings (lower/stripped)
     """
     if not isinstance(t, (list, tuple)) or len(t) < 2:
         return None
     v = t[1]
-    try:
-        if isinstance(v, str):
-            s = v.strip().lower()
-            if s == "true":
-                return 1
-            if s == "false":
-                return 0
-            v = s.replace(",", ".")
-        f = float(v)
-        return 1 if int(round(f)) != 0 else 0
-    except Exception:
+
+    if isinstance(v, bool):
+        return 1.0 if v else 0.0
+
+    if isinstance(v, (int, float)):
+        return float(v)
+
+    if isinstance(v, str):
+        s = v.strip().lower()
+        if s == "true":
+            return 1.0
+        if s == "false":
+            return 0.0
+        try:
+            return float(s.replace(",", "."))
+        except Exception:
+            return s  # nicht-numerischer String bleibt String
+
+    return None
+
+
+def _values_equal(a, b) -> bool:
+    """
+    Vergleicht a und b robust:
+    - Wenn beide numerisch interpretierbar sind -> numerischer Vergleich (mit Toleranz)
+    - Sonst Stringvergleich (lower/stripped)
+    """
+    def _to_num(x):
+        if isinstance(x, (int, float)):
+            return float(x)
+        if isinstance(x, str):
+            try:
+                return float(x.strip().lower().replace(",", "."))
+            except Exception:
+                return None
+        if isinstance(x, bool):
+            return 1.0 if x else 0.0
         return None
 
+    an = _to_num(a)
+    bn = _to_num(b)
+    if an is not None and bn is not None:
+        return abs(an - bn) <= 1e-9
+    return str(a).strip().lower() == str(b).strip().lower()
 
-def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optional[int]:
+
+def find_last_ts_equal(uuid: str, target_value: Any, lookback_min: int) -> Optional[int]:
     """
-    Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (z.B. 1) zu !=target_value**
+    Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value zu !=target_value**
     innerhalb des Lookback-Fensters. Wert wird aus Spalte 1 der Tupel gelesen: [ts, value, (quality)].
+    Es findet KEINE Binarisierung statt – Rohwerte werden verwendet (z.B. 1 → 5 wird erkannt).
     """
     payload = get_vals(uuid, f"-{lookback_min}min")
     sections = _normalize_sections(payload)
@@ -194,17 +229,17 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
         _d("[DEBUG] find_last_ts_equal: keine sections im Payload")
         return None
 
-    samples: List[Tuple[int, int]] = []  # (ts_ms, val(0/1))
+    samples: List[Tuple[int, Any]] = []  # (ts_ms, val_raw)
     for section in sections:
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
             except Exception:
                 continue
-            val_bin = _val_from_tuple(t)
-            if val_bin is None:
+            val_raw = _value_from_tuple_raw(t)
+            if val_raw is None:
                 continue
-            samples.append((ts_ms, val_bin))
+            samples.append((ts_ms, val_raw))
 
     if not samples:
         _d("[DEBUG] find_last_ts_equal: keine verwertbaren (ts,val)-Paare")
@@ -217,13 +252,13 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
     for i in range(1, len(samples)):
         prev_val = samples[i - 1][1]
         cur_val = samples[i][1]
-        if prev_val == target_value and cur_val != target_value:
+        if _values_equal(prev_val, target_value) and not _values_equal(cur_val, target_value):
             last_change_ts = samples[i][0]  # Zeitpunkt, ab dem der neue (≠target) Wert gilt
 
     if last_change_ts is None:
-        _d("[DEBUG] kein 1→!=1 Wechsel im Fenster gefunden")
+        _d("[DEBUG] kein target→!=target Wechsel im Fenster gefunden")
     else:
-        _d(f"[DEBUG] letzter 1→!=1 Wechsel @ {fmt_ts(last_change_ts)}")
+        _d(f"[DEBUG] letzter {target_value}→!= {target_value} Wechsel @ {fmt_ts(last_change_ts)}")
 
     return last_change_ts
 
