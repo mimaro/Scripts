@@ -2,22 +2,23 @@
 # -*- coding: utf-8 -*-
 
 """
-SRF Meteo 48h → Volkszähler (Vorschau + immer: Bereich löschen, dann neu schreiben)
+SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben)
 
 - Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
-- Wählt genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
-- KONSOLE: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
-- Volkszähler: löscht 48h-Bereich und schreibt dann neu (ts = ms seit 1970-01-01 UTC)
+- Auswahl: genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
+- Konsole: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
+- Volkszähler: löscht 48h-Bereich (beide Kanäle) und schreibt dann neu
+- Zeitstempel beim Schreiben: Millisekunden seit 1970-01-01 00:00:00 **UTC**
 
-Konfiguration via Env (optional):
-  SRG_CLIENT_ID / SRG_CLIENT_SECRET     OAuth für SRF Meteo
+Umgebungsvariablen (optional):
+  SRG_CLIENT_ID / SRG_CLIENT_SECRET   OAuth für SRF Meteo
   SRF_ZIP=5607, SRF_PLACE="Hägglingen", LOCAL_TZ="Europe/Zurich"
-  VZ_BASE_URL="http://<host>/middleware.php"
+  VZ_BASE_URL="http://<host>/middleware.php"   # ggf. /middleware statt /middleware.php
   UUID_T_OUTDOOR_FORECAST, UUID_P_PV_FORECAST
   DRY_RUN=1  → nur ausgeben, nichts schreiben
   DEBUG=1    → Debug-Logs
 
-WICHTIG: Der DB-User der Volkszähler-Middleware muss DELETE-Rechte haben.
+Voraussetzung: requests (pip install requests)
 """
 
 import base64
@@ -43,12 +44,12 @@ ZIP = int(os.environ.get("SRF_ZIP", "5607"))
 PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")
 TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 
-# Volkszähler Defaults (deine genannten UUIDs)
+# Volkszähler (deine Defaults; bei Bedarf via Env überschreiben)
 VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_PV      = os.environ.get("UUID_P_PV_FORECAST",      "abcf6600-97c1-11f0-9348-db517d4efb8f")
 
-USER_AGENT = "srf-weather-vz/1.3"
+USER_AGENT = "srf-weather-vz/1.4"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -168,7 +169,7 @@ def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tu
     geo = best.get("geolocation") or {}
     lat = float(geo.get("lat"))
     lon = float(geo.get("lon"))
-    geolocation_id = f"{lat:.4f},{lon:.4f}"  # API akzeptiert "[lat],[lon]"
+    geolocation_id = f"{lat:.4f},{lon:.4f}"  # "[lat],[lon]"
     return lat, lon, geolocation_id
 
 def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]:
@@ -232,10 +233,14 @@ def vz_delete_range(uuid: str, from_ts_ms: int, to_ts_ms: int) -> None:
 
 def vz_write(uuid: str, value: float, ts_ms: int) -> None:
     """
-    Wert schreiben (POST, operation=add).
+    Wert schreiben (POST, operation=add) – Zeitstempel in ms (UTC).
     """
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
+    params = {
+        "operation": "add",
+        "ts": str(ts_ms),
+        "value": f"{float(value):.6f}",
+    }
     if DRY_RUN:
         print(f"DRY_RUN: POST {url} params={params}")
         return
@@ -266,24 +271,24 @@ def main() -> int:
             dt_local = dt_utc.astimezone(tz)
             local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
 
-            t_val = row.get("TTT_C")
-            i_val = row.get("IRRADIANCE_WM2")
+            t_val_raw = row.get("TTT_C")
+            i_val_raw = row.get("IRRADIANCE_WM2")
 
-            t_float = None
-            i_float = None
+            t_val = None
+            i_val = None
             try:
-                if t_val is not None:
-                    t_float = float(str(t_val).replace(",", "."))
+                if t_val_raw is not None:
+                    t_val = float(str(t_val_raw).replace(",", "."))
             except Exception:
-                t_float = None
+                t_val = None
             try:
-                if i_val is not None:
-                    i_float = float(str(i_val).replace(",", "."))
+                if i_val_raw is not None:
+                    i_val = float(str(i_val_raw).replace(",", "."))
             except Exception:
-                i_float = None
+                i_val = None
 
-            preview_T.append((local_str, ts_ms, t_float))
-            preview_I.append((local_str, ts_ms, i_float))
+            preview_T.append((local_str, ts_ms, t_val))
+            preview_I.append((local_str, ts_ms, i_val))
 
         # --- KONSOLE: getrennte Vorschau-Ausgabe ---
         print("\n===== Vorschau: Temperatur (TTT_C) – nächste 48h =====")
