@@ -14,7 +14,7 @@ Umgebungsvariablen (optional):
   SRG_CLIENT_ID / SRG_CLIENT_SECRET   OAuth für SRF Meteo
   SRF_ZIP=5607, SRF_PLACE="Hägglingen", LOCAL_TZ="Europe/Zurich"
   VZ_BASE_URL="http://<host>/middleware.php"   # ggf. /middleware statt /middleware.php
-  UUID_T_OUTDOOR_FORECAST, UUID_P_PV_FORECAST
+  UUID_T_OUTDOOR_FORECAST, UUID_P_IRR_FORECAST
   DRY_RUN=1  → nur ausgeben, nichts schreiben
   DEBUG=1    → Debug-Logs
 
@@ -44,12 +44,10 @@ ZIP = int(os.environ.get("SRF_ZIP", "5607"))
 PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")
 TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 
-# Volkszähler (deine Defaults; bei Bedarf via Env überschreiben)
+# Volkszähler (Defaults; bei Bedarf via Env überschreiben)
 VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
-UUID_P_PV      = os.environ.get("UUID_P_IRR_FORECAST",      "510567b0-990b-11f0-bb5b-d33e693aa264")
-
-	
+UUID_P_IRR     = os.environ.get("UUID_P_IRR_FORECAST",     "510567b0-990b-11f0-bb5b-d33e693aa264")
 
 USER_AGENT = "srf-weather-vz/1.4"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
@@ -310,7 +308,7 @@ def main() -> int:
         # Löschen & Neu schreiben
         print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (beide Kanäle)")
         vz_delete_range(UUID_T_OUTDOOR, start_ts_ms, end_ts_ms)
-        vz_delete_range(UUID_P_PV,      start_ts_ms, end_ts_ms)
+        vz_delete_range(UUID_P_IRR,     start_ts_ms, end_ts_ms)
 
         print(f"Schreibe {len(next48)} Stunden (ab nächster voller Stunde, TZ={TZ}) nach Volkszähler…")
         count_T = count_I = 0
@@ -324,12 +322,12 @@ def main() -> int:
                     print(f"Warnung: TTT_C @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
             if i_val is not None:
                 try:
-                    vz_write(UUID_P_PV, float(i_val), ts_ms)
+                    vz_write(UUID_P_IRR, float(i_val), ts_ms)
                     count_I += 1
                 except Exception as e:
                     print(f"Warnung: IRRADIANCE_WM2 @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
 
-        print(f"\nFertig – geschrieben: T_outdoor_forecast={count_T}, P_PV_forecast={count_I}.")
+        print(f"\nFertig – geschrieben: T_outdoor_forecast={count_T}, P_IRR_forecast={count_I}.")
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
         return 0
