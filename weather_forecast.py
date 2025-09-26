@@ -6,11 +6,15 @@ SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben
 + Zusatz: 24h-Mittel TTT_C → WP-Strom (kWh) & Heizwärmebedarf (kWh)
 + Zusatz: stündlicher COP (48h) aus TTT_C
 + Zusatz: stündliche max. Aufnahmeleistung der WP (48h) aus TTT_C
-+ NEU:    PV-Clip: min( PV-Prognose kW , PV-Max kW ) je Stunde (48h) → Ziel-UUID
++ NEU:    PV-Clip: min( PV-Prognose , PV-Max ) je Stunde (48h) → Ziel-UUID
 
-NEU (DST-fest):
-- Startzeitpunkt für **Datenabfragen** (from) in VZ entspricht **aktueller lokaler Zeit Europe/Zurich**
-  (Sommerzeit UTC+2 / Winterzeit UTC+1 automatisch), intern als UTC-ms verwendet.
+NEU:
+- Startzeitpunkt für VZ-Datenabfragen ist lokale Zeit Europe/Zurich (DST-fest).
+- Skalierungen (×1000) für folgende Ziel-UUIDs:
+  • UUID_HP_MAX_POWER         (kW → W)
+  • UUID_HEAT_DEMAND_KWH      (kWh → Wh)
+  • UUID_WP_POWER_KWH         (kWh → Wh)
+  • UUID_PV_CAPPED_FORECAST_OUT (W → W×1000; Inputs werden in W gelesen)
 """
 
 import base64
@@ -41,19 +45,19 @@ VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.ph
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_IRR     = os.environ.get("UUID_P_IRR_FORECAST",     "510567b0-990b-11f0-bb5b-d33e693aa264")
 
-# Zusätzliche Kennzahlen
-UUID_WP_POWER_KWH    = os.environ.get("UUID_WP_POWER_KWH",    "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")
-UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f0-8991-c9bc212463c9")
-UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")
-UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")  # WP max (kW)
+# Zusätzliche Kennzahlen (Ziele)
+UUID_WP_POWER_KWH    = os.environ.get("UUID_WP_POWER_KWH",    "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")  # kWh → schreiben als Wh (×1000)
+UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f0-8991-c9bc212463c9")  # kWh → schreiben als Wh (×1000)
+UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")  # dimensionslos
+UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")  # kW → schreiben als W (×1000)
 
-# PV-Clip-UUIDs
+# PV-Clip: Eingänge (in W lesen) & Ziel
 UUID_PV_PROD_FORECAST_IN    = os.environ.get("UUID_PV_PROD_FORECAST_IN",
-                                             "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose kW
+                                             "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose (W)
 UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
-                                             "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max kW (Quelle)
+                                             "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max (W)
 UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
-                                             "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # min(prod, max)
+                                             "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # schreiben als W×1000
 
 # Mittelwert-Fenster & Formeln
 AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
@@ -74,9 +78,14 @@ FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
 FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
 
-USER_AGENT = "srf-weather-vz/1.8"
+USER_AGENT = "srf-weather-vz/1.9"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
+
+# ===== Skalierungsfaktoren (einheitlich an einer Stelle) =====
+SCALE_HP_MAX_kW_TO_W        = 1000.0   # für UUID_HP_MAX_POWER
+SCALE_ENERGY_kWh_TO_Wh      = 1000.0   # für UUID_WP_POWER_KWH & UUID_HEAT_DEMAND_KWH
+SCALE_PV_CLIP_W_TO_WTIMES   = 1000.0   # für UUID_PV_CAPPED_FORECAST_OUT (Inputs in W → write W×1000)
 
 # ============================== UTILS =========================================
 class ApiError(RuntimeError):
@@ -284,24 +293,19 @@ def now_local_dt() -> datetime:
     return datetime.now(ZoneInfo(TZ) if ZoneInfo else timezone.utc)
 
 def local_now_ms_utc() -> int:
-    """
-    Liefert den aktuellen lokalen Zeitpunkt (Europe/Zurich),
-    konvertiert nach UTC, als Epoch ms.
-    """
+    """Aktueller lokaler Zeitpunkt → UTC-ms."""
     return int(now_local_dt().astimezone(timezone.utc).timestamp() * 1000)
 
 # ============== PV-Clip-Funktion: min(PV_Prod, PV_Max) je Stunde schreiben ====
 def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_loc) -> None:
     """
-    - Liest PV-Prod (kW) und PV-Max (kW) aus VZ für [from_ms_localnow, to_ms]
-      (Start = **aktuelle lokale Zeit** Europe/Zurich → UTC-ms)
-    - Ermittelt je ts in ts_grid das Minimum
-    - Löscht Zielbereich und schreibt 48 Punkte
-    - Gibt alle Punkte in der Konsole aus
+    - Liest PV-Prod (W) und PV-Max (W) aus VZ für [from_ms_localnow, to_ms]
+    - Ermittelt je ts in ts_grid das Minimum (W)
+    - Löscht Zielbereich und schreibt 48 Punkte als **W×1000** (gemäß Vorgabe)
     """
     print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
 
-    # Daten laden mit lokalem Startzeitpunkt (DST-fest)
+    # Daten laden (Inputs in W)
     prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, from_ms_localnow, to_ms)
     vmax = vz_get_tuples(UUID_PV_MAX_FORECAST_IN,  from_ms_localnow, to_ms)
     prod_map = {ts: v for ts, v, _ in prod}
@@ -314,31 +318,29 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
     except Exception as e:
         print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
-    # Kopfzeile Konsole
-    print("Zeit lokal | ts_ms | PV_Prod_kW | PV_Max_kW | min_kW")
-
+    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | min_W | geschrieben (W×1000)")
     written = 0
     for ts in ts_grid:
         dt_local = datetime.fromtimestamp(ts/1000.0, tz=timezone.utc).astimezone(tz_loc)
         local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
-        p = prod_map.get(ts, None)
-        m = vmax_map.get(ts, None)
+        p = prod_map.get(ts); m = vmax_map.get(ts)
 
         if p is None or m is None:
-            p_str = "n/a" if p is None else f"{p:.3f}"
-            m_str = "n/a" if m is None else f"{m:.3f}"
-            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a (fehlender Wert)")
+            p_str = "n/a" if p is None else f"{p:.1f}"
+            m_str = "n/a" if m is None else f"{m:.1f}"
+            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a | n/a")
             continue
 
-        v = min(float(p), float(m))
-        print(f"{local_str} | {ts} | {p:.3f} | {m:.3f} | {v:.3f}")
+        v_w = min(float(p), float(m))              # W
+        v_write = v_w * SCALE_PV_CLIP_W_TO_WTIMES  # W×1000
+        print(f"{local_str} | {ts} | {p:.1f} | {m:.1f} | {v_w:.1f} | {v_write:.1f}")
         try:
-            vz_write(UUID_PV_CAPPED_FORECAST_OUT, v, ts)
+            vz_write(UUID_PV_CAPPED_FORECAST_OUT, v_write, ts)
             written += 1
         except Exception as e:
             print(f"Warnung: Schreiben @ ts_ms={ts} fehlgeschlagen: {e}", file=sys.stderr)
 
-    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte auf {UUID_PV_CAPPED_FORECAST_OUT}.")
+    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte → {UUID_PV_CAPPED_FORECAST_OUT} (W×1000).")
 
 # ============================== MAIN ==========================================
 def main() -> int:
@@ -419,22 +421,27 @@ def main() -> int:
         if temps:
             t_mean = sum(temps) / len(temps)
             t_eff = min(t_mean, TEMP_CAP_MAX_C)
-            wp_kwh = wp_power_kwh_from_t(t_mean)
-            q_kwh  = heat_demand_kwh_from_t(t_mean)
+            wp_kwh = wp_power_kwh_from_t(t_mean)       # kWh
+            q_kwh  = heat_demand_kwh_from_t(t_mean)    # kWh
             ts_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+            wp_wh = wp_kwh * SCALE_ENERGY_kWh_TO_Wh    # schreiben als Wh
+            q_wh  = q_kwh  * SCALE_ENERGY_kWh_TO_Wh    # schreiben als Wh
+
             print("\n===== 24h-Mittel & abgeleitete Kennzahlen =====")
             print(f"Fenster    : nächste {len(temps)} h")
-            print(f"T_mean     : {t_mean:.2f} °C (gedeckelt bei {TEMP_CAP_MAX_C:.1f} °C → {t_eff:.2f} °C)")
-            print(f"WP-Strom   : {wp_kwh:.3f} kWh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
-            print(f"Heizwärme  : {q_kwh:.3f} kWh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
-            try: vz_write(UUID_WP_POWER_KWH, float(wp_kwh), ts_now_ms)
-            except Exception as e: print(f"Warnung: WP-Strom (kWh) nicht geschrieben: {e}", file=sys.stderr)
-            try: vz_write(UUID_HEAT_DEMAND_KWH, float(q_kwh), ts_now_ms)
-            except Exception as e: print(f"Warnung: Heizwärme (kWh) nicht geschrieben: {e}", file=sys.stderr)
+            print(f"T_mean     : {t_mean:.2f} °C (Deckel {TEMP_CAP_MAX_C:.1f} °C → {t_eff:.2f} °C)")
+            print(f"WP-Strom   : {wp_kwh:.3f} kWh → write {wp_wh:.1f} Wh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
+            print(f"Heizwärme  : {q_kwh:.3f} kWh → write {q_wh:.1f} Wh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
+
+            try: vz_write(UUID_WP_POWER_KWH, float(wp_wh), ts_now_ms)
+            except Exception as e: print(f"Warnung: WP-Strom (Wh) nicht geschrieben: {e}", file=sys.stderr)
+            try: vz_write(UUID_HEAT_DEMAND_KWH, float(q_wh), ts_now_ms)
+            except Exception as e: print(f"Warnung: Heizwärme (Wh) nicht geschrieben: {e}", file=sys.stderr)
         else:
             print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
 
-        # COP (48h)
+        # COP (48h) – dimensionslos
         print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
         print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
         try: vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
@@ -449,8 +456,8 @@ def main() -> int:
             except Exception as e: print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
 
-        # WP max Aufnahmeleistung (48h)
-        print("\n===== Max. Aufnahmeleistung WP (kW) – stündlich, nächste 48h =====")
+        # WP max Aufnahmeleistung (48h) – kW → schreiben als W
+        print("\n===== Max. Aufnahmeleistung WP – stündlich, nächste 48h =====")
         print(f"Lösche Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_HP_MAX_POWER})")
         try: vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
         except Exception as e: print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
@@ -458,13 +465,14 @@ def main() -> int:
         for (local_str, ts_ms, t_val) in preview_T:
             if t_val is None:
                 print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)"); continue
-            pmax_kw = hp_max_power_kw_from_t(t_val)
-            print(f"{local_str} | ts_ms={ts_ms} | T={t_val:.2f} °C | Pmax={pmax_kw:.3f} kW")
-            try: vz_write(UUID_HP_MAX_POWER, float(pmax_kw), ts_ms); count_HP_MAX += 1
+            pmax_kw = hp_max_power_kw_from_t(t_val)            # kW
+            pmax_w  = pmax_kw * SCALE_HP_MAX_kW_TO_W           # W
+            print(f"{local_str} | ts_ms={ts_ms} | T={t_val:.2f} °C | Pmax={pmax_kw:.3f} kW → write {pmax_w:.1f} W")
+            try: vz_write(UUID_HP_MAX_POWER, float(pmax_w), ts_ms); count_HP_MAX += 1
             except Exception as e: print(f"Warnung: Pmax @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
-        print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte.")
+        print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte (W).")
 
-        # PV-CLIP: Startzeitpunkt der **Abfrage** = lokale Jetztzeit (DST-fest)
+        # PV-CLIP: Startzeitpunkt der Abfrage = lokale Jetztzeit (DST-fest)
         from_ms_localnow = local_now_ms_utc()
         pv_clip_and_write(ts_grid, from_ms_localnow, end_ts_ms, tz_loc)
 
