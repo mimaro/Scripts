@@ -2,18 +2,22 @@
 # -*- coding: utf-8 -*-
 
 """
-PV-Produktions-Forecast (48h) aus Volkszähler-IRR (W/m²) → kW nach Volkszähler schreiben
+PV-Produktions-Forecast (48h) aus Volkszähler-IRR (W/m²) → **WATT** nach Volkszähler schreiben
+
+Änderung: Der berechnete PV-Ertragswert wird nicht mehr in kW gespeichert,
+sondern (wie gewünscht) um den Faktor 1000 skaliert und in **W** geschrieben.
 
 - Quelle (lesen):  UUID_P_IRR_FORECAST  (Globalstrahlung in W/m², Stundenende als ts_ms)
-- Ziel  (schreiben):abcf6600-97c1-11f0-9348-db517d4efb8f  (PV-Forecast in kW)
-- Bereich: nächste 48 Stunden ab nächster voller Stunde (Europe/Zurich)
-- Vor dem Schreiben: vorhandene Werte im Bereich auf der Ziel-UUID löschen
-- Konsole: je Stunde lokale Zeit, ts_ms, IRR (W/m²), optional T_amb (°C), P_PV (kW)
+- Ziel  (schreiben):UUID_PV_FORECAST_OUT (PV-Forecast in **W**)
+- Raster: exakt 48 Stunden ab Ende der aktuellen Stunde (Europe/Zurich)
+- Vor dem Schreiben: vorhandene Werte im 48h-Bereich auf der Ziel-UUID löschen
+- Konsole: je Stunde lokale Zeit, ts_ms, IRR (W/m²), T_amb (°C), P_PV (**W**)
 
 Umgebungsvariablen (optional):
   VZ_BASE_URL                (default: http://192.168.178.49/middleware.php)
   UUID_P_IRR_FORECAST        (default: 510567b0-990b-11f0-bb5b-d33e693aa264)
-  UUID_T_OUTDOOR_FORECAST    (optional; wenn gesetzt, wird T_amb aus VZ gelesen)
+  UUID_T_OUTDOOR_FORECAST    (default: c56767e0-97c1-11f0-96ab-41d2e85d0d5f)
+  UUID_PV_FORECAST_OUT       (default: abcf6600-97c1-11f0-9348-db517d4efb8f)
   LOCAL_TZ                   (default: Europe/Zurich)
   LAT, LON                   (default: 47.3870, 8.2500 – Hägglingen)
   DRY_RUN=1                  → nur ausgeben, nichts löschen/schreiben
@@ -25,7 +29,6 @@ Voraussetzung: pip install requests
 import os
 import math
 import sys
-import json
 import requests
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timedelta, timezone
@@ -43,27 +46,28 @@ UUID_P_IRR = os.environ.get(
     "510567b0-990b-11f0-bb5b-d33e693aa264"  # <- Quelle: IRR W/m² (Forecast)
 )
 UUID_T_OUTDOOR = os.environ.get(
-    "UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f"           # <- optional Quelle: T_amb °C (Forecast)
+    "UUID_T_OUTDOOR_FORECAST",
+    "c56767e0-97c1-11f0-96ab-41d2e85d0d5f"  # <- Standard-Quelle: T_amb °C (Forecast)
 )
 UUID_PV_OUT = os.environ.get(
     "UUID_PV_FORECAST_OUT",
-    "abcf6600-97c1-11f0-9348-db517d4efb8f"  # <- Ziel: PV-Forecast in kW
+    "abcf6600-97c1-11f0-9348-db517d4efb8f"  # <- Ziel: PV-Forecast in **W**
 )
 
 LOCAL_TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 LAT = float(os.environ.get("LAT", "47.3870"))
 LON = float(os.environ.get("LON", "8.2500"))
 
-USER_AGENT = "pv-forecast-from-vz/1.0"
+USER_AGENT = "pv-forecast-from-vz/1.2"
 TIMEOUT = 25
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 
-# PV-Modell (einfach & robust; identisch zum bisherigen Ansatz)
+# PV-Modell
 CONFIG = {
     "noct_c": 45.0,               # Nominal Operating Cell Temp
     "temp_coeff_per_K": -0.004,   # Wirkungsgradänderung pro Kelvin
     "eta_stc": 0.17,              # Modulwirkungsgrad bei STC
-    # Zwei Teildächer (Beispielwerte wie zuvor)
+    # Zwei Teildächer (Beispielwerte)
     "arrays": [
         {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.8},
         {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.6},
@@ -71,22 +75,24 @@ CONFIG = {
 }
 # --------------------------------------------------
 
-def _tz() -> timezone:
+def _tz():
     return ZoneInfo(LOCAL_TZ) if ZoneInfo else timezone.utc
 
 def _debug(msg: str) -> None:
     if os.environ.get("DEBUG"):
         print(f"[DEBUG] {msg}", file=sys.stderr)
 
-# ---------- Zeitfenster: nächste 48h ab nächster voller Stunde ----------
-def next_48h_window_ms() -> Tuple[int, int]:
+# ---------- 48h-Stundenraster ----------
+def next_48h_grid_ms() -> List[int]:
+    """Gibt 48 Zeitstempel (ms UTC) für das Ende der Stunden ab nächster voller Stunde zurück."""
     tz = _tz()
     now_local = datetime.now(tz)
     start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    end_local = start_local + timedelta(hours=48)
-    start_ms = int(start_local.astimezone(timezone.utc).timestamp() * 1000)
-    end_ms   = int(end_local  .astimezone(timezone.utc).timestamp() * 1000)
-    return start_ms, end_ms
+    grid: List[int] = []
+    for i in range(48):
+        dt_local = start_local + timedelta(hours=i)
+        grid.append(int(dt_local.astimezone(timezone.utc).timestamp() * 1000))
+    return grid
 
 # --------------------- Volkszähler I/O ---------------------
 def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float, int]]:
@@ -106,9 +112,8 @@ def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float,
             out.append((ts, val, qual))
         except Exception:
             continue
-    # sortieren & auf 48 Einträge begrenzen
     out.sort(key=lambda x: x[0])
-    return out[:48]
+    return out
 
 def vz_delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
     """Löscht Werte im Bereich [from_ms, to_ms] auf UUID (erfordert DELETE-Rechte)."""
@@ -122,9 +127,9 @@ def vz_delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
         raise RuntimeError(f"Volkszähler-DELETE fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
 def vz_write_point(uuid: str, ts_ms: int, value: float) -> None:
-    """Schreibt einen Punkt (kW) auf UUID (operation=add, ts in ms UTC)."""
+    """Schreibt einen Punkt (**W**) auf UUID (operation=add, ts in ms UTC)."""
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
+    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.3f}"}
     if DRY_RUN:
         print(f"DRY_RUN: POST {url} {params}")
         return
@@ -132,7 +137,7 @@ def vz_write_point(uuid: str, ts_ms: int, value: float) -> None:
     if not r.ok:
         raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-# --------------------- Sonnenstand & Modell ---------------------
+# --------------------- Sonnenstand & PV-Modell ---------------------
 def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[str, float]:
     """
     Vereinfachte Sonnenstandsberechnung.
@@ -216,37 +221,38 @@ def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
 # --------------------- Hauptlogik ---------------------
 def main() -> int:
     try:
-        # Zeitfenster bestimmen
-        start_ms, end_ms = next_48h_window_ms()
+        # 1) 48h-Gitter (ms UTC) ermitteln
+        ts_grid = next_48h_grid_ms()
+        start_ms, end_ms = ts_grid[0], ts_grid[-1]
 
-        # IRR W/m² lesen
+        # 2) IRR W/m² & T_amb °C aus VZ lesen (für das gleiche Fenster)
         irr_tuples = vz_get_tuples(UUID_P_IRR, start_ms, end_ms)
         if not irr_tuples:
             print("Keine IRR-Werte im gewünschten 48h-Fenster gefunden.", file=sys.stderr)
             return 2
+        irr_map: Dict[int, float] = {ts: val for ts, val, _ in irr_tuples}
 
-        # Optional: T_amb lesen (wenn UUID vorhanden)
         t_map: Dict[int, float] = {}
-        if UUID_T_OUTDOOR:
-            try:
-                t_tuples = vz_get_tuples(UUID_T_OUTDOOR, start_ms, end_ms)
-                t_map = {ts: val for ts, val, _ in t_tuples}
-            except Exception as e:
-                print(f"Hinweis: Konnte T_amb nicht laden ({e}) – verwende Fallback 15.0 °C.")
+        try:
+            t_tuples = vz_get_tuples(UUID_T_OUTDOOR, start_ms, end_ms)
+            t_map = {ts: val for ts, val, _ in t_tuples}
+        except Exception as e:
+            print(f"Hinweis: Konnte T_amb nicht laden ({e}) – verwende Fallback 15.0 °C.")
 
+        # 3) Berechnung exakt für die 48 Zeitpunkte des Gitters
         tz = _tz()
-        preview: List[Tuple[str, int, float, Optional[float], float]] = []  # local_str, ts_ms, IRR, T_amb, P_kW
+        preview: List[Tuple[str, int, float, float, float]] = []  # local_str, ts_ms, IRR, T_amb, P_W
 
-        # Berechnen
-        for ts_ms, irr_wm2, _qual in irr_tuples:
+        for ts_ms in ts_grid:
             dt_utc = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
-            # Mittelpunktszeit für Sonnenstand
+            # Mittelpunktszeit (für Sonnenstand)
             dt_mid_local = (dt_utc - timedelta(minutes=30)).astimezone(tz)
+
+            irr_wm2 = float(irr_map.get(ts_ms, 0.0))     # fehlende IRR → 0.0
+            amb_c   = float(t_map.get(ts_ms, 15.0))      # fehlende T   → 15.0 °C
+
             sun = solar_position(dt_mid_local, LAT, LON)
 
-            # Ambient-Temp:
-            amb_c = t_map.get(ts_ms, 15.0)  # 15°C Fallback
-            # Leistung pro Array aufsummieren
             total_kw = 0.0
             for arr in CONFIG["arrays"]:
                 poa = plane_of_array_from_ghi(
@@ -266,39 +272,32 @@ def main() -> int:
                 )
                 total_kw += p_kw
 
+            # >>> EINHEIT ANPASSEN: **Watt**
+            total_w = total_kw * 1000.0
+
             local_str = dt_utc.astimezone(tz).strftime("%Y-%m-%d %H:%M %Z")
-            preview.append((local_str, ts_ms, float(irr_wm2), (amb_c if UUID_T_OUTDOOR else None), round(total_kw, 3)))
+            preview.append((local_str, ts_ms, irr_wm2, amb_c, round(total_w, 1)))
 
-        # Konsole: Vorschau
-        print("\n===== Vorschau: PV-Forecast (kW) – nächste 48h =====")
-        hdr = "Zeit lokal | ts_ms | IRR (W/m²) | "
-        hdr += ("T_amb (°C) | " if UUID_T_OUTDOOR else "")
-        hdr += "P_PV (kW)"
-        print(hdr)
-        for row in preview:
-            if UUID_T_OUTDOOR:
-                local_str, ts_ms, irr, amb, pkw = row
-                amb_s = f"{amb:.1f} °C" if amb is not None else "n/a"
-                print(f"{local_str} | {ts_ms} | {irr:.0f} | {amb_s} | {pkw:.3f}")
-            else:
-                local_str, ts_ms, irr, _amb, pkw = row
-                print(f"{local_str} | {ts_ms} | {irr:.0f} | {pkw:.3f}")
+        # 4) Konsole: Vorschau (48 Zeilen, jetzt in W)
+        print("\n===== Vorschau: PV-Forecast (**W**) – nächste 48h (exaktes Stundenraster) =====")
+        print("Zeit lokal | ts_ms | IRR (W/m²) | T_amb (°C) | P_PV (W)")
+        for local_str, ts_ms, irr, amb, p_w in preview:
+            print(f"{local_str} | {ts_ms} | {irr:.0f} | {amb:.1f} | {p_w:.1f}")
 
-        # Zielbereich löschen
-        print(f"\nLösche vorhandene PV-Forecast-Werte auf {UUID_PV_OUT}: {start_ms} … {preview[-1][1]}")
-        vz_delete_range(UUID_PV_OUT, start_ms, preview[-1][1])
+        # 5) Zielbereich löschen und schreiben (W)
+        print(f"\nLösche vorhandene PV-Forecast-Werte (W) auf {UUID_PV_OUT}: {start_ms} … {end_ms}")
+        vz_delete_range(UUID_PV_OUT, start_ms, end_ms)
 
-        # Schreiben
-        print(f"Schreibe {len(preview)} Stundenpunkte (kW) nach Volkszähler…")
+        print(f"Schreibe {len(preview)} Stundenpunkte (**W**) nach Volkszähler…")
         written = 0
-        for _, ts_ms, _irr, _amb, pkw in preview:
+        for _local, ts_ms, _irr, _amb, p_w in preview:
             try:
-                vz_write_point(UUID_PV_OUT, ts_ms, pkw)
+                vz_write_point(UUID_PV_OUT, ts_ms, p_w)
                 written += 1
             except Exception as e:
                 print(f"Warnung: Schreiben @ ts_ms={ts_ms} fehlgeschlagen: {e}", file=sys.stderr)
 
-        print(f"\nFertig – geschrieben: P_PV_forecast={written} Punkte auf {UUID_PV_OUT}.")
+        print(f"\nFertig – geschrieben: P_PV_forecast (W) = {written} Punkte auf {UUID_PV_OUT}.")
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
         return 0
