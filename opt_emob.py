@@ -159,69 +159,40 @@ def _iter_section_tuples(section: dict) -> Iterable[list]:
 
 
 # =========================
-# 1) Letzten Wechsel „target → !=target“ finden (Rohwert in Spalte 1)
+# 1) Letzten Wechsel „1 → !=1“ finden (Wert in Spalte 1)
 # =========================
-def _value_from_tuple_raw(t: list):
+def _raw_val_from_tuple(t: list) -> Optional[float]:
     """
-    Liefert den ROHwert aus Spalte 1 (Index 1).
-    - Zahlen bleiben Zahlen (float)
-    - 'true'/'false' -> 1/0
-    - Strings, die nicht als Zahl parsebar sind, bleiben Strings (lower/stripped)
+    Liest die **zweite** Spalte (Index 1) als **rohen numerischen Wert** (float).
+    Akzeptiert Zahlen/Strings (z.B. "5", "1.0"). Bei Fehlern -> None.
     """
     if not isinstance(t, (list, tuple)) or len(t) < 2:
         return None
     v = t[1]
-
-    if isinstance(v, bool):
-        return 1.0 if v else 0.0
-
-    if isinstance(v, (int, float)):
-        return float(v)
-
-    if isinstance(v, str):
-        s = v.strip().lower()
-        if s == "true":
-            return 1.0
-        if s == "false":
-            return 0.0
-        try:
-            return float(s.replace(",", "."))
-        except Exception:
-            return s  # nicht-numerischer String bleibt String
-
-    return None
-
-
-def _values_equal(a, b) -> bool:
-    """
-    Vergleicht a und b robust:
-    - Wenn beide numerisch interpretierbar sind -> numerischer Vergleich (mit Toleranz)
-    - Sonst Stringvergleich (lower/stripped)
-    """
-    def _to_num(x):
-        if isinstance(x, (int, float)):
-            return float(x)
-        if isinstance(x, str):
-            try:
-                return float(x.strip().lower().replace(",", "."))
-            except Exception:
-                return None
-        if isinstance(x, bool):
-            return 1.0 if x else 0.0
+    try:
+        if isinstance(v, str):
+            v = v.strip().replace(",", ".")
+        f = float(v)
+        if not math.isfinite(f):
+            return None
+        return f
+    except Exception:
         return None
 
-    an = _to_num(a)
-    bn = _to_num(b)
-    if an is not None and bn is not None:
-        return abs(an - bn) <= 1e-9
-    return str(a).strip().lower() == str(b).strip().lower()
+
+def _values_equal(a: Any, b: Any, tol: float = 1e-9) -> bool:
+    """Vergleicht zwei Werte numerisch (tolerant)."""
+    try:
+        return math.isclose(float(a), float(b), rel_tol=0.0, abs_tol=tol)
+    except Exception:
+        return a == b
 
 
-def find_last_ts_equal(uuid: str, target_value: Any, lookback_min: int) -> Optional[int]:
+def find_last_ts_equal(uuid: str, target_value: Union[int, float], lookback_min: int) -> Optional[int]:
     """
-    Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value zu !=target_value**
+    Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (z.B. 1) zu !=target_value**
     innerhalb des Lookback-Fensters. Wert wird aus Spalte 1 der Tupel gelesen: [ts, value, (quality)].
-    Es findet KEINE Binarisierung statt – Rohwerte werden verwendet (z.B. 1 → 5 wird erkannt).
+    WICHTIG: Es wird **der rohe Wert** verwendet (KEINE Binarisierung).
     """
     payload = get_vals(uuid, f"-{lookback_min}min")
     sections = _normalize_sections(payload)
@@ -229,14 +200,15 @@ def find_last_ts_equal(uuid: str, target_value: Any, lookback_min: int) -> Optio
         _d("[DEBUG] find_last_ts_equal: keine sections im Payload")
         return None
 
-    samples: List[Tuple[int, Any]] = []  # (ts_ms, val_raw)
+    # (ts, raw_val)
+    samples: List[Tuple[int, float]] = []
     for section in sections:
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
             except Exception:
                 continue
-            val_raw = _value_from_tuple_raw(t)
+            val_raw = _raw_val_from_tuple(t)
             if val_raw is None:
                 continue
             samples.append((ts_ms, val_raw))
@@ -247,18 +219,34 @@ def find_last_ts_equal(uuid: str, target_value: Any, lookback_min: int) -> Optio
 
     samples.sort(key=lambda x: x[0])
 
+    # Optionales Debug: kurze Statistik
+    if DEBUG:
+        first_ts, first_val = samples[0]
+        last_ts_s, last_val_s = samples[-1]
+        _d(f"[DEBUG] Punkte: {len(samples)}  von {fmt_ts(first_ts)} (v={first_val}) bis {fmt_ts(last_ts_s)} (v={last_val_s})")
+
+    # Aufeinanderfolgende Duplikate komprimieren (nur echte Wertwechsel behalten)
+    compact: List[Tuple[int, float]] = []
+    for ts, v in samples:
+        if not compact or not _values_equal(v, compact[-1][1]):
+            compact.append((ts, v))
+
+    if DEBUG:
+        _d(f"[DEBUG] komprimierte Wechselpunkte: {len(compact)}")
+        _d("[DEBUG] letzte 5 Zustände: " + ", ".join(f"{fmt_ts(ts)}=>{v}" for ts, v in compact[-5:]))
+
     # Den letzten Übergang target_value -> !=target_value suchen
     last_change_ts: Optional[int] = None
-    for i in range(1, len(samples)):
-        prev_val = samples[i - 1][1]
-        cur_val = samples[i][1]
+    for i in range(1, len(compact)):
+        prev_val = compact[i - 1][1]
+        cur_val = compact[i][1]
         if _values_equal(prev_val, target_value) and not _values_equal(cur_val, target_value):
-            last_change_ts = samples[i][0]  # Zeitpunkt, ab dem der neue (≠target) Wert gilt
+            last_change_ts = compact[i][0]  # Zeitpunkt, ab dem der neue (≠target) Wert gilt
 
     if last_change_ts is None:
-        _d("[DEBUG] kein target→!=target Wechsel im Fenster gefunden")
+        _d("[DEBUG] kein (target)->(!=target) Wechsel im Fenster gefunden")
     else:
-        _d(f"[DEBUG] letzter {target_value}→!= {target_value} Wechsel @ {fmt_ts(last_change_ts)}")
+        _d(f"[DEBUG] letzter {target_value}→!={target_value} Wechsel @ {fmt_ts(last_change_ts)}")
 
     return last_change_ts
 
