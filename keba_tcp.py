@@ -201,7 +201,7 @@ def main():
 
     #Prüfen PV-Ertrag & Freitage Stromtarif
     freigabe_pv = get_vals(UUID["PV_Prod"], duration="-15min")["data"]["average"]
-    freigabe_emob = get_vals(UUID["Freigabe_EMob"], duration="-1min")["data"]["average"]
+    freigabe_emob = get_vals(UUID["Freigabe_EMob"], duration="0min")["data"]["average"]
 
     # Schreibe auf KEBA
     if switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 0:
