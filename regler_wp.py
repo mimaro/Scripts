@@ -45,7 +45,9 @@ UUID = {
     "S_FREIGABE_KÜHLEN": "21eb5f90-76ef-11f0-be2d-11efc51999be",
     "T_Raum_OG_puffer": "82ba5d00-77b5-11f0-acfb-7d514a443171",
     "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533",
-    "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b"
+    "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
+    "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
+    "P_Ther_Prod": "69630320-6522-11ee-9e09-ebb553e47b70"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -375,6 +377,16 @@ def main():
     #logging.info("Ist-Wert WW-Temp ({}°C) >= Ausschalt-Wert WW-Temp ({}°C): WW_Sperrung {}".format(ww_temp,ww_aus,Ww_aus))
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
 
+    ######################################################################
+    logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
+
+    p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]
+    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min")["data"]["consumption"]
+
+    logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
+    logging.info("P thermisch Produziert: {}".format(p_therm_prod))
+
+    
     ######################################################################
     logging.info(f"---------- Modifikation Heizkurve ----------")   
     steigung_soll = 45
