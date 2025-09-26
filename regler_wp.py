@@ -48,8 +48,7 @@ UUID = {
     "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
     "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
     "P_Therm_Prod": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5",
-    "P_Therm_Bil_Freig": "73b73d10-9ab4-11f0-8b11-5dbc6ea585f4",
-    "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",
+    "P_Therm_Bil_Freig": "73b73d10-9ab4-11f0-8b11-5dbc6ea585f4"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
