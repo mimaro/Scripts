@@ -19,7 +19,7 @@ VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&v
 #######################################################################################################
 # Configuration
 UUID = {
-    "P_PV_Forecast": "abcf6600-97c1-11f0-9348-db517d4efb8f",
+    "P_WP_PV_min_Forecast": "2ef42c20-9abb-11f0-9cfd-ad07953daec6",
     "P_el_WP_Forecast": "58cbc600-9aaa-11f0-8a74-894e01bd6bb7",
     "COP_Forecast": "31877e20-9aaa-11f0-8759-733431a03535",
     "WP_el_Max": 	"46e21920-9ab9-11f0-9359-d3451ca32acb"
@@ -48,20 +48,18 @@ def main():
 
     opt_solar = 0 
 
-    p_pv_prod = get_vals(UUID["P_PV_Forecast"], duration="now&to=+720min")["data"]["consumption"]/1000
+    p_pv_wp_min = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]["consumption"]/1000
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="+720min&to=+2160min")["data"]["consumption"]/1000
     wp_el_max_tag = get_vals(UUID["P_PV_Forecast"], duration="now&to=+720min")["data"]["average"]
     
     cop_tag = get_vals(UUID["COP_Forecast"], duration="now&to=+720min")["data"]["average"]
     cop_nacht = get_vals(UUID["COP_Forecast"], duration="+720min&to=+1440min")["data"]["average"]
 
-    wp_betriebszeit = 
-
 
     
-    
-    logging.info("PV Produktion heute: {}".format(p_pv_prod))
+    logging.info("PV Produktion heute: {}".format(p_pv_wp_min))
     logging.info("El. Bedarf WP morgen: {}".format(p_el_wp_bed))
+    logging.info("Max el WP Leistung Tag: {}".format(wp_el_max_tag))
     logging.info("COP Tag: {}".format(cop_tag))
     logging.info("COP Nacht: {}".format(cop_nacht))
 
