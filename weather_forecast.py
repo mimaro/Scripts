@@ -7,6 +7,10 @@ SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben
 + Zusatz: stündlicher COP (48h) aus TTT_C
 + Zusatz: stündliche max. Aufnahmeleistung der WP (48h) aus TTT_C
 + NEU:    PV-Clip: min( PV-Prognose kW , PV-Max kW ) je Stunde (48h) → Ziel-UUID
+
+NEU (DST-fest):
+- Startzeitpunkt für **Datenabfragen** (from) in VZ entspricht **aktueller lokaler Zeit Europe/Zurich**
+  (Sommerzeit UTC+2 / Winterzeit UTC+1 automatisch), intern als UTC-ms verwendet.
 """
 
 import base64
@@ -43,7 +47,7 @@ UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f
 UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")
 UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")  # WP max (kW)
 
-# >>> NEU: PV-Clip-UUIDs
+# PV-Clip-UUIDs
 UUID_PV_PROD_FORECAST_IN    = os.environ.get("UUID_PV_PROD_FORECAST_IN",
                                              "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose kW
 UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
@@ -51,7 +55,7 @@ UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
 UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
                                              "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # min(prod, max)
 
-# Mittelwert-Fenster & Formeln (unverändert)
+# Mittelwert-Fenster & Formeln
 AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
 TEMP_CAP_MAX_C = float(os.environ.get("TEMP_CAP_MAX_C", "15.0"))
 
@@ -70,7 +74,7 @@ FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
 FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
 
-USER_AGENT = "srf-weather-vz/1.7"
+USER_AGENT = "srf-weather-vz/1.8"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -200,8 +204,8 @@ def parse_dt(dt_str: str) -> datetime:
     return dt.astimezone(timezone.utc)
 
 def select_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
-    now_local = datetime.now(tz)
+    tzloc = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+    now_local = datetime.now(tzloc)
     start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
     end_local = start_local + timedelta(hours=48)
     start_utc = start_local.astimezone(timezone.utc)
@@ -242,7 +246,6 @@ def vz_write(uuid: str, value: float, ts_ms: int) -> None:
     if not r.ok:
         raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-# >>> NEU: Lesen von Daten (tuples) aus VZ
 def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float, int]]:
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
     params = {"from": str(from_ms), "to": str(to_ms)}
@@ -275,26 +278,39 @@ def cop_from_t(t_c: float) -> float:
 def hp_max_power_kw_from_t(t_c: float) -> float:
     return max(0.0, FORM_HP_MAX_M * t_c + FORM_HP_MAX_B)
 
-# >>> NEU: PV-Clip-Funktion: min(PV_Prod, PV_Max) je TS schreiben
-def pv_clip_and_write(ts_grid: List[int], start_ms: int, end_ms: int, tz_loc) -> None:
+# ============================== NEU: Zeit-Helfer (DST-sicher) =================
+def now_local_dt() -> datetime:
+    """Aktuelle lokale Zeit (Europe/Zurich), inkl. Sommer-/Winterzeit."""
+    return datetime.now(ZoneInfo(TZ) if ZoneInfo else timezone.utc)
+
+def local_now_ms_utc() -> int:
     """
-    - Liest PV-Prod (kW) und PV-Max (kW) aus VZ für [start_ms, end_ms]
+    Liefert den aktuellen lokalen Zeitpunkt (Europe/Zurich),
+    konvertiert nach UTC, als Epoch ms.
+    """
+    return int(now_local_dt().astimezone(timezone.utc).timestamp() * 1000)
+
+# ============== PV-Clip-Funktion: min(PV_Prod, PV_Max) je Stunde schreiben ====
+def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_loc) -> None:
+    """
+    - Liest PV-Prod (kW) und PV-Max (kW) aus VZ für [from_ms_localnow, to_ms]
+      (Start = **aktuelle lokale Zeit** Europe/Zurich → UTC-ms)
     - Ermittelt je ts in ts_grid das Minimum
     - Löscht Zielbereich und schreibt 48 Punkte
     - Gibt alle Punkte in der Konsole aus
     """
     print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
 
-    # Daten laden
-    prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, start_ms, end_ms)
-    vmax = vz_get_tuples(UUID_PV_MAX_FORECAST_IN,  start_ms, end_ms)
+    # Daten laden mit lokalem Startzeitpunkt (DST-fest)
+    prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, from_ms_localnow, to_ms)
+    vmax = vz_get_tuples(UUID_PV_MAX_FORECAST_IN,  from_ms_localnow, to_ms)
     prod_map = {ts: v for ts, v, _ in prod}
     vmax_map = {ts: v for ts, v, _ in vmax}
 
     # Zielbereich löschen
-    print(f"Lösche Zielbereich {start_ms} … {end_ms} (UUID {UUID_PV_CAPPED_FORECAST_OUT})")
+    print(f"Lösche Zielbereich {from_ms_localnow} … {to_ms} (UUID {UUID_PV_CAPPED_FORECAST_OUT})")
     try:
-        vz_delete_range(UUID_PV_CAPPED_FORECAST_OUT, start_ms, end_ms)
+        vz_delete_range(UUID_PV_CAPPED_FORECAST_OUT, from_ms_localnow, to_ms)
     except Exception as e:
         print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
@@ -309,7 +325,6 @@ def pv_clip_and_write(ts_grid: List[int], start_ms: int, end_ms: int, tz_loc) ->
         m = vmax_map.get(ts, None)
 
         if p is None or m is None:
-            # Zur Kontrolle trotzdem ausgeben
             p_str = "n/a" if p is None else f"{p:.3f}"
             m_str = "n/a" if m is None else f"{m:.3f}"
             print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a (fehlender Wert)")
@@ -377,7 +392,7 @@ def main() -> int:
         start_ts_ms = ts_grid[0]
         end_ts_ms   = ts_grid[-1]
 
-        # TTT_C / IRR in VZ schreiben (wie zuvor)
+        # TTT_C / IRR in VZ schreiben
         print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (TTT_C & IRR)")
         vz_delete_range(UUID_T_OUTDOOR, start_ts_ms, end_ts_ms)
         vz_delete_range(UUID_P_IRR,     start_ts_ms, end_ts_ms)
@@ -399,7 +414,7 @@ def main() -> int:
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
 
-        # 24h-Mittel / Kennzahlen (unverändert) …
+        # 24h-Mittel / Kennzahlen
         temps = [v for (_, _, v) in preview_T[:AVG_TEMP_HOURS] if v is not None]
         if temps:
             t_mean = sum(temps) / len(temps)
@@ -419,7 +434,7 @@ def main() -> int:
         else:
             print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
 
-        # COP (48h) …
+        # COP (48h)
         print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
         print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
         try: vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
@@ -434,7 +449,7 @@ def main() -> int:
             except Exception as e: print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
 
-        # WP max Aufnahmeleistung (48h) – unverändert
+        # WP max Aufnahmeleistung (48h)
         print("\n===== Max. Aufnahmeleistung WP (kW) – stündlich, nächste 48h =====")
         print(f"Lösche Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_HP_MAX_POWER})")
         try: vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
@@ -449,8 +464,9 @@ def main() -> int:
             except Exception as e: print(f"Warnung: Pmax @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte.")
 
-        # >>> NEU: PV-CLIP berechnen & schreiben
-        pv_clip_and_write(ts_grid, start_ts_ms, end_ts_ms, tz_loc)
+        # PV-CLIP: Startzeitpunkt der **Abfrage** = lokale Jetztzeit (DST-fest)
+        from_ms_localnow = local_now_ms_utc()
+        pv_clip_and_write(ts_grid, from_ms_localnow, end_ts_ms, tz_loc)
 
         return 0
 
