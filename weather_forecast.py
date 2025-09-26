@@ -3,11 +3,17 @@
 
 """
 SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben)
++ Zusatz: 24h-Mittel TTT_C → WP-Strom (kWh) & Heizwärmebedarf (kWh)
++ Zusatz: stündlicher COP (48h) aus TTT_C
 
 - Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
 - Auswahl: genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
 - Konsole: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
 - Volkszähler: löscht 48h-Bereich (beide Kanäle) und schreibt dann neu
+- Zusätze:
+  * 24h-Mittel (konfigurierbar) der kommenden TTT_C → WP-Strom/Heizwärmebedarf berechnen,
+    Ergebnis (kWh) an jetzt-TS schreiben (zwei UUIDs)
+  * COP je Stunde für 48h berechnen & schreiben (eigene UUID, Bereich vorher löschen)
 - Zeitstempel beim Schreiben: Millisekunden seit 1970-01-01 00:00:00 **UTC**
 
 Umgebungsvariablen (optional):
@@ -15,6 +21,11 @@ Umgebungsvariablen (optional):
   SRF_ZIP=5607, SRF_PLACE="Hägglingen", LOCAL_TZ="Europe/Zurich"
   VZ_BASE_URL="http://<host>/middleware.php"   # ggf. /middleware statt /middleware.php
   UUID_T_OUTDOOR_FORECAST, UUID_P_IRR_FORECAST
+  UUID_WP_POWER_KWH, UUID_HEAT_DEMAND_KWH, UUID_COP_FORECAST
+  AVG_TEMP_HOURS=24, TEMP_CAP_MAX_C=15
+  FORM_HP_A, FORM_HP_B, FORM_HP_C
+  FORM_Q_A,  FORM_Q_B,  FORM_Q_C
+  FORM_COP_M, FORM_COP_B
   DRY_RUN=1  → nur ausgeben, nichts schreiben
   DEBUG=1    → Debug-Logs
 
@@ -49,7 +60,28 @@ VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.ph
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_IRR     = os.environ.get("UUID_P_IRR_FORECAST",     "510567b0-990b-11f0-bb5b-d33e693aa264")
 
-USER_AGENT = "srf-weather-vz/1.4"
+# NEU: Ziel-UUIDs für zusätzliche Kennzahlen
+UUID_WP_POWER_KWH   = os.environ.get("UUID_WP_POWER_KWH",   "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")
+UUID_HEAT_DEMAND_KWH= os.environ.get("UUID_HEAT_DEMAND_KWH","9d6f6990-9aac-11f0-8991-c9bc212463c9")
+UUID_COP_FORECAST   = os.environ.get("UUID_COP_FORECAST",   "31877e20-9aaa-11f0-8759-733431a03535")
+
+# Mittelwert-Fenster & Temperaturdeckel
+AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))   # z. B. 24
+TEMP_CAP_MAX_C = float(os.environ.get("TEMP_CAP_MAX_C", "15.0"))
+
+# Formeln zentral (Defaults gemäß Vorgabe)
+FORM_HP_A = float(os.environ.get("FORM_HP_A", "0.0474"))
+FORM_HP_B = float(os.environ.get("FORM_HP_B", "-1.6072"))
+FORM_HP_C = float(os.environ.get("FORM_HP_C", "17.326"))
+
+FORM_Q_A  = float(os.environ.get("FORM_Q_A",  "0.0762"))
+FORM_Q_B  = float(os.environ.get("FORM_Q_B",  "-4.0294"))
+FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "59.037"))
+
+FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
+FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
+
+USER_AGENT = "srf-weather-vz/1.5"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -248,6 +280,21 @@ def vz_write(uuid: str, value: float, ts_ms: int) -> None:
     if not r.ok:
         raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
+# ============================== FORMEL-FUNKTIONEN ==============================
+def wp_power_kwh_from_t(t_c: float) -> float:
+    """Stromverbrauch WP [kWh] aus mittlerer Außentemperatur (mit Deckelung)."""
+    t_eff = min(t_c, TEMP_CAP_MAX_C)
+    return FORM_HP_A * t_eff * t_eff + FORM_HP_B * t_eff + FORM_HP_C
+
+def heat_demand_kwh_from_t(t_c: float) -> float:
+    """Heizwärmebedarf [kWh] aus mittlerer Außentemperatur (mit Deckelung analog)."""
+    t_eff = min(t_c, TEMP_CAP_MAX_C)
+    return FORM_Q_A * t_eff * t_eff + FORM_Q_B * t_eff + FORM_Q_C
+
+def cop_from_t(t_c: float) -> float:
+    """COP (leistungszahl) aus stündlicher Außentemperatur."""
+    return FORM_COP_M * t_c + FORM_COP_B
+
 # ============================== MAIN ==========================================
 def main() -> int:
     try:
@@ -305,8 +352,8 @@ def main() -> int:
         start_ts_ms = preview_T[0][1]
         end_ts_ms   = preview_T[-1][1]
 
-        # Löschen & Neu schreiben
-        print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (beide Kanäle)")
+        # Löschen & Neu schreiben (TTT_C / IRR)
+        print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (TTT_C & IRR)")
         vz_delete_range(UUID_T_OUTDOOR, start_ts_ms, end_ts_ms)
         vz_delete_range(UUID_P_IRR,     start_ts_ms, end_ts_ms)
 
@@ -330,6 +377,61 @@ def main() -> int:
         print(f"\nFertig – geschrieben: T_outdoor_forecast={count_T}, P_IRR_forecast={count_I}.")
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
+
+        # ===================== NEU: 24h-Mittelwert & Kennzahlen =====================
+        # Mittel aus den kommenden AVG_TEMP_HOURS Stunden bilden (nur vorhandene, ohne None)
+        temps = [v for (_, _, v) in preview_T[:AVG_TEMP_HOURS] if v is not None]
+        if not temps:
+            print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
+        else:
+            t_mean = sum(temps) / len(temps)
+            t_eff = min(t_mean, TEMP_CAP_MAX_C)
+            wp_kwh = wp_power_kwh_from_t(t_mean)
+            q_kwh  = heat_demand_kwh_from_t(t_mean)
+
+            # Jetzt-Zeitstempel (ms UTC) für die beiden Summenwerte
+            ts_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+
+            print("\n===== 24h-Mittel & abgeleitete Kennzahlen =====")
+            print(f"Fenster    : nächste {len(temps)} h")
+            print(f"T_mean     : {t_mean:.2f} °C (gedeckelt bei {TEMP_CAP_MAX_C:.1f} °C → {t_eff:.2f} °C)")
+            print(f"WP-Strom   : {wp_kwh:.3f} kWh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
+            print(f"Heizwärme  : {q_kwh:.3f} kWh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
+
+            # Schreiben
+            try:
+                vz_write(UUID_WP_POWER_KWH, float(wp_kwh), ts_now_ms)
+            except Exception as e:
+                print(f"Warnung: WP-Strom (kWh) nicht geschrieben: {e}", file=sys.stderr)
+            try:
+                vz_write(UUID_HEAT_DEMAND_KWH, float(q_kwh), ts_now_ms)
+            except Exception as e:
+                print(f"Warnung: Heizwärme (kWh) nicht geschrieben: {e}", file=sys.stderr)
+
+        # ===================== NEU: stündlicher COP (48h) ==========================
+        print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
+        # Lösche vorhandenen COP-Bereich im selben Zeitfenster
+        print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
+        try:
+            vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
+        except Exception as e:
+            print(f"Warnung: COP-DELETE fehlgeschlagen: {e}", file=sys.stderr)
+
+        count_COP = 0
+        for (local_str, ts_ms, t_val) in preview_T:
+            if t_val is None:
+                print(f"{local_str} | ts_ms={ts_ms} | COP=n/a (kein T)")
+                continue
+            cop = cop_from_t(t_val)
+            print(f"{local_str} | ts_ms={ts_ms} | COP={cop:.3f}")
+            try:
+                vz_write(UUID_COP_FORECAST, float(cop), ts_ms)
+                count_COP += 1
+            except Exception as e:
+                print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
+
+        print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
+
         return 0
 
     except ApiError as e:
