@@ -5,15 +5,17 @@
 SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben)
 + Zusatz: 24h-Mittel TTT_C → WP-Strom (kWh) & Heizwärmebedarf (kWh)
 + Zusatz: stündlicher COP (48h) aus TTT_C
++ NEU:    stündliche max. Aufnahmeleistung der WP (48h) aus TTT_C
 
 - Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
 - Auswahl: genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
 - Konsole: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
-- Volkszähler: löscht 48h-Bereich (beide Kanäle) und schreibt dann neu
+- Volkszähler: löscht 48h-Bereich (relevante Kanäle) und schreibt dann neu
 - Zusätze:
   * 24h-Mittel (konfigurierbar) der kommenden TTT_C → WP-Strom/Heizwärmebedarf berechnen,
     Ergebnis (kWh) an jetzt-TS schreiben (zwei UUIDs)
   * COP je Stunde für 48h berechnen & schreiben (eigene UUID, Bereich vorher löschen)
+  * NEU: max. Aufnahmeleistung je Stunde für 48h berechnen & schreiben (eigene UUID, Bereich vorher löschen)
 - Zeitstempel beim Schreiben: Millisekunden seit 1970-01-01 00:00:00 **UTC**
 
 Umgebungsvariablen (optional):
@@ -22,10 +24,12 @@ Umgebungsvariablen (optional):
   VZ_BASE_URL="http://<host>/middleware.php"   # ggf. /middleware statt /middleware.php
   UUID_T_OUTDOOR_FORECAST, UUID_P_IRR_FORECAST
   UUID_WP_POWER_KWH, UUID_HEAT_DEMAND_KWH, UUID_COP_FORECAST
+  UUID_HP_MAX_POWER
   AVG_TEMP_HOURS=24, TEMP_CAP_MAX_C=15
   FORM_HP_A, FORM_HP_B, FORM_HP_C
   FORM_Q_A,  FORM_Q_B,  FORM_Q_C
   FORM_COP_M, FORM_COP_B
+  FORM_HP_MAX_M, FORM_HP_MAX_B
   DRY_RUN=1  → nur ausgeben, nichts schreiben
   DEBUG=1    → Debug-Logs
 
@@ -60,10 +64,12 @@ VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.ph
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_IRR     = os.environ.get("UUID_P_IRR_FORECAST",     "510567b0-990b-11f0-bb5b-d33e693aa264")
 
-# NEU: Ziel-UUIDs für zusätzliche Kennzahlen
-UUID_WP_POWER_KWH   = os.environ.get("UUID_WP_POWER_KWH",   "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")
-UUID_HEAT_DEMAND_KWH= os.environ.get("UUID_HEAT_DEMAND_KWH","9d6f6990-9aac-11f0-8991-c9bc212463c9")
-UUID_COP_FORECAST   = os.environ.get("UUID_COP_FORECAST",   "31877e20-9aaa-11f0-8759-733431a03535")
+# Ziel-UUIDs für zusätzliche Kennzahlen
+UUID_WP_POWER_KWH    = os.environ.get("UUID_WP_POWER_KWH",    "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")
+UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f0-8991-c9bc212463c9")
+UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")
+# NEU: UUID für stündliche max. Aufnahmeleistung (kW)
+UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")
 
 # Mittelwert-Fenster & Temperaturdeckel
 AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))   # z. B. 24
@@ -81,7 +87,11 @@ FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "59.037"))
 FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
 FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 
-USER_AGENT = "srf-weather-vz/1.5"
+# NEU: Formel für max. Aufnahmeleistung (kW) aus T (°C): Pmax = M*T + B
+FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
+FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
+
+USER_AGENT = "srf-weather-vz/1.6"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -295,6 +305,11 @@ def cop_from_t(t_c: float) -> float:
     """COP (leistungszahl) aus stündlicher Außentemperatur."""
     return FORM_COP_M * t_c + FORM_COP_B
 
+# NEU: max. Aufnahmeleistung (kW) aus T (°C) – linear: Pmax = M*T + B
+def hp_max_power_kw_from_t(t_c: float) -> float:
+    # Negative Leistungen vermeiden (bei hohen T kann die lineare Formel < 0 werden)
+    return max(0.0, FORM_HP_MAX_M * t_c + FORM_HP_MAX_B)
+
 # ============================== MAIN ==========================================
 def main() -> int:
     try:
@@ -378,8 +393,7 @@ def main() -> int:
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
 
-        # ===================== NEU: 24h-Mittelwert & Kennzahlen =====================
-        # Mittel aus den kommenden AVG_TEMP_HOURS Stunden bilden (nur vorhandene, ohne None)
+        # ===================== 24h-Mittelwert & Kennzahlen =====================
         temps = [v for (_, _, v) in preview_T[:AVG_TEMP_HOURS] if v is not None]
         if not temps:
             print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
@@ -389,7 +403,6 @@ def main() -> int:
             wp_kwh = wp_power_kwh_from_t(t_mean)
             q_kwh  = heat_demand_kwh_from_t(t_mean)
 
-            # Jetzt-Zeitstempel (ms UTC) für die beiden Summenwerte
             ts_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
 
             print("\n===== 24h-Mittel & abgeleitete Kennzahlen =====")
@@ -398,7 +411,6 @@ def main() -> int:
             print(f"WP-Strom   : {wp_kwh:.3f} kWh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
             print(f"Heizwärme  : {q_kwh:.3f} kWh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
 
-            # Schreiben
             try:
                 vz_write(UUID_WP_POWER_KWH, float(wp_kwh), ts_now_ms)
             except Exception as e:
@@ -408,9 +420,8 @@ def main() -> int:
             except Exception as e:
                 print(f"Warnung: Heizwärme (kWh) nicht geschrieben: {e}", file=sys.stderr)
 
-        # ===================== NEU: stündlicher COP (48h) ==========================
+        # ===================== COP (48h) ==========================
         print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
-        # Lösche vorhandenen COP-Bereich im selben Zeitfenster
         print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
         try:
             vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
@@ -431,6 +442,29 @@ def main() -> int:
                 print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
 
         print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
+
+        # ===================== NEU: max. Aufnahmeleistung (48h) ==================
+        print("\n===== Max. Aufnahmeleistung WP (kW) – stündlich, nächste 48h =====")
+        print(f"Lösche Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_HP_MAX_POWER})")
+        try:
+            vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
+        except Exception as e:
+            print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
+
+        count_HP_MAX = 0
+        for (local_str, ts_ms, t_val) in preview_T:
+            if t_val is None:
+                print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)")
+                continue
+            pmax_kw = hp_max_power_kw_from_t(t_val)
+            print(f"{local_str} | ts_ms={ts_ms} | T={t_val:.2f} °C | Pmax={pmax_kw:.3f} kW")
+            try:
+                vz_write(UUID_HP_MAX_POWER, float(pmax_kw), ts_ms)
+                count_HP_MAX += 1
+            except Exception as e:
+                print(f"Warnung: Pmax @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
+
+        print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte.")
 
         return 0
 
