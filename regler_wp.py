@@ -384,10 +384,9 @@ def main():
 
     p_prod = 0
     
-    p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]
+    p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]/1000
     p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min&to=now")["data"]["consumption"]/1000
-    emob = get_vals(UUID["Cable_State"], duration="-6000min")["data"]
-    print(emob)
+  
 
     p_therm_bil = p_therm_zukunft - p_therm_prod 
 
