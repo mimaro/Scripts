@@ -22,10 +22,11 @@ UUID = {
     "P_WP_PV_min_Forecast": "2ef42c20-9abb-11f0-9cfd-ad07953daec6",
     "P_el_WP_Forecast": "58cbc600-9aaa-11f0-8a74-894e01bd6bb7",
     "COP_Forecast": "31877e20-9aaa-11f0-8759-733431a03535",
-    "WP_el_Max": 	"46e21920-9ab9-11f0-9359-d3451ca32acb"
+    "WP_el_Max": "46e21920-9ab9-11f0-9359-d3451ca32acb"
 
     
 ###########################################################################################################
+
 
 def get_vals(uuid, duration="-0min"):
     # Daten von vz lesen. 
@@ -54,7 +55,6 @@ def main():
     
     cop_tag = get_vals(UUID["COP_Forecast"], duration="now&to=+720min")["data"]["average"]
     cop_nacht = get_vals(UUID["COP_Forecast"], duration="+720min&to=+1440min")["data"]["average"]
-
 
     
     logging.info("PV Produktion heute: {}".format(p_pv_wp_min))
