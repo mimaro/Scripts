@@ -381,7 +381,7 @@ def main():
     logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
 
     p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]
-    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min")["consumption"]
+    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min")["data"]
 
     logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
     logging.info("P thermisch Produziert: {}".format(p_therm_prod))
