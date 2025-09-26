@@ -49,8 +49,8 @@ def main():
 
     opt_solar = 0 
 
-    p_pv_wp_min = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]["consumption"]/1000
-    p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="+720min&to=+2160min")["data"]["consumption"]/1000
+    p_pv_wp_min = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]["consumption"]
+    p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="+720min&to=+2160min")["data"]["consumption"]
     wp_el_max_tag = get_vals(UUID["WP_el_Max"], duration="now&to=+720min")["data"]["average"]
     
     cop_tag = get_vals(UUID["COP_Forecast"], duration="now&to=+720min")["data"]["average"]
