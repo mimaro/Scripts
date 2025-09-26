@@ -2,22 +2,22 @@
 # -*- coding: utf-8 -*-
 
 """
-SRF Meteo 48h → Volkszähler (immer: Bereich löschen, dann neu schreiben)
+SRF Meteo 48h → Volkszähler (Vorschau + immer: Bereich löschen, dann neu schreiben)
 
-- Stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
-- Auswahl: genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
-- Zeitstempel: ms seit 1970-01-01 UTC (SRF date_time = Ende der Stunde)
-- Volkszähler: erst delete (48h-Bereich), dann add
+- Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
+- Wählt genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
+- KONSOLE: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
+- Volkszähler: löscht 48h-Bereich und schreibt dann neu (ts = ms seit 1970-01-01 UTC)
 
 Konfiguration via Env (optional):
-  SRG_CLIENT_ID / SRG_CLIENT_SECRET    OAuth für SRF Meteo
+  SRG_CLIENT_ID / SRG_CLIENT_SECRET     OAuth für SRF Meteo
   SRF_ZIP=5607, SRF_PLACE="Hägglingen", LOCAL_TZ="Europe/Zurich"
   VZ_BASE_URL="http://<host>/middleware.php"
   UUID_T_OUTDOOR_FORECAST, UUID_P_PV_FORECAST
   DRY_RUN=1  → nur ausgeben, nichts schreiben
   DEBUG=1    → Debug-Logs
 
-WICHTIG: Der DB-User der Volkszähler-Middleware muss DELETE-Rechte haben, sonst schlägt das Löschen fehl.
+WICHTIG: Der DB-User der Volkszähler-Middleware muss DELETE-Rechte haben.
 """
 
 import base64
@@ -48,7 +48,7 @@ VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.ph
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_PV      = os.environ.get("UUID_P_PV_FORECAST",      "abcf6600-97c1-11f0-9348-db517d4efb8f")
 
-USER_AGENT = "srf-weather-vz/1.2"
+USER_AGENT = "srf-weather-vz/1.3"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -232,7 +232,7 @@ def vz_delete_range(uuid: str, from_ts_ms: int, to_ts_ms: int) -> None:
 
 def vz_write(uuid: str, value: float, ts_ms: int) -> None:
     """
-    Wert schreiben (POST, operation=add) – OHNE skipduplicates, denn wir löschen vorher.
+    Wert schreiben (POST, operation=add).
     """
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
     params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
@@ -256,42 +256,75 @@ def main() -> int:
             print("Keine Forecastdaten für die nächsten 48 h gefunden.", file=sys.stderr)
             return 2
 
-        # Bereich bestimmen (inklusive)
-        start_ts_ms = int(parse_dt(next48[0]["date_time"]).timestamp() * 1000)
-        end_ts_ms   = int(parse_dt(next48[-1]["date_time"]).timestamp() * 1000)
+        # Vorschau-Listen zusammenstellen
+        tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+        preview_T: List[Tuple[str, int, Optional[float]]] = []
+        preview_I: List[Tuple[str, int, Optional[float]]] = []
+        for row in next48:
+            dt_utc = parse_dt(row.get("date_time"))
+            ts_ms = int(dt_utc.timestamp() * 1000)
+            dt_local = dt_utc.astimezone(tz)
+            local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
 
-        print(f"Lösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (beide Kanäle)")
+            t_val = row.get("TTT_C")
+            i_val = row.get("IRRADIANCE_WM2")
+
+            t_float = None
+            i_float = None
+            try:
+                if t_val is not None:
+                    t_float = float(str(t_val).replace(",", "."))
+            except Exception:
+                t_float = None
+            try:
+                if i_val is not None:
+                    i_float = float(str(i_val).replace(",", "."))
+            except Exception:
+                i_float = None
+
+            preview_T.append((local_str, ts_ms, t_float))
+            preview_I.append((local_str, ts_ms, i_float))
+
+        # --- KONSOLE: getrennte Vorschau-Ausgabe ---
+        print("\n===== Vorschau: Temperatur (TTT_C) – nächste 48h =====")
+        for local_str, ts_ms, val in preview_T:
+            vs = "n/a" if val is None else f"{val:.2f} °C"
+            print(f"{local_str} | ts_ms={ts_ms} | TTT_C={vs}")
+
+        print("\n===== Vorschau: Einstrahlung (IRRADIANCE_WM2) – nächste 48h =====")
+        for local_str, ts_ms, val in preview_I:
+            vs = "n/a" if val is None else f"{val:.0f} W/m²"
+            print(f"{local_str} | ts_ms={ts_ms} | IRRADIANCE_WM2={vs}")
+
+        # Bereich bestimmen (inklusive)
+        start_ts_ms = preview_T[0][1]
+        end_ts_ms   = preview_T[-1][1]
+
+        # Löschen & Neu schreiben
+        print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (beide Kanäle)")
         vz_delete_range(UUID_T_OUTDOOR, start_ts_ms, end_ts_ms)
         vz_delete_range(UUID_P_PV,      start_ts_ms, end_ts_ms)
 
         print(f"Schreibe {len(next48)} Stunden (ab nächster voller Stunde, TZ={TZ}) nach Volkszähler…")
         count_T = count_I = 0
 
-        for row in next48:
-            dt_utc = parse_dt(row.get("date_time"))
-            ts_ms = int(dt_utc.timestamp() * 1000)
-
-            # Temperatur (°C)
-            t_raw = row.get("TTT_C")
-            if t_raw is not None:
+        for (_, ts_ms, t_val), (_, _, i_val) in zip(preview_T, preview_I):
+            if t_val is not None:
                 try:
-                    t_val = float(str(t_raw).replace(",", "."))
-                    vz_write(UUID_T_OUTDOOR, t_val, ts_ms)
+                    vz_write(UUID_T_OUTDOOR, float(t_val), ts_ms)
                     count_T += 1
                 except Exception as e:
-                    print(f"Warnung: TTT_C @ {dt_utc.isoformat()} nicht geschrieben: {e}", file=sys.stderr)
-
-            # Globalstrahlung (W/m²)
-            irr_raw = row.get("IRRADIANCE_WM2")
-            if irr_raw is not None:
+                    print(f"Warnung: TTT_C @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
+            if i_val is not None:
                 try:
-                    i_val = float(str(irr_raw).replace(",", "."))
-                    vz_write(UUID_P_PV, i_val, ts_ms)
+                    vz_write(UUID_P_PV, float(i_val), ts_ms)
                     count_I += 1
                 except Exception as e:
-                    print(f"Warnung: IRRADIANCE_WM2 @ {dt_utc.isoformat()} nicht geschrieben: {e}", file=sys.stderr)
+                    print(f"Warnung: IRRADIANCE_WM2 @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
 
-        print(f"Fertig – geschrieben: T_outdoor_forecast={count_T}, P_PV_forecast={count_I}.")
+        print(f"\nFertig – geschrieben: T_outdoor_forecast={count_T}, P_PV_forecast={count_I}.")
+        if DRY_RUN:
+            print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
         return 0
 
     except ApiError as e:
