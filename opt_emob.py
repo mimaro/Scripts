@@ -26,7 +26,7 @@ VZ_POST_URL = BASE_URL + "/data/{}.json"                        # ts & value als
 
 UUIDS: Dict[str, str] = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
-    "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",     # valve/states
+    "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",     # tuples: [ts, value, quality]
     "Emob_Cons":     "6cb255a0-6e5f-11ee-b899-c791d8058d25",     # Leistung/Energie (W/Wh)
     "Price":         "a1547420-8c87-11f0-ab9a-bd73b64c1942",     # Tarif (z.B. Rp/kWh)
 }
@@ -128,7 +128,7 @@ def _normalize_sections(payload: Any) -> List[dict]:
         return []
 
     if isinstance(payload, dict):
-        # Viele VZ-Antworten: {"data": {...}} oder {"data":[{...}, ...]}
+        # Häufig: {"data": {...}} oder {"data":[{...}, ...]}
         if "data" in payload:
             data = payload["data"]
             if isinstance(data, list):
@@ -158,102 +158,35 @@ def _iter_section_tuples(section: dict) -> Iterable[list]:
                 yield t
 
 
-def _sections_time_range(sections: List[dict]) -> Tuple[int, int, int]:
-    ts_all: List[int] = []
-    for s in sections:
-        for t in _iter_section_tuples(s):
-            try:
-                ts_all.append(int(t[0]))
-            except Exception:
-                pass
-    if not ts_all:
-        return (0, 0, 0)
-    return (len(ts_all), min(ts_all), max(ts_all))
-
-
-def _get_columns_for_section(section: dict) -> Optional[List[str]]:
+# =========================
+# 1) Letzten Wechsel „1 → !=1“ finden (Wert in Spalte 1)
+# =========================
+def _val_from_tuple(t: list) -> Optional[int]:
     """
-    Versucht Spaltennamen zu finden – häufig „columns“ auf Section-Level
-    oder unter „meta.columns“. Gesucht ist insbesondere „valve“.
+    Interpretiert die **zweite** Spalte (Index 1) als Wert.
+    Akzeptiert 0/1, floats, 'true'/'false'. Gibt 0/1 zurück.
     """
-    cols = None
-    if isinstance(section.get("columns"), list):
-        cols = section["columns"]
-    elif isinstance(section.get("meta"), dict) and isinstance(section["meta"].get("columns"), list):
-        cols = section["meta"]["columns"]
-
-    if cols:
-        # Normalize to strings
-        try:
-            cols = [str(c).strip().lower() for c in cols]
-        except Exception:
-            pass
-        return cols
-    return None
-
-
-def _first_numeric_after_ts(t: list) -> Optional[float]:
-    """
-    Fallback: Sucht im Tupel ab Index 1 die erste numerisch interpretierbare Spalte.
-    Akzeptiert 0/1, floats, 'true'/'false'.
-    """
-    for i in range(1, len(t)):
-        v = t[i]
-        try:
-            if isinstance(v, str):
-                s = v.strip().lower()
-                if s == "true":
-                    return 1.0
-                if s == "false":
-                    return 0.0
-                v = s.replace(",", ".")
-            return float(v)
-        except Exception:
-            continue
-    return None
-
-
-def _tuple_get_valve_value(section: dict, t: list) -> Optional[int]:
-    """
-    Holt – wenn möglich – den „valve“-Wert aus dem Tupel.
-    - Wenn die Section Spaltennamen hat und „valve“ darin vorkommt, nutze diese Spalte.
-    - Andernfalls Fallback: erste numerische Spalte nach ts.
-    Ergebnis als 0/1-Integer (alles !=0 → 1).
-    """
-    cols = _get_columns_for_section(section)
-    if cols and "valve" in cols:
-        idx = cols.index("valve")
-        # Tuple ist: [ts, ...]; valve sollte an Position idx stehen
-        if 0 <= idx < len(t):
-            try:
-                raw = t[idx]
-                if isinstance(raw, str):
-                    s = raw.strip().lower()
-                    if s == "true":
-                        return 1
-                    if s == "false":
-                        return 0
-                    raw = s.replace(",", ".")
-                val = float(raw)
-                return 1 if int(round(val)) != 0 else 0
-            except Exception:
-                pass
-
-    # Fallback
-    v = _first_numeric_after_ts(t)
-    if v is None:
+    if not isinstance(t, (list, tuple)) or len(t) < 2:
         return None
-    return 1 if int(round(v)) != 0 else 0
+    v = t[1]
+    try:
+        if isinstance(v, str):
+            s = v.strip().lower()
+            if s == "true":
+                return 1
+            if s == "false":
+                return 0
+            v = s.replace(",", ".")
+        f = float(v)
+        return 1 if int(round(f)) != 0 else 0
+    except Exception:
+        return None
 
 
-# =========================
-# 1) Letzten Wechsel „1 → !=1“ finden (mit 'valve'-Spalte)
-# =========================
 def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optional[int]:
     """
     Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (z.B. 1) zu !=target_value**
-    innerhalb des Lookback-Fensters.
-    Bevorzugt die Spalte „valve“, falls vorhanden. Fällt sonst auf eine numerische Spalte zurück.
+    innerhalb des Lookback-Fensters. Wert wird aus Spalte 1 der Tupel gelesen: [ts, value, (quality)].
     """
     payload = get_vals(uuid, f"-{lookback_min}min")
     sections = _normalize_sections(payload)
@@ -263,15 +196,12 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
 
     samples: List[Tuple[int, int]] = []  # (ts_ms, val(0/1))
     for section in sections:
-        cols = _get_columns_for_section(section)
-        if cols:
-            _d(f"[DEBUG] columns erkannt: {cols}")
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
             except Exception:
                 continue
-            val_bin = _tuple_get_valve_value(section, t)
+            val_bin = _val_from_tuple(t)
             if val_bin is None:
                 continue
             samples.append((ts_ms, val_bin))
@@ -288,7 +218,7 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
         prev_val = samples[i - 1][1]
         cur_val = samples[i][1]
         if prev_val == target_value and cur_val != target_value:
-            last_change_ts = samples[i][0]  # Zeitstempel, ab dem der neue (≠target) Wert gilt
+            last_change_ts = samples[i][0]  # Zeitpunkt, ab dem der neue (≠target) Wert gilt
 
     if last_change_ts is None:
         _d("[DEBUG] kein 1→!=1 Wechsel im Fenster gefunden")
@@ -401,11 +331,11 @@ def get_price_series_minutely(from_local: datetime, to_local: datetime) -> List[
     end_ms = int(to_utc.timestamp() * 1000)
     minute = 60_000
 
-    # Fallback: wenn keine Daten → erzeugen wir ein Grid mit Preis 0.0
+    # Fallback: wenn keine Daten → Grid mit Preis 0.0
     if not raw:
         return [(ts, 0.0) for ts in range(start_ms, end_ms, minute)]
 
-    # Minutengitter bauen & Preis "halten"
+    # Minutengitter; letzten bekannten Preis „halten“
     series: List[Tuple[int, float]] = []
     idx = 0
     current_val = raw[0][1]
@@ -499,7 +429,7 @@ def main():
     tz = ch_tz()
     now_local = datetime.now(tz)
 
-    # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ (valve) auf Cable_State
+    # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ auf Cable_State
     last_ts = find_last_ts_equal(UUIDS["Cable_State"], target_value=1, lookback_min=args.lookback)
     if last_ts is None:
         print("⚠️  Kein letzter 1→!=1-Wechsel gefunden – setze Freigabe komplett auf 0 bis 05:00.")
@@ -508,7 +438,7 @@ def main():
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
-    print(f"Letzter 1→!=1-Wechsel (valve) auf Cable_State: {fmt_ts(last_ts)}")
+    print(f"Letzter 1→!=1-Wechsel auf Cable_State: {fmt_ts(last_ts)}")
 
     # 2) Energie seit diesem Zeitpunkt
     kwh_since = energy_kwh_from_power_between(UUIDS["Emob_Cons"], last_ts, to="now")
@@ -522,7 +452,7 @@ def main():
     to_local = next_5_local(now_local)
 
     if kwh_min <= 0:
-        print("Bereits ≥ Zielenergie „abgedeckt“ – schreibe überall 0 bis 05:00.")
+        print("Bereits ≥ Zielenergie – schreibe überall 0 bis 05:00.")
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
