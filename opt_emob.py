@@ -192,9 +192,15 @@ def find_last_ts_equal(uuid: str, target_value: Union[int, float], lookback_min:
     """
     Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (z.B. 1) zu !=target_value**
     innerhalb des Lookback-Fensters. Wert wird aus Spalte 1 der Tupel gelesen: [ts, value, (quality)].
-    WICHTIG: Es wird **der rohe Wert** verwendet (KEINE Binarisierung).
+    WICHTIG: Es wird **der rohe Wert** verwendet (KEINE Binarisierung) und es wird immer mit einem
+    expliziten **[from,to]**-Fenster (Millisekunden) abgefragt, um Downsampling/Aggregation zu vermeiden.
     """
-    payload = get_vals(uuid, f"-{lookback_min}min")
+    # Explizites Fenster [now - lookback, now] in ms
+    now_ms = int(_utc_now().timestamp() * 1000)
+    from_ms = now_ms - lookback_min * 60_000
+
+    # Abfrage mit from/to
+    payload = get_vals_between(uuid, str(from_ms), str(now_ms))
     sections = _normalize_sections(payload)
     if not sections:
         _d("[DEBUG] find_last_ts_equal: keine sections im Payload")
@@ -211,7 +217,9 @@ def find_last_ts_equal(uuid: str, target_value: Union[int, float], lookback_min:
             val_raw = _raw_val_from_tuple(t)
             if val_raw is None:
                 continue
-            samples.append((ts_ms, val_raw))
+            # nur Punkte im Fenster
+            if from_ms <= ts_ms <= now_ms:
+                samples.append((ts_ms, val_raw))
 
     if not samples:
         _d("[DEBUG] find_last_ts_equal: keine verwertbaren (ts,val)-Paare")
