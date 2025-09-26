@@ -2,312 +2,278 @@
 # -*- coding: utf-8 -*-
 
 """
-PV-Produktions-Forecast (24h) aus Volkszähler-IRR (W/m²) → kW
-- Quelle (lesen):  UUID_P_IRR_FORECAST  (Globalstrahlung in W/m², Stundenende als ts_ms)
-- Ziel  (schreiben):a1547420-8c87-11f0-ab9a-bd73b64c1942  (PV-Forecast in kW)
-- Raster: exakt 24 Stunden ab Ende der aktuellen Stunde (Europe/Zurich)
-- Vor dem Schreiben: vorhandene Werte im 24h-Bereich auf der Ziel-UUID löschen
-- CSV-Ausgabe und Konsolen-Kontrolle
+Swisspower ESIT – dynamische Preise:
+- Vergangene 2h + nächste 24h (15-Minuten-Raster)
+- Aktueller Slot + CSV-Ausgabe
+- NEU: Alle Slots zusätzlich nach Volkszähler schreiben (Rp/kWh) mit korrektem ts (ms UTC)
 
-Env (optional):
-  VZ_BASE_URL             (default: http://192.168.178.49/middleware.php)
-  UUID_P_IRR_FORECAST     (default: 510567b0-990b-11f0-bb5b-d33e693aa264)
-  UUID_T_OUTDOOR_FORECAST (default: c56767e0-97c1-11f0-96ab-41d2e85d0d5f)
-  UUID_PV_FORECAST_OUT    (default: a1547420-8c87-11f0-ab9a-bd73b64c1942)
-  OUTPUT_CSV              (default: /home/pi/Scripts/pv_forecast_24h.csv)
-  LOCAL_TZ                (default: Europe/Zurich)
-  LAT, LON                (default: 47.3870, 8.2500 – Hägglingen)
-  DRY_RUN=1               → nur ausgeben, nichts löschen/schreiben
-  DEBUG=1                 → Debug-Logs
-
-Voraussetzung: pip install requests
+Voraussetzungen:
+  pip3 install requests python-dateutil
 """
 
 import os
-import csv
-import math
 import sys
-import requests
-from typing import Dict, List, Optional, Tuple
+import csv
+import logging
 from datetime import datetime, timedelta, timezone
+from dateutil import tz
+import requests
 
-try:
-    from zoneinfo import ZoneInfo  # Python 3.9+
-except Exception:
-    ZoneInfo = None
+# ===== Konfiguration =====
+BASE_URL = os.environ.get("ESIT_BASE_URL", "https://esit.code-fabrik.ch")
+API_PATH = "/api/v1/metering_code"
 
-# --------------------- CONFIG ---------------------
+METERING_CODE = os.environ.get(
+    "ESIT_METERING_CODE",
+    "CH1011701234500000000000002093987"
+)
+AUTH_TOKEN = os.environ.get(
+    "ESIT_API_TOKEN",
+    "459cceb84e827d308cb61a14da203506"
+)
+
+# Tariftyp: "integrated" = Gesamtpreis; Alternativen: "electricity", "dso"
+TARIFF_TYPE = os.environ.get("ESIT_TARIFF_TYPE", "integrated")
+
+# Zeitraumsteuerung
+PAST_HOURS = 2
+FUTURE_HOURS = 24
+
+# Volkszähler
 VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
-
-UUID_P_IRR = os.environ.get(
-    "UUID_P_IRR_FORECAST",
-    "510567b0-990b-11f0-bb5b-d33e693aa264"  # Quelle: IRR W/m² (Forecast)
-)
-UUID_T_OUTDOOR = os.environ.get(
-    "UUID_T_OUTDOOR_FORECAST",
-    "c56767e0-97c1-11f0-96ab-41d2e85d0d5f"  # Standard-Quelle: Außentemperatur °C (Forecast)
-)
-UUID_PV_OUT = os.environ.get(
-    "UUID_PV_FORECAST_OUT",
-    "a1547420-8c87-11f0-ab9a-bd73b64c1942"  # Ziel: PV-Forecast in kW (neu gewünscht)
-)
-
-OUTPUT_CSV = os.environ.get("OUTPUT_CSV", "/home/pi/Scripts/esit_prices.csv")
-
-LOCAL_TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
-LAT = float(os.environ.get("LAT", "47.3870"))
-LON = float(os.environ.get("LON", "8.2500"))
-
-USER_AGENT = "pv-forecast-from-vz/1.2"
-TIMEOUT = 25
+VZ_UUID_PRICE = os.environ.get("VZ_UUID_PRICE", "a1547420-8c87-11f0-ab9a-bd73b64c1942")  # Ziel-UUID
+HTTP_TIMEOUT = 20
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
+USER_AGENT = "esit-prices-to-vz/1.0"
 
-# PV-Modell
-CONFIG = {
-    "noct_c": 45.0,               # Nominal Operating Cell Temp
-    "temp_coeff_per_K": -0.004,   # Wirkungsgradänderung pro Kelvin
-    "eta_stc": 0.17,              # Modulwirkungsgrad bei STC
-    # Zwei Teildächer (Beispielwerte)
-    "arrays": [
-        {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.8},
-        {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.6},
-    ],
-}
+# CSV
+CSV_PATH = os.path.abspath(os.environ.get("ESIT_CSV_PATH", "/home/pi/Scripts/esit_prices.csv"))
+# ==========================
 
-# --------------------- Helpers ---------------------
-def _tz() -> timezone:
-    return ZoneInfo(LOCAL_TZ) if ZoneInfo else timezone.utc
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
-def _debug(msg: str) -> None:
-    if os.environ.get("DEBUG"):
-        print(f"[DEBUG] {msg}", file=sys.stderr)
-
-def next_24h_grid_ms() -> List[int]:
-    """24 Zeitstempel (ms UTC) für das Ende der Stunden ab nächster voller Stunde."""
-    tz = _tz()
-    now_local = datetime.now(tz)
-    start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
-    grid: List[int] = []
-    for i in range(24):
-        dt_local = start_local + timedelta(hours=i)
-        grid.append(int(dt_local.astimezone(timezone.utc).timestamp() * 1000))
-    return grid
-
-# --------------------- Volkszähler I/O ---------------------
-def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float, int]]:
-    """Liest Rohdaten-Tupel [ts_ms, value, count] für UUID im Zeitfenster."""
+# ---------------- Volkszähler-Helfer ----------------
+def vz_delete_range(uuid: str, from_ts_ms: int, to_ts_ms: int) -> None:
+    """Zeitbereich [from..to] auf UUID löschen (verhindert Duplikate)."""
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {"from": str(from_ms), "to": str(to_ms)}
-    r = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
-    r.raise_for_status()
-    data = r.json().get("data", {})
-    tuples = data.get("tuples") or []
-    out: List[Tuple[int, float, int]] = []
-    for t in tuples:
-        try:
-            ts = int(t[0])
-            val = float(t[1])
-            qual = int(t[2]) if len(t) > 2 else 1
-            out.append((ts, val, qual))
-        except Exception:
-            continue
-    out.sort(key=lambda x: x[0])
-    return out
-
-def vz_delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
-    """Löscht Werte im Bereich [from_ms, to_ms] auf UUID (erfordert DELETE-Rechte)."""
-    url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {"operation": "delete", "from": str(from_ms), "to": str(to_ms)}
+    params = {"operation": "delete", "from": str(from_ts_ms), "to": str(to_ts_ms)}
     if DRY_RUN:
-        print(f"DRY_RUN: DELETE {url} {params}")
+        logging.info("DRY_RUN: VZ DELETE %s %s", url, params)
         return
-    r = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    r = requests.get(url, params=params, timeout=HTTP_TIMEOUT, headers={"User-Agent": USER_AGENT})
     if not r.ok:
         raise RuntimeError(f"Volkszähler-DELETE fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-def vz_write_point(uuid: str, ts_ms: int, value: float) -> None:
-    """Schreibt einen Punkt (kW) auf UUID (operation=add, ts in ms UTC)."""
+def vz_write_point(uuid: str, ts_ms_utc: int, value_float: float) -> None:
+    """Punkt (ts in ms UTC, value mit Punktnotation) auf UUID schreiben."""
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
+    params = {
+        "operation": "add",
+        "ts": str(ts_ms_utc),
+        "value": f"{float(value_float):.6f}",
+    }
     if DRY_RUN:
-        print(f"DRY_RUN: POST {url} {params}")
+        logging.info("DRY_RUN: VZ POST %s %s", url, params)
         return
-    r = requests.post(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    r = requests.post(url, params=params, timeout=HTTP_TIMEOUT, headers={"User-Agent": USER_AGENT})
     if not r.ok:
         raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-# --------------------- Sonnenstand & PV-Modell ---------------------
-def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[str, float]:
-    """Vereinfachte Sonnenstandsberechnung: elevation_deg (α), azimuth_deg (0=N,90=E,180=S,270=W)."""
-    doy = int(dt_local.timetuple().tm_yday)
-    hr = dt_local.hour + dt_local.minute / 60.0 + dt_local.second / 3600.0
-    tz_hours = dt_local.utcoffset().total_seconds() / 3600.0 if dt_local.utcoffset() else 0.0
+# ---------------- ESIT/CSV-Logik ----------------
+def floor_to_quarter(dt: datetime) -> datetime:
+    return dt.replace(minute=(dt.minute // 15) * 15, second=0, microsecond=0)
 
-    gamma = 2.0 * math.pi / 365.0 * (doy - 1 + (hr - 12) / 24.0)
-    eq_time = 229.18 * (
-        0.000075 + 0.001868 * math.cos(gamma) - 0.032077 * math.sin(gamma)
-        - 0.014615 * math.cos(2 * gamma) - 0.040849 * math.sin(2 * gamma)
-    )
-    decl = (
-        0.006918 - 0.399912 * math.cos(gamma) + 0.070257 * math.sin(gamma)
-        - 0.006758 * math.cos(2 * gamma) + 0.000907 * math.sin(2 * gamma)
-        - 0.002697 * math.cos(3 * gamma) + 0.001480 * math.sin(3 * gamma)
-    )
+def rfc3339(dt: datetime) -> str:
+    return dt.isoformat(timespec="seconds")  # lokale TZ; API spiegelt TZ zurück
 
-    time_offset = eq_time + 4.0 * lon_deg - 60.0 * tz_hours
-    tst = hr * 60.0 + time_offset
-    ha_deg = (tst / 4.0) - 180.0
-    while ha_deg < -180.0:
-        ha_deg += 360.0
-    while ha_deg > 180.0:
-        ha_deg -= 360.0
-    ha = math.radians(ha_deg)
-    lat = math.radians(lat_deg)
+def build_url(base, path):
+    return base.rstrip("/") + "/" + path.lstrip("/")
 
-    sin_alpha = math.sin(lat) * math.sin(decl) + math.cos(lat) * math.cos(decl) * math.cos(ha)
-    sin_alpha = max(-1.0, min(1.0, sin_alpha))
-    alpha = math.degrees(math.asin(sin_alpha))
+def fetch_tariffs(start_ts: str, end_ts: str, metering_code: str, tariff_type: str):
+    url = build_url(BASE_URL, API_PATH)
+    params = {
+        "start_timestamp": start_ts,
+        "end_timestamp": end_ts,
+        "metering_code": metering_code,
+        "tariff_type": tariff_type,
+    }
+    headers = {"Authorization": f"Bearer {AUTH_TOKEN}"}
+    resp = requests.get(url, params=params, headers=headers, timeout=HTTP_TIMEOUT)
+    if resp.status_code != 200:
+        raise RuntimeError(f"HTTP {resp.status_code}: {resp.text[:400]}")
+    return resp.json()
 
-    az = math.degrees(math.atan2(
-        math.sin(ha),
-        math.cos(ha) * math.sin(lat) - math.tan(decl) * math.cos(lat)
-    ))
-    az = (az + 180.0) % 360.0
-    return {"elevation_deg": alpha, "azimuth_deg": az}
-
-def plane_of_array_from_ghi(ghi_wm2: float, sun_elev_deg: float, sun_az_deg: float,
-                            tilt_deg: float, panel_az_deg: float) -> float:
-    """POA ≈ GHI * max(0, cos(θi)) / max(ε, sin(α)), begrenzt auf ≤ 1.6⋅GHI/sin(α)."""
-    if ghi_wm2 <= 0.0 or sun_elev_deg <= 0.0:
+def sum_chf_per_kwh(components):
+    """Summiert nur Arbeitskomponenten in CHF/kWh."""
+    if not isinstance(components, list):
         return 0.0
-    rad = math.radians
-    alpha = rad(sun_elev_deg)
-    beta = rad(tilt_deg)
-    dgamma = rad((sun_az_deg - panel_az_deg + 540.0) % 360.0 - 180.0)
-
-    cos_alpha = math.cos(alpha)
-    sin_alpha = math.sin(alpha)
-
-    cos_ti = sin_alpha * math.cos(beta) + cos_alpha * math.sin(beta) * math.cos(dgamma)
-    cos_ti = max(0.0, cos_ti)
-
-    denom = max(0.05, sin_alpha)
-    factor = max(0.0, min(1.6, cos_ti / denom))
-    return ghi_wm2 * factor
-
-def module_temperature(amb_c: float, poa_wm2: float, noct_c: float) -> float:
-    """T_mod ≈ T_amb + (NOCT-20)/800 * POA (°C)."""
-    return amb_c + (noct_c - 20.0) / 800.0 * max(0.0, poa_wm2)
-
-def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
-                          eta_stc: float, temp_coeff_per_K: float) -> float:
-    """DC-Leistung [kW] aus Fläche [m²], POA [W/m²], Wirkungsgrad und Temp.-Korrektur."""
-    if poa_wm2 <= 0.0 or area_m2 <= 0.0 or eta_stc <= 0.0:
-        return 0.0
-    eta = eta_stc * (1.0 + temp_coeff_per_K * (t_mod_c - 25.0))
-    eta = max(0.0, eta)
-    p_w = poa_wm2 * area_m2 * eta
-    return max(0.0, p_w) / 1000.0
-
-# --------------------- CSV ---------------------
-def write_csv(path: str, rows: List[Tuple[str, int, float, float, float]]) -> None:
-    """
-    rows: (local_str, ts_ms, irr_wm2, amb_c, p_kw)
-    CSV-Spalten: date_time_local, ts_ms_utc, irr_wm2, t_amb_c, p_pv_kw
-    """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["date_time_local", "ts_ms_utc", "irr_wm2", "t_amb_c", "p_pv_kw"])
-        for local_str, ts_ms, irr, amb, pkw in rows:
-            w.writerow([local_str, ts_ms, f"{irr:.1f}", f"{amb:.1f}", f"{pkw:.3f}"])
-
-# --------------------- MAIN ---------------------
-def main() -> int:
-    try:
-        # 1) 24h-Gitter (ms UTC) ermitteln
-        ts_grid = next_24h_grid_ms()
-        start_ms, end_ms = ts_grid[0], ts_grid[-1]
-
-        # 2) IRR und T aus VZ lesen
-        irr_tuples = vz_get_tuples(UUID_P_IRR, start_ms, end_ms)
-        if not irr_tuples:
-            print("Keine IRR-Werte im gewünschten 24h-Fenster gefunden.", file=sys.stderr)
-            return 2
-        irr_map: Dict[int, float] = {ts: val for ts, val, _ in irr_tuples}
-
-        t_tuples = vz_get_tuples(UUID_T_OUTDOOR, start_ms, end_ms)
-        t_map: Dict[int, float] = {ts: val for ts, val, _ in t_tuples}
-
-        # 3) Berechnung für alle 24 Zeitpunkte
-        tz = _tz()
-        preview: List[Tuple[str, int, float, float, float]] = []  # local_str, ts_ms, IRR, T_amb, P_kW
-
-        for ts_ms in ts_grid:
-            dt_utc = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
-            dt_mid_local = (dt_utc - timedelta(minutes=30)).astimezone(tz)
-
-            irr_wm2 = float(irr_map.get(ts_ms, 0.0))
-            amb_c   = float(t_map.get(ts_ms, 15.0))  # Fallback 15°C, falls fehlend
-
-            sun = solar_position(dt_mid_local, LAT, LON)
-
-            total_kw = 0.0
-            for arr in CONFIG["arrays"]:
-                poa = plane_of_array_from_ghi(
-                    ghi_wm2=irr_wm2,
-                    sun_elev_deg=sun["elevation_deg"],
-                    sun_az_deg=sun["azimuth_deg"],
-                    tilt_deg=float(arr["tilt_deg"]),
-                    panel_az_deg=float(arr["azimuth_deg"]),
-                )
-                t_mod = module_temperature(amb_c, poa, CONFIG["noct_c"])
-                p_kw = pv_power_kw_from_area(
-                    poa_wm2=poa,
-                    t_mod_c=t_mod,
-                    area_m2=float(arr["area_m2"]),
-                    eta_stc=CONFIG["eta_stc"],
-                    temp_coeff_per_K=CONFIG["temp_coeff_per_K"],
-                )
-                total_kw += p_kw
-
-            local_str = dt_utc.astimezone(tz).strftime("%Y-%m-%d %H:%M %Z")
-            preview.append((local_str, ts_ms, irr_wm2, amb_c, round(total_kw, 3)))
-
-        # 4) Konsole: Kontrolle
-        print("\n===== PV-Forecast (kW) – nächste 24h (exaktes Stundenraster) =====")
-        print("Zeit lokal | ts_ms | IRR (W/m²) | T_amb (°C) | P_PV (kW)")
-        for local_str, ts_ms, irr, amb, pkw in preview:
-            print(f"{local_str} | {ts_ms} | {irr:.0f} | {amb:.1f} | {pkw:.3f}")
-
-        # 5) CSV schreiben
-        write_csv(OUTPUT_CSV, preview)
-        print(f"\nOK – CSV geschrieben: {OUTPUT_CSV}")
-
-        # 6) VZ-Bereich löschen & schreiben
-        print(f"Lösche vorhandene PV-Forecast-Werte auf {UUID_PV_OUT}: {start_ms} … {end_ms}")
-        vz_delete_range(UUID_PV_OUT, start_ms, end_ms)
-
-        print(f"Schreibe {len(preview)} Stundenpunkte (kW) nach Volkszähler (UUID {UUID_PV_OUT})…")
-        written = 0
-        for _local, ts_ms, _irr, _amb, pkw in preview:
+    total = 0.0
+    for c in components:
+        if c.get("unit") == "CHF/kWh" and c.get("component") == "work":
             try:
-                vz_write_point(UUID_PV_OUT, ts_ms, pkw)
-                written += 1
-            except Exception as e:
-                print(f"Warnung: Schreiben @ ts_ms={ts_ms} fehlgeschlagen: {e}", file=sys.stderr)
+                total += float(c.get("value", 0.0))
+            except Exception:
+                pass
+    return total
 
-        print(f"\nFertig – geschrieben: {written} Punkte auf {UUID_PV_OUT}.")
-        if DRY_RUN:
-            print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
-        return 0
+def extract_slot_price(slot, prefer="integrated"):
+    """
+    Liefert (price_chf_per_kwh, start_dt_local, end_dt_local).
+    Zeitstempel aus API sind i.d.R. TZ-aware (lokal). Falls naiv, als lokal interpretieren.
+    """
+    st = datetime.fromisoformat(slot["start_timestamp"])
+    en = datetime.fromisoformat(slot["end_timestamp"])
 
-    except requests.RequestException as e:
-        print(f"Netzwerkfehler: {e}", file=sys.stderr)
-        return 1
+    # Bevorzugt 'integrated'
+    if prefer and prefer in slot:
+        p_int = sum_chf_per_kwh(slot[prefer])
+        if p_int > 0 or isinstance(slot.get(prefer), list):
+            return p_int, st, en
+
+    # Fallback: electricity + dso (+ grid)
+    p = 0.0
+    if "electricity" in slot:
+        p += sum_chf_per_kwh(slot["electricity"])
+    if "dso" in slot:
+        p += sum_chf_per_kwh(slot["dso"])
+    if p == 0.0 and "grid" in slot:
+        p += sum_chf_per_kwh(slot["grid"])
+    return p, st, en
+
+def write_csv_atomic(path, rows):
+    """
+    rows: Iterable (price_chf_per_kwh, start_dt_local, end_dt_local)
+    Header: start_local, end_local, price_chf_per_kwh
+    """
+    tmp = f"{path}.tmp"
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["start_local", "end_local", "price_chf_per_kwh"])
+        for price, st, en in rows:
+            w.writerow([
+                st.isoformat(timespec="seconds"),
+                en.isoformat(timespec="seconds"),
+                f"{price:.8f}",
+            ])
+        f.flush()
+        os.fsync(f.fileno())
+
+    os.replace(tmp, path)
+    try:
+        os.chmod(path, 0o644)
+    except Exception:
+        pass
+
+# ---------------- Zeitstempel-Helfer ----------------
+def to_utc_ms(dt_local: datetime) -> int:
+    """
+    Konvertiert einen (lokalen) datetime nach ms seit Epoch (UTC).
+    Falls dt_local naiv ist, wird lokale System-TZ angenommen.
+    """
+    if dt_local.tzinfo is None:
+        dt_local = dt_local.replace(tzinfo=tz.tzlocal())
+    dt_utc = dt_local.astimezone(timezone.utc)
+    return int(dt_utc.timestamp() * 1000)
+
+# ================================ MAIN ================================
+def main():
+    if not AUTH_TOKEN:
+        print("⚠️  Bitte ESIT_API_TOKEN setzen!", file=sys.stderr)
+        sys.exit(1)
+
+    local_tz = tz.tzlocal()
+    now_local = datetime.now(local_tz)
+
+    # letzten 2h + nächsten 24h
+    start_local = floor_to_quarter(now_local - timedelta(hours=PAST_HOURS))
+    # Ende inkl. letztem vollen Slot innerhalb der 24h
+    end_local   = floor_to_quarter(now_local) + timedelta(hours=FUTURE_HOURS) - timedelta(seconds=1)
+
+    start_ts = rfc3339(start_local)
+    end_ts   = rfc3339(end_local)
+
+    logging.info("Hole Preise von %s bis %s", start_ts, end_ts)
+
+    try:
+        data = fetch_tariffs(start_ts, end_ts, METERING_CODE, TARIFF_TYPE)
     except Exception as e:
-        print(f"Unerwarteter Fehler: {e}", file=sys.stderr)
-        return 1
+        print(f"❌ Abruf fehlgeschlagen: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    prices = data.get("prices", [])
+    if not prices:
+        print("Keine Preise erhalten.")
+        sys.exit(3)
+
+    # Slots extrahieren und sortieren
+    rows = [extract_slot_price(s, prefer="integrated") for s in prices]
+    rows.sort(key=lambda x: x[1])  # nach Startzeit
+
+    # Aktuellen Slot ermitteln (nur für Anzeige)
+    current = None
+    for price, st, en in rows:
+        if st <= now_local <= en:
+            current = (st, en, price)
+            break
+    if current is None:
+        for price, st, en in rows:
+            if st > now_local:
+                current = (st, en, price)
+                break
+        if current is None:
+            price, st, en = rows[-1]
+            current = (st, en, price)
+
+    st, en, pr = current
+    print("\n=== Swisspower ESIT – Dynamischer Tarif ===")
+    print(f"Messpunkt : {METERING_CODE}")
+    print(f"Tariftyp  : {TARIFF_TYPE} (Gesamtpreis)")
+    print(f"Zeitraum  : {rows[0][1].strftime('%Y-%m-%d %H:%M')} – {rows[-1][2].strftime('%Y-%m-%d %H:%M')} (lokal)\n")
+    print(">> Aktueller Slot:")
+    print(f"  {st.strftime('%Y-%m-%d %H:%M')} – {en.strftime('%H:%M')}  ->  {pr:.5f} CHF/kWh\n")
+
+    # CSV atomar schreiben
+    try:
+        write_csv_atomic(CSV_PATH, rows)
+        print(f"CSV gespeichert: {CSV_PATH}")
+    except Exception as e:
+        print(f"⚠️ CSV konnte nicht gespeichert werden: {e}", file=sys.stderr)
+
+    # ---- NEU: Alle Slots in Rp/kWh an Volkszähler schreiben (mit ts=Slot-START) ----
+    # Vorbereitung Zeitbereich zum Löschen
+    first_start_ms = to_utc_ms(rows[0][1])
+    last_end_ms    = to_utc_ms(rows[-1][2])
+
+    print(f"\nLösche bestehenden Bereich auf {VZ_UUID_PRICE}: {first_start_ms} … {last_end_ms}")
+    try:
+        vz_delete_range(VZ_UUID_PRICE, first_start_ms, last_end_ms)
+    except Exception as e:
+        print(f"⚠️ DELETE fehlgeschlagen: {e}", file=sys.stderr)
+
+    print(f"\nSchreibe {len(rows)} 15-Min-Punkte nach Volkszähler (UUID {VZ_UUID_PRICE})…")
+    print("Zeit (lokal) | ts_ms_utc | Preis (Rp/kWh)")
+
+    written = 0
+    for price_chf, st_local, _en_local in rows:
+        ts_ms = to_utc_ms(st_local)                 # Slot-Start als Zeitstempel
+        price_rp = price_chf * 100.0                # CHF/kWh → Rp/kWh
+        # Konsole zur Kontrolle
+        print(f"{st_local.strftime('%Y-%m-%d %H:%M:%S %Z')} | {ts_ms} | {price_rp:.3f}")
+        # Schreiben
+        try:
+            vz_write_point(VZ_UUID_PRICE, ts_ms, price_rp)
+            written += 1
+        except Exception as e:
+            print(f"Warnung: Schreiben @ ts_ms={ts_ms} fehlgeschlagen: {e}", file=sys.stderr)
+
+    print(f"\nFertig – geschrieben: {written}/{len(rows)} Punkte auf {VZ_UUID_PRICE}.")
+    if DRY_RUN:
+        print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
