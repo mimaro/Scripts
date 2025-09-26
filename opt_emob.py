@@ -57,7 +57,8 @@ def _utc_now() -> datetime:
 
 
 def ch_tz():
-    return ZoneInfo("Europe/Zurich") if ZoneInfo else timezone(timedelta(hours=1))  # Fallback: CET (+1, ohne DST)
+    # Für korrekte Sommer-/Winterzeit sollte ZoneInfo verfügbar sein
+    return ZoneInfo("Europe/Zurich") if ZoneInfo else timezone(timedelta(hours=1))
 
 
 def fmt_ts(ms: int) -> str:
@@ -105,7 +106,7 @@ def post_point(uuid: str, ts_ms: int, value: Union[int, float]) -> None:
 
 
 def delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
-    """Löscht existierende Werte im Bereich (inklusive) – optional, hier genutzt um alte Werte zu bereinigen."""
+    """Löscht existierende Werte im Bereich (inklusive)."""
     params = {"operation": "delete", "from": str(int(from_ms)), "to": str(int(to_ms))}
     r = requests.get(VZ_POST_URL.format(uuid), params=params, timeout=20)
     if not r.ok:
@@ -251,14 +252,18 @@ def energy_kwh_from_power_between(uuid: str, from_ts_ms: int, to: str = "now") -
 # 3) Preisreihe (minütlich) zwischen jetzt und nächstem 05:00 CH
 # =========================
 def next_5_local(now_local: datetime) -> datetime:
+    """
+    Gibt das nächste lokale 05:00 (Europe/Zurich) zurück – korrekt tz-aware.
+    Kein fromutc()-Missbrauch; 05:00 ist bei DST-Wechseln unkritisch.
+    """
     tz = ch_tz()
-    today_5 = now_local.replace(hour=5, minute=0, second=0, microsecond=0)
-    if now_local < today_5:
-        end_local = today_5
-    else:
-        end_local = (now_local + timedelta(days=1)).replace(hour=5, minute=0, second=0, microsecond=0)
-    # Bei DST-Sprüngen kann 05:00 „springen“ – absichern:
-    return tz.fromutc(end_local.astimezone(timezone.utc).replace(tzinfo=timezone.utc)).astimezone(tz)
+    now_local = now_local.astimezone(tz)
+    candidate_today = now_local.replace(hour=5, minute=0, second=0, microsecond=0)
+    if now_local < candidate_today:
+        return candidate_today
+    # morgen 05:00 lokal
+    tomorrow = now_local + timedelta(days=1)
+    return tomorrow.replace(hour=5, minute=0, second=0, microsecond=0)
 
 
 def get_price_series_minutely(from_local: datetime, to_local: datetime) -> List[Tuple[int, float]]:
@@ -272,8 +277,6 @@ def get_price_series_minutely(from_local: datetime, to_local: datetime) -> List[
 
     payload = get_vals_between(UUIDS["Price"], str(int(from_utc.timestamp() * 1000)), str(int(to_utc.timestamp() * 1000)))
     sections = _normalize_sections(payload)
-    if not sections:
-        return []
 
     # Raw tuples zusammenführen
     raw: List[Tuple[int, float]] = []
@@ -287,14 +290,15 @@ def get_price_series_minutely(from_local: datetime, to_local: datetime) -> List[
                 continue
     raw.sort(key=lambda x: x[0])
 
-    if not raw:
-        return []
-
-    # Minutengitter bauen & Preis "halten"
     start_ms = int(from_utc.timestamp() * 1000)
     end_ms = int(to_utc.timestamp() * 1000)
     minute = 60_000
 
+    # Fallback: wenn keine Daten → erzeugen wir ein Grid mit Preis 0.0
+    if not raw:
+        return [(ts, 0.0) for ts in range(start_ms, end_ms, minute)]
+
+    # Minutengitter bauen & Preis "halten"
     series: List[Tuple[int, float]] = []
     idx = 0
     current_val = raw[0][1]
@@ -320,14 +324,9 @@ def plan_and_write(from_local: datetime, to_local: datetime, minutes_needed: int
     """
     tz = ch_tz()
     prices = get_price_series_minutely(from_local, to_local)
-    if not prices:
-        print("⚠️  Keine Preisdaten im gewünschten Fenster – es wird überall 0 geschrieben.")
-        minutes_needed = 0
 
     # Minutenliste [ (ts_ms, price) ]
-    # Anzahl verfügbarer Minuten:
     total_minutes = int((to_local - from_local).total_seconds() // 60)
-    # Sicherheitskürzung auf verfügbare Länge
     minutes_needed = max(0, min(minutes_needed, total_minutes))
 
     # Günstigste Minuten wählen
@@ -358,9 +357,7 @@ def plan_and_write(from_local: datetime, to_local: datetime, minutes_needed: int
     print(f"Freigabe geschrieben (Minuten): {written} – davon aktiv: {len(chosen_set)}")
 
     # Stundenmittel (lokale Stunden) berechnen & ausgeben
-    # Baue eine Map hour_start_local -> (sum, count)
     hourly: Dict[datetime, Tuple[int, int]] = {}
-    minute = 60_000
     for ts_ms, _price in prices:
         val = 1 if ts_ms in chosen_set else 0
         dt_loc = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc).astimezone(tz)
