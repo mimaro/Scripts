@@ -1,50 +1,69 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-PV-Ertragsforecast aus CSV (robust):
-[... unverändert gelassene Kopf-Kommentare ...]
+PV-Produktions-Forecast (48h) aus Volkszähler-IRR (W/m²) → kW nach Volkszähler schreiben
+
+- Quelle (lesen):  UUID_P_IRR_FORECAST  (Globalstrahlung in W/m², Stundenende als ts_ms)
+- Ziel  (schreiben):abcf6600-97c1-11f0-9348-db517d4efb8f  (PV-Forecast in kW)
+- Bereich: nächste 48 Stunden ab nächster voller Stunde (Europe/Zurich)
+- Vor dem Schreiben: vorhandene Werte im Bereich auf der Ziel-UUID löschen
+- Konsole: je Stunde lokale Zeit, ts_ms, IRR (W/m²), optional T_amb (°C), P_PV (kW)
+
+Umgebungsvariablen (optional):
+  VZ_BASE_URL                (default: http://192.168.178.49/middleware.php)
+  UUID_P_IRR_FORECAST        (default: 510567b0-990b-11f0-bb5b-d33e693aa264)
+  UUID_T_OUTDOOR_FORECAST    (optional; wenn gesetzt, wird T_amb aus VZ gelesen)
+  LOCAL_TZ                   (default: Europe/Zurich)
+  LAT, LON                   (default: 47.3870, 8.2500 – Hägglingen)
+  DRY_RUN=1                  → nur ausgeben, nichts löschen/schreiben
+  DEBUG=1                    → Debug-Logs
+
+Voraussetzung: pip install requests
 """
 
-import csv
-import json
-import math
 import os
+import math
+import sys
+import json
+import requests
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any, Optional, Tuple
 
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
 except Exception:
     ZoneInfo = None
 
-# ------------- zentrale KONFIGURATION -------------
-INPUT_CSV    = "/home/pi/Scripts/haegglingen_5607_48h.csv"
-OUTPUT_JSON  = "/home/pi/Scripts/pv_yield_48h.json"
-OUTPUT_CSV   = "/home/pi/Scripts/pv_yield_48h.csv"
-LOCAL_TZ     = "Europe/Zurich"  # Zeitzone für Mittelpunktszeit
+# --------------------- CONFIG ---------------------
+VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
 
-# Standort Hägglingen (falls nicht separat angegeben)
-LAT = 47.3870
-LON = 8.2500
+UUID_P_IRR = os.environ.get(
+    "UUID_P_IRR_FORECAST",
+    "510567b0-990b-11f0-bb5b-d33e693aa264"  # <- Quelle: IRR W/m² (Forecast)
+)
+UUID_T_OUTDOOR = os.environ.get(
+    "UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f"           # <- optional Quelle: T_amb °C (Forecast)
+)
+UUID_PV_OUT = os.environ.get(
+    "UUID_PV_FORECAST_OUT",
+    "abcf6600-97c1-11f0-9348-db517d4efb8f"  # <- Ziel: PV-Forecast in kW
+)
 
-# Azimut: 0°=Nord, 90°=Ost, 180°=Süd, 270°=West
+LOCAL_TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
+LAT = float(os.environ.get("LAT", "47.3870"))
+LON = float(os.environ.get("LON", "8.2500"))
+
+USER_AGENT = "pv-forecast-from-vz/1.0"
+TIMEOUT = 25
+DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
+
+# PV-Modell (einfach & robust; identisch zum bisherigen Ansatz)
 CONFIG = {
-    "csv_columns": {
-        "time": "date_time",
-        "ghi_candidates": [
-            "IRRADIANCE_WM2", "GHI_WM2", "GHI", "GLOBAL_IRRADIANCE_WM2",
-            "GLOBALSTRAHLUNG_W_M2", "GLOBALSTRAHLUNG", "RAD_GLOB_WM2",
-            "SHORTWAVE_RADIATION_W_M2", "SWGDN"
-        ],
-        "temp_candidates": [
-            "TTT_C", "T2M_C", "TEMP_C", "T_AIR_C", "TA_C", "AIR_TEMPERATURE_C"
-        ],
-    },
-
-    "noct_c": 45.0,
-    "temp_coeff_per_K": -0.004,
-    "eta_stc": 0.17,
-
+    "noct_c": 45.0,               # Nominal Operating Cell Temp
+    "temp_coeff_per_K": -0.004,   # Wirkungsgradänderung pro Kelvin
+    "eta_stc": 0.17,              # Modulwirkungsgrad bei STC
+    # Zwei Teildächer (Beispielwerte wie zuvor)
     "arrays": [
         {"name": "east", "tilt_deg": 20.0, "azimuth_deg": 90.0,  "area_m2": 58.8},
         {"name": "west", "tilt_deg": 20.0, "azimuth_deg": 270.0, "area_m2": 33.6},
@@ -52,36 +71,73 @@ CONFIG = {
 }
 # --------------------------------------------------
 
+def _tz() -> timezone:
+    return ZoneInfo(LOCAL_TZ) if ZoneInfo else timezone.utc
 
-def ensure_tz() -> Optional[ZoneInfo]:
-    return ZoneInfo(LOCAL_TZ) if ZoneInfo else None
+def _debug(msg: str) -> None:
+    if os.environ.get("DEBUG"):
+        print(f"[DEBUG] {msg}", file=sys.stderr)
 
+# ---------- Zeitfenster: nächste 48h ab nächster voller Stunde ----------
+def next_48h_window_ms() -> Tuple[int, int]:
+    tz = _tz()
+    now_local = datetime.now(tz)
+    start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+    end_local = start_local + timedelta(hours=48)
+    start_ms = int(start_local.astimezone(timezone.utc).timestamp() * 1000)
+    end_ms   = int(end_local  .astimezone(timezone.utc).timestamp() * 1000)
+    return start_ms, end_ms
 
-def next_full_hour_local(now: Optional[datetime] = None) -> datetime:
-    """Ende der laufenden Stunde als aware Local (Europe/Zurich)."""
-    tz = ensure_tz() or timezone.utc
-    if now is None:
-        now = datetime.now(tz)
-    else:
-        now = now.astimezone(tz) if now.tzinfo else now.replace(tzinfo=tz)
-    return (now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
+# --------------------- Volkszähler I/O ---------------------
+def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float, int]]:
+    """Liest Rohdaten-Tupel [ts_ms, value, count] für UUID im Zeitfenster."""
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"from": str(from_ms), "to": str(to_ms)}
+    r = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    data = r.json().get("data", {})
+    tuples = data.get("tuples") or []
+    out: List[Tuple[int, float, int]] = []
+    for t in tuples:
+        try:
+            ts = int(t[0])
+            val = float(t[1])
+            qual = int(t[2]) if len(t) > 2 else 1
+            out.append((ts, val, qual))
+        except Exception:
+            continue
+    # sortieren & auf 48 Einträge begrenzen
+    out.sort(key=lambda x: x[0])
+    return out[:48]
 
+def vz_delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
+    """Löscht Werte im Bereich [from_ms, to_ms] auf UUID (erfordert DELETE-Rechte)."""
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"operation": "delete", "from": str(from_ms), "to": str(to_ms)}
+    if DRY_RUN:
+        print(f"DRY_RUN: DELETE {url} {params}")
+        return
+    r = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    if not r.ok:
+        raise RuntimeError(f"Volkszähler-DELETE fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-def parse_iso_to_utc(s: str) -> datetime:
-    """CSV-ISO-Zeit robust nach UTC (aware) wandeln."""
-    s = s.strip()
-    if s.endswith("Z"):
-        dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
-    else:
-        dt = datetime.fromisoformat(s)
-        if dt.tzinfo is None:
-            tz = ensure_tz() or timezone.utc
-            dt = dt.replace(tzinfo=tz)
-    return dt.astimezone(timezone.utc)
+def vz_write_point(uuid: str, ts_ms: int, value: float) -> None:
+    """Schreibt einen Punkt (kW) auf UUID (operation=add, ts in ms UTC)."""
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
+    if DRY_RUN:
+        print(f"DRY_RUN: POST {url} {params}")
+        return
+    r = requests.post(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    if not r.ok:
+        raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
-
+# --------------------- Sonnenstand & Modell ---------------------
 def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[str, float]:
-    """Vereinfachte Sonnenstandsberechnung. Rückgabe: elevation_deg (α), azimuth_deg (0=N,90=E,180=S,270=W)."""
+    """
+    Vereinfachte Sonnenstandsberechnung.
+    Rückgabe: elevation_deg (α), azimuth_deg (0=N,90=E,180=S,270=W).
+    """
     doy = int(dt_local.timetuple().tm_yday)
     hr = dt_local.hour + dt_local.minute / 60.0 + dt_local.second / 3600.0
     tz_hours = dt_local.utcoffset().total_seconds() / 3600.0 if dt_local.utcoffset() else 0.0
@@ -107,27 +163,27 @@ def solar_position(dt_local: datetime, lat_deg: float, lon_deg: float) -> Dict[s
     ha = math.radians(ha_deg)
     lat = math.radians(lat_deg)
 
+    # Sonnenhöhe
     sin_alpha = math.sin(lat) * math.sin(decl) + math.cos(lat) * math.cos(decl) * math.cos(ha)
     sin_alpha = max(-1.0, min(1.0, sin_alpha))
-    alpha = math.asin(sin_alpha)
+    alpha = math.degrees(math.asin(sin_alpha))
 
-    az = math.atan2(
+    # Azimut (0=N -> 90=E -> 180=S -> 270=W)
+    az = math.degrees(math.atan2(
         math.sin(ha),
-        math.cos(ha) * math.sin(lat) - math.tan(decl) * math.cos(lat,
+        math.cos(ha) * math.sin(lat) - math.tan(decl) * math.cos(lat)
     ))
-    az_deg = (math.degrees(az) + 180.0) % 360.0
-    return {"elevation_deg": math.degrees(alpha), "azimuth_deg": az_deg}
-
+    az = (az + 180.0) % 360.0
+    return {"elevation_deg": alpha, "azimuth_deg": az}
 
 def plane_of_array_from_ghi(ghi_wm2: float, sun_elev_deg: float, sun_az_deg: float,
                             tilt_deg: float, panel_az_deg: float) -> float:
     """
     POA-Schätzung aus GHI:
-      POA ≈ GHI * max(0, cos(θi)) / max(ε, sin(α)), begrenzt auf ≤1.6⋅GHI/sin(α)
+      POA ≈ GHI * max(0, cos(θi)) / max(ε, sin(α)), begrenzt auf ≤ 1.6⋅GHI/sin(α)
     """
     if ghi_wm2 <= 0.0 or sun_elev_deg <= 0.0:
         return 0.0
-
     rad = math.radians
     alpha = rad(sun_elev_deg)
     beta = rad(tilt_deg)
@@ -143,11 +199,9 @@ def plane_of_array_from_ghi(ghi_wm2: float, sun_elev_deg: float, sun_az_deg: flo
     factor = max(0.0, min(1.6, cos_ti / denom))
     return ghi_wm2 * factor
 
-
 def module_temperature(amb_c: float, poa_wm2: float, noct_c: float) -> float:
     """T_mod ≈ T_amb + (NOCT-20)/800 * POA (°C)."""
     return amb_c + (noct_c - 20.0) / 800.0 * max(0.0, poa_wm2)
-
 
 def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
                           eta_stc: float, temp_coeff_per_K: float) -> float:
@@ -159,260 +213,102 @@ def pv_power_kw_from_area(poa_wm2: float, t_mod_c: float, area_m2: float,
     p_w = poa_wm2 * area_m2 * eta
     return max(0.0, p_w) / 1000.0
 
-
-# ---------- CSV-Helfer ----------
-
-def _norm(s: str) -> str:
-    return "".join(ch for ch in s.strip().lower() if ch.isalnum() or ch == "_")
-
-
-def choose_column(fieldnames: List[str], candidates: List[str]) -> Optional[str]:
-    if not fieldnames:
-        return None
-    norm_map = {_norm(fn): fn for fn in fieldnames}
-    for cand in candidates:
-        n = _norm(cand)
-        if n in norm_map:
-            return norm_map[n]
-    for fn in fieldnames:
-        nfn = _norm(fn)
-        for cand in candidates:
-            nc = _norm(cand)
-            if nfn.startswith(nc) or nc in nfn:
-                return fn
-    return None
-
-
-def to_float(val: Any, default: float = 0.0) -> float:
-    if val is None:
-        return default
-    if isinstance(val, (float, int)):
-        return float(val)
-    s = str(val).strip().replace(",", ".")
-    try:
-        return float(s)
-    except Exception:
-        return default
-
-
-def read_weather_rows(csv_path: str) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
-    if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"Eingabedatei nicht gefunden: {csv_path}")
-    with open(csv_path, newline="", encoding="utf-8") as f:
-        r = csv.DictReader(f)
-        fields = r.fieldnames or []
-        if not fields:
-            raise RuntimeError("CSV hat keine Kopfzeile/Spalten.")
-
-        cols_cfg = CONFIG["csv_columns"]
-        time_col = cols_cfg.get("time", "date_time")
-        ghi_col = choose_column(fields, cols_cfg.get("ghi_candidates", []))
-        t_col   = choose_column(fields, cols_cfg.get("temp_candidates", []))
-
-        missing = []
-        if time_col not in fields:
-            missing.append(time_col)
-        if not ghi_col:
-            missing.append("<GHI-Spalte>")
-        if not t_col:
-            missing.append("<Temp-Spalte>")
-        if missing:
-            raise RuntimeError(
-                "Pflichtspalten fehlen oder wurden nicht gefunden: " + ", ".join(missing) +
-                f".\nVorhandene Spalten: {fields}"
-            )
-
-        rows_raw = list(r)
-        colmap = {"time": time_col, "ghi": ghi_col, "temp": t_col}
-        return rows_raw, colmap
-
-
-# ---------- Output CSV ----------
-
-def write_pv_csv(path: str, rows: List[Dict[str, Any]], array_names: List[str]) -> None:
-    base_cols = ["date_time", "ghi_wm2", "ambient_c", "sun_elevation_deg", "sun_azimuth_deg"]
-    per_arr_cols = []
-    for name in array_names:
-        per_arr_cols += [
-            f"{name}_poa_wm2",
-            f"{name}_t_module_c",
-            f"{name}_p_kw",
-            f"{name}_e_kwh",
-        ]
-    tail_cols = ["pv_total_power_kw", "pv_total_energy_kwh"]
-    columns = base_cols + per_arr_cols + tail_cols
-
-    with open(path, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=columns)
-        w.writeheader()
-        for r in rows:
-            out = {k: r.get(k, "") for k in base_cols}
-            for name in array_names:
-                part = r.get(name) or {}
-                out[f"{name}_poa_wm2"] = part.get("poa_wm2", "")
-                out[f"{name}_t_module_c"] = part.get("t_module_c", "")
-                out[f"{name}_p_kw"] = part.get("p_kw", "")
-                out[f"{name}_e_kwh"] = part.get("e_kwh", "")
-            out["pv_total_power_kw"] = r.get("pv_total_power_kw", "")
-            out["pv_total_energy_kwh"] = r.get("pv_total_energy_kwh", "")
-            w.writerow(out)
-
-
+# --------------------- Hauptlogik ---------------------
 def main() -> int:
-    tz = ensure_tz()
-    weather_rows, colmap = read_weather_rows(INPUT_CSV)
-
-    results: List[Dict[str, Any]] = []
-
-    for row in weather_rows:
-        # 1) Zeit aus Input übernehmen (Format unverändert)
-        dt_end_str = row[colmap["time"]]
-        dt_end_utc = parse_iso_to_utc(dt_end_str)
-        dt_mid_utc = dt_end_utc - timedelta(minutes=30)
-        dt_mid_local = dt_mid_utc.astimezone(tz) if tz else dt_mid_utc
-
-        # 2) Werte aus CSV
-        ghi = to_float(row.get(colmap["ghi"]))
-        amb = to_float(row.get(colmap["temp"]))
-
-        # 3) Sonnenstand zur Mittelpunktszeit in Europe/Zurich
-        sp = solar_position(dt_mid_local, LAT, LON)
-        elev = sp["elevation_deg"]
-        az = sp["azimuth_deg"]
-
-        # 4) PV pro Teilanlage (Fläche & Wirkungsgrad)
-        total_power_kw = 0.0
-        parts: Dict[str, Any] = {}
-
-        for arr in CONFIG["arrays"]:
-            name = arr["name"]
-            tilt = float(arr["tilt_deg"])
-            paz  = float(arr["azimuth_deg"])
-            area = float(arr.get("area_m2", 0.0))
-
-            poa  = plane_of_array_from_ghi(ghi, elev, az, tilt, paz)
-            tmod = module_temperature(amb, poa, CONFIG["noct_c"])
-            pkw  = pv_power_kw_from_area(
-                poa_wm2=poa,
-                t_mod_c=tmod,
-                area_m2=area,
-                eta_stc=CONFIG["eta_stc"],
-                temp_coeff_per_K=CONFIG["temp_coeff_per_K"],
-            )
-            ekwh = pkw * 1.0  # 1 Stunde
-
-            total_power_kw += pkw
-            parts[name] = {
-                "poa_wm2": round(poa, 1),
-                "t_module_c": round(tmod, 1),
-                "p_kw": round(pkw, 3),
-                "e_kwh": round(ekwh, 3),
-            }
-
-        # 5) Datensatz mit exakt dem Input-Zeitformat
-        record = {
-            "date_time": dt_end_str,               # 1:1 aus CSV übernommen
-            "ghi_wm2": round(ghi, 1),
-            "ambient_c": round(amb, 1),
-            "sun_elevation_deg": round(elev, 2),
-            "sun_azimuth_deg": round(az, 2),
-            "pv_total_power_kw": round(total_power_kw, 3),
-            "pv_total_energy_kwh": round(total_power_kw * 1.0, 3),
-        }
-        for name, part in parts.items():
-            record[name] = part
-
-        results.append(record)
-
-    # JSON schreiben
-    out_payload = {
-        "source": INPUT_CSV,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "location": {"lat": LAT, "lon": LON, "tz": LOCAL_TZ},
-        "config": CONFIG,
-        "selected_columns": colmap,
-        "count_hours": len(results),
-        "hours": results,
-        "note": (
-            "Zeitpunkte ('date_time') stammen 1:1 aus dem Input-CSV; "
-            "Sonnenstand bei Mittelpunktszeit (date_time - 30 min) in Europe/Zurich."
-        ),
-    }
-    os.makedirs(os.path.dirname(OUTPUT_JSON), exist_ok=True)
-    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
-        json.dump(out_payload, f, ensure_ascii=False, indent=2)
-
-    # CSV schreiben (mit identischen Zeitpunkten/Strings)
-    array_names = [a["name"] for a in CONFIG["arrays"]]
-    write_pv_csv(OUTPUT_CSV, results, array_names)
-
-    # >>> Neu: Werte der aktuellen Stunde in der Konsole ausgeben
     try:
-        hour_end_local = next_full_hour_local()
-        hour_start_local = hour_end_local - timedelta(hours=1)
-        target_end_utc = hour_end_local.astimezone(timezone.utc)
+        # Zeitfenster bestimmen
+        start_ms, end_ms = next_48h_window_ms()
 
-        best_row = None
-        best_dt_utc = None
-        for r in results:
+        # IRR W/m² lesen
+        irr_tuples = vz_get_tuples(UUID_P_IRR, start_ms, end_ms)
+        if not irr_tuples:
+            print("Keine IRR-Werte im gewünschten 48h-Fenster gefunden.", file=sys.stderr)
+            return 2
+
+        # Optional: T_amb lesen (wenn UUID vorhanden)
+        t_map: Dict[int, float] = {}
+        if UUID_T_OUTDOOR:
             try:
-                dt_utc = parse_iso_to_utc(r["date_time"])
-            except Exception:
-                continue
+                t_tuples = vz_get_tuples(UUID_T_OUTDOOR, start_ms, end_ms)
+                t_map = {ts: val for ts, val, _ in t_tuples}
+            except Exception as e:
+                print(f"Hinweis: Konnte T_amb nicht laden ({e}) – verwende Fallback 15.0 °C.")
 
-            # exakte Übereinstimmung ±30s
-            if abs((dt_utc - target_end_utc).total_seconds()) <= 30:
-                best_row, best_dt_utc = r, dt_utc
-                break
+        tz = _tz()
+        preview: List[Tuple[str, int, float, Optional[float], float]] = []  # local_str, ts_ms, IRR, T_amb, P_kW
 
-            # Fallback: erste Zeit >= Zielzeit
-            if dt_utc >= target_end_utc:
-                if best_dt_utc is None or dt_utc < best_dt_utc:
-                    best_row, best_dt_utc = r, dt_utc
+        # Berechnen
+        for ts_ms, irr_wm2, _qual in irr_tuples:
+            dt_utc = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc)
+            # Mittelpunktszeit für Sonnenstand
+            dt_mid_local = (dt_utc - timedelta(minutes=30)).astimezone(tz)
+            sun = solar_position(dt_mid_local, LAT, LON)
 
-        if best_row:
-            # PV-Leistung
-            pv_power_kw = float(best_row.get("pv_total_power_kw", 0.0))
-
-            # GHI (Globalstrahlung) aus Datensatz
-            ghi_now = float(best_row.get("ghi_wm2", 0.0))
-
-            # Einstrahlung auf die gesamte PV-Fläche:
-            # Summe(POA_Wm2_i * Fläche_i) = Gesamt-Einstrahlungsleistung in W
-            total_area = sum(float(a.get("area_m2", 0.0)) for a in CONFIG["arrays"]) or 0.0
-            poa_total_w = 0.0
+            # Ambient-Temp:
+            amb_c = t_map.get(ts_ms, 15.0)  # 15°C Fallback
+            # Leistung pro Array aufsummieren
+            total_kw = 0.0
             for arr in CONFIG["arrays"]:
-                name = arr["name"]
-                area = float(arr.get("area_m2", 0.0))
-                part = best_row.get(name, {}) or {}
-                poa_i = float(part.get("poa_wm2", 0.0))
-                poa_total_w += poa_i * area  # W
+                poa = plane_of_array_from_ghi(
+                    ghi_wm2=irr_wm2,
+                    sun_elev_deg=sun["elevation_deg"],
+                    sun_az_deg=sun["azimuth_deg"],
+                    tilt_deg=float(arr["tilt_deg"]),
+                    panel_az_deg=float(arr["azimuth_deg"]),
+                )
+                t_mod = module_temperature(amb_c, poa, CONFIG["noct_c"])
+                p_kw = pv_power_kw_from_area(
+                    poa_wm2=poa,
+                    t_mod_c=t_mod,
+                    area_m2=float(arr["area_m2"]),
+                    eta_stc=CONFIG["eta_stc"],
+                    temp_coeff_per_K=CONFIG["temp_coeff_per_K"],
+                )
+                total_kw += p_kw
 
-            poa_avg_wm2 = (poa_total_w / total_area) if total_area > 0 else 0.0
+            local_str = dt_utc.astimezone(tz).strftime("%Y-%m-%d %H:%M %Z")
+            preview.append((local_str, ts_ms, float(irr_wm2), (amb_c if UUID_T_OUTDOOR else None), round(total_kw, 3)))
 
-            # Konsole
-            print(
-                f"Aktuelle Stunde {hour_start_local.strftime('%Y-%m-%d %H:%M')}–"
-                f"{hour_end_local.strftime('%H:%M')} ({LOCAL_TZ})"
-            )
-            print(f"  GHI (Globalstrahlung): {ghi_now:.1f} W/m²")
-            print(
-                f"  Einstrahlung auf gesamte PV-Fläche: {poa_total_w:.0f} W "
-                f"({poa_total_w/1000.0:.2f} kW, Ø {poa_avg_wm2:.1f} W/m² über {total_area:.1f} m²)"
-            )
-            print(f"  PV-Leistung (Modell): {pv_power_kw:.3f} kW")
-        else:
-            print("Hinweis: Keine passende Zeile für die aktuelle Stunde gefunden – keine Werte ausgegeben.")
+        # Konsole: Vorschau
+        print("\n===== Vorschau: PV-Forecast (kW) – nächste 48h =====")
+        hdr = "Zeit lokal | ts_ms | IRR (W/m²) | "
+        hdr += ("T_amb (°C) | " if UUID_T_OUTDOOR else "")
+        hdr += "P_PV (kW)"
+        print(hdr)
+        for row in preview:
+            if UUID_T_OUTDOOR:
+                local_str, ts_ms, irr, amb, pkw = row
+                amb_s = f"{amb:.1f} °C" if amb is not None else "n/a"
+                print(f"{local_str} | {ts_ms} | {irr:.0f} | {amb_s} | {pkw:.3f}")
+            else:
+                local_str, ts_ms, irr, _amb, pkw = row
+                print(f"{local_str} | {ts_ms} | {irr:.0f} | {pkw:.3f}")
+
+        # Zielbereich löschen
+        print(f"\nLösche vorhandene PV-Forecast-Werte auf {UUID_PV_OUT}: {start_ms} … {preview[-1][1]}")
+        vz_delete_range(UUID_PV_OUT, start_ms, preview[-1][1])
+
+        # Schreiben
+        print(f"Schreibe {len(preview)} Stundenpunkte (kW) nach Volkszähler…")
+        written = 0
+        for _, ts_ms, _irr, _amb, pkw in preview:
+            try:
+                vz_write_point(UUID_PV_OUT, ts_ms, pkw)
+                written += 1
+            except Exception as e:
+                print(f"Warnung: Schreiben @ ts_ms={ts_ms} fehlgeschlagen: {e}", file=sys.stderr)
+
+        print(f"\nFertig – geschrieben: P_PV_forecast={written} Punkte auf {UUID_PV_OUT}.")
+        if DRY_RUN:
+            print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
+        return 0
+
+    except requests.RequestException as e:
+        print(f"Netzwerkfehler: {e}", file=sys.stderr)
+        return 1
     except Exception as e:
-        print(f"Hinweis: Konnte Werte der aktuellen Stunde nicht ermitteln: {e}")
-
-    print(
-        "OK – PV-Ertragsforecast gespeichert: "
-        f"{OUTPUT_JSON} und {OUTPUT_CSV} (Zeilen: {len(results)})\n"
-        f"Benutzte Spalten → Zeit: '{colmap['time']}', GHI: '{colmap['ghi']}', T: '{colmap['temp']}'"
-    )
-    return 0
-
+        print(f"Unerwarteter Fehler: {e}", file=sys.stderr)
+        return 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
