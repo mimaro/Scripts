@@ -51,7 +51,7 @@ def main():
 
     p_pv_wp_min = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]["consumption"]/1000
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="+720min&to=+2160min")["data"]["consumption"]/1000
-    wp_el_max_tag = get_vals(UUID["P_PV_Forecast"], duration="now&to=+720min")["data"]["average"]
+    wp_el_max_tag = get_vals(UUID["WP_el_Max"], duration="now&to=+720min")["data"]["average"]
     
     cop_tag = get_vals(UUID["COP_Forecast"], duration="now&to=+720min")["data"]["average"]
     cop_nacht = get_vals(UUID["COP_Forecast"], duration="+720min&to=+1440min")["data"]["average"]
