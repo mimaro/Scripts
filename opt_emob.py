@@ -181,7 +181,7 @@ def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optio
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
-                val = int(float(t[1]))
+                val = int(float(t[5]))
                 if val == target_value:
                     if last_ts_ms is None or ts_ms > last_ts_ms:
                         last_ts_ms = ts_ms
