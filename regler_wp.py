@@ -157,7 +157,7 @@ def main():
     #t_now = 0
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
-    t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min&to=now")["data"]["average"]
+    t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     #t_roll_avg_24 = 0
 
     #Abfragen aktueller Zustand Freigabe Normalbetrieb (Heizgrenze)
@@ -187,7 +187,7 @@ def main():
     #b_sperrung_wp = 0
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
-    power_balance = get_vals(UUID["PV_Produktion"], duration="-30min&to=now")["data"]["average"]
+    power_balance = get_vals(UUID["PV_Produktion"], duration="-30min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
