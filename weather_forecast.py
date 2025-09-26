@@ -47,7 +47,9 @@ TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 # Volkszähler (deine Defaults; bei Bedarf via Env überschreiben)
 VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
-UUID_P_PV      = os.environ.get("UUID_P_PV_FORECAST",      "abcf6600-97c1-11f0-9348-db517d4efb8f")
+UUID_P_PV      = os.environ.get("UUID_P_PV_FORECAST",      "510567b0-990b-11f0-bb5b-d33e693aa264")
+
+	
 
 USER_AGENT = "srf-weather-vz/1.4"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
