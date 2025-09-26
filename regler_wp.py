@@ -47,7 +47,8 @@ UUID = {
     "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533",
     "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
     "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
-    "P_Therm_Prod": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5"
+    "P_Therm_Prod": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5",
+    "P_Therm_Bil_Freig": "73b73d10-9ab4-11f0-8b11-5dbc6ea585f4"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -380,12 +381,26 @@ def main():
     ######################################################################
     logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
 
+    p_prod = 0
+    
     p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]
     p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min&to=now")["data"]["consumption"]/1000
 
+    p_therm_bil = p_therm_zukunft - p_therm_prod 
+
+    if p_therm_bil < 0:
+        p_prod = 0
+    else:
+        p_prod = 1
+    
+    write_vals(UUID["P_Therm_Bil_Freig"], p_prod) 
+    
     logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
     logging.info("P thermisch Produziert: {}".format(p_therm_prod))
+    logging.info("P thermisch Bilanz: {}".format(p_therm_bil))
+    logging.info("P thermisch Freigabe: {}".format(p_prod))
 
+    
     
     ######################################################################
     logging.info(f"---------- Modifikation Heizkurve ----------")   
@@ -481,7 +496,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
-    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe):
+    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe & p_prod):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
