@@ -188,6 +188,9 @@ def main():
     power_balance = get_vals(UUID["PV_Produktion"], duration="-30min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
+
+    power_balance_t = get_vals(UUID["PV_Produktion"], duration="-30min")["data"]["consumption"]
+    logging.info("Freigabe_Leistung_TEST: {}".format(power_balance_t))
     
     # Aktuelle Einschaltschwelle Sonderbetrieb    
     p_freigabe_now = -(FREIGABE_WARM_P + (t_now - FREIGABE_WARM_TEMP) * 
