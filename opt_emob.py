@@ -366,10 +366,10 @@ def main():
     freigabe_emob = 0
     
     #Vergleich Energieladung seit letzten Einstecken im Vergleich zu max Ladung von 20 kWh
-    kwh_min = kwh - Max_Ladung
+    kwh_min = Max_Ladung - kwh
+    ladezeit = kwh_min/7
 
-    if kwh_min <=0:
-        freigabe_emob = 0
+    
         
 
 
