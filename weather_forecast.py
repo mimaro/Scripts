@@ -5,35 +5,8 @@
 SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben)
 + Zusatz: 24h-Mittel TTT_C → WP-Strom (kWh) & Heizwärmebedarf (kWh)
 + Zusatz: stündlicher COP (48h) aus TTT_C
-+ NEU:    stündliche max. Aufnahmeleistung der WP (48h) aus TTT_C
-
-- Holt stündliche Forecasts (TTT_C, IRRADIANCE_WM2) für Hägglingen (PLZ 5607)
-- Auswahl: genau die nächsten 48 Stunden ab Ende der laufenden Stunde (Europe/Zurich)
-- Konsole: getrennte Vorschau-Listen (Temperatur / Einstrahlung) mit lokaler Zeit + ts_ms
-- Volkszähler: löscht 48h-Bereich (relevante Kanäle) und schreibt dann neu
-- Zusätze:
-  * 24h-Mittel (konfigurierbar) der kommenden TTT_C → WP-Strom/Heizwärmebedarf berechnen,
-    Ergebnis (kWh) an jetzt-TS schreiben (zwei UUIDs)
-  * COP je Stunde für 48h berechnen & schreiben (eigene UUID, Bereich vorher löschen)
-  * NEU: max. Aufnahmeleistung je Stunde für 48h berechnen & schreiben (eigene UUID, Bereich vorher löschen)
-- Zeitstempel beim Schreiben: Millisekunden seit 1970-01-01 00:00:00 **UTC**
-
-Umgebungsvariablen (optional):
-  SRG_CLIENT_ID / SRG_CLIENT_SECRET   OAuth für SRF Meteo
-  SRF_ZIP=5607, SRF_PLACE="Hägglingen", LOCAL_TZ="Europe/Zurich"
-  VZ_BASE_URL="http://<host>/middleware.php"   # ggf. /middleware statt /middleware.php
-  UUID_T_OUTDOOR_FORECAST, UUID_P_IRR_FORECAST
-  UUID_WP_POWER_KWH, UUID_HEAT_DEMAND_KWH, UUID_COP_FORECAST
-  UUID_HP_MAX_POWER
-  AVG_TEMP_HOURS=24, TEMP_CAP_MAX_C=15
-  FORM_HP_A, FORM_HP_B, FORM_HP_C
-  FORM_Q_A,  FORM_Q_B,  FORM_Q_C
-  FORM_COP_M, FORM_COP_B
-  FORM_HP_MAX_M, FORM_HP_MAX_B
-  DRY_RUN=1  → nur ausgeben, nichts schreiben
-  DEBUG=1    → Debug-Logs
-
-Voraussetzung: requests (pip install requests)
++ Zusatz: stündliche max. Aufnahmeleistung der WP (48h) aus TTT_C
++ NEU:    PV-Clip: min( PV-Prognose kW , PV-Max kW ) je Stunde (48h) → Ziel-UUID
 """
 
 import base64
@@ -59,23 +32,29 @@ ZIP = int(os.environ.get("SRF_ZIP", "5607"))
 PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")
 TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 
-# Volkszähler (Defaults; bei Bedarf via Env überschreiben)
+# Volkszähler
 VZ_BASE_URL = os.environ.get("VZ_BASE_URL", "http://192.168.178.49/middleware.php")
 UUID_T_OUTDOOR = os.environ.get("UUID_T_OUTDOOR_FORECAST", "c56767e0-97c1-11f0-96ab-41d2e85d0d5f")
 UUID_P_IRR     = os.environ.get("UUID_P_IRR_FORECAST",     "510567b0-990b-11f0-bb5b-d33e693aa264")
 
-# Ziel-UUIDs für zusätzliche Kennzahlen
+# Zusätzliche Kennzahlen
 UUID_WP_POWER_KWH    = os.environ.get("UUID_WP_POWER_KWH",    "58cbc600-9aaa-11f0-8a74-894e01bd6bb7")
 UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f0-8991-c9bc212463c9")
 UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")
-# NEU: UUID für stündliche max. Aufnahmeleistung (kW)
-UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")
+UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")  # WP max (kW)
 
-# Mittelwert-Fenster & Temperaturdeckel
-AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))   # z. B. 24
+# >>> NEU: PV-Clip-UUIDs
+UUID_PV_PROD_FORECAST_IN    = os.environ.get("UUID_PV_PROD_FORECAST_IN",
+                                             "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose kW
+UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
+                                             "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max kW (Quelle)
+UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
+                                             "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # min(prod, max)
+
+# Mittelwert-Fenster & Formeln (unverändert)
+AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
 TEMP_CAP_MAX_C = float(os.environ.get("TEMP_CAP_MAX_C", "15.0"))
 
-# Formeln zentral (Defaults gemäß Vorgabe)
 FORM_HP_A = float(os.environ.get("FORM_HP_A", "0.0474"))
 FORM_HP_B = float(os.environ.get("FORM_HP_B", "-1.6072"))
 FORM_HP_C = float(os.environ.get("FORM_HP_C", "17.326"))
@@ -87,11 +66,11 @@ FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "59.037"))
 FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
 FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 
-# NEU: Formel für max. Aufnahmeleistung (kW) aus T (°C): Pmax = M*T + B
+# Formel für max. WP-Aufnahmeleistung
 FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
 FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
 
-USER_AGENT = "srf-weather-vz/1.6"
+USER_AGENT = "srf-weather-vz/1.7"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
@@ -109,7 +88,6 @@ def mask(s: str) -> str:
     return (s[:2] + "…" + s[-2:]) if len(s) > 6 else "…" * len(s)
 
 def load_env_file_secure(path: str) -> Dict[str, str]:
-    """Liest KEY=VALUE aus path, erlaubt nur Modus 600 und Besitzer = aktueller User."""
     env: Dict[str, str] = {}
     if not os.path.exists(path):
         return env
@@ -129,10 +107,8 @@ def load_env_file_secure(path: str) -> Dict[str, str]:
     return env
 
 def get_credentials() -> Tuple[str, str]:
-    """SRG_CLIENT_ID / SRG_CLIENT_SECRET aus Env oder ~/.srg-meteo.env (chmod 600)."""
     client_id = (os.environ.get("SRG_CLIENT_ID") or "").strip().strip('"').strip("'")
     client_secret = (os.environ.get("SRG_CLIENT_SECRET") or "").strip().strip('"').strip("'")
-
     if not client_id or not client_secret:
         home_env_path = os.path.expanduser("~/.srg-meteo.env")
         try:
@@ -144,16 +120,13 @@ def get_credentials() -> Tuple[str, str]:
         except ApiError as e:
             print(str(e), file=sys.stderr)
             sys.exit(2)
-
     if not client_id or not client_secret:
-        print("SRG_CLIENT_ID / SRG_CLIENT_SECRET fehlen (Env oder ~/.srg-meteo.env mit chmod 600).", file=sys.stderr)
+        print("SRG_CLIENT_ID / SRG_CLIENT_SECRET fehlen.", file=sys.stderr)
         sys.exit(2)
-
     _debug(f"Creds: {mask(client_id)} / {mask(client_secret)}")
     return client_id, client_secret
 
 def get_access_token(client_id: str, client_secret: str) -> str:
-    """OAuth2 Client-Credentials: grant_type in URL, Basic Auth im Header."""
     auth_raw = f"{client_id}:{client_secret}".encode("utf-8")
     auth_b64 = base64.b64encode(auth_raw).decode("ascii")
     headers = {
@@ -183,7 +156,6 @@ def api_get(path: str, token: str, params: Optional[Dict[str, Any]] = None) -> D
     return r.json()
 
 def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tuple[float, float, str]:
-    """Geopunkt via PLZ; falls Name nicht exakt passt, nimm ersten Treffer."""
     res = api_get("/geolocationNames", token, params={"zip": zip_code, "limit": 20})
     items: List[Dict[str, Any]] = []
     if isinstance(res, list):
@@ -197,7 +169,6 @@ def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tu
             items = [res]
     if not items:
         raise ApiError(f"Keine geolocationNames für PLZ {zip_code} gefunden: {res}")
-
     best = None
     for it in items:
         nm = (it.get("name") or it.get("default_name") or "").strip().lower()
@@ -206,12 +177,10 @@ def find_geolocation_by_zip_and_name(token: str, zip_code: int, name: str) -> Tu
             break
     if best is None:
         best = items[0]
-        _debug(f"Exakte Übereinstimmung '{name}' nicht gefunden – verwende: {best.get('name') or best.get('default_name')}")
-
     geo = best.get("geolocation") or {}
     lat = float(geo.get("lat"))
     lon = float(geo.get("lon"))
-    geolocation_id = f"{lat:.4f},{lon:.4f}"  # "[lat],[lon]"
+    geolocation_id = f"{lat:.4f},{lon:.4f}"
     return lat, lon, geolocation_id
 
 def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]:
@@ -222,7 +191,6 @@ def get_hourly_forecast(token: str, geolocation_id: str) -> List[Dict[str, Any]]
     return hours
 
 def parse_dt(dt_str: str) -> datetime:
-    """SRF 'date_time' (Ende der Stunde) → aware UTC datetime."""
     if dt_str.endswith("Z"):
         return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
     dt = datetime.fromisoformat(dt_str)
@@ -232,16 +200,12 @@ def parse_dt(dt_str: str) -> datetime:
     return dt.astimezone(timezone.utc)
 
 def select_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Wähle genau die nächsten 48 Stunden (Ende jeder Stunde), beginnend ab Ende der laufenden Stunde (lokal).
-    """
     tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
     now_local = datetime.now(tz)
     start_local = (now_local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1))
     end_local = start_local + timedelta(hours=48)
     start_utc = start_local.astimezone(timezone.utc)
     end_utc = end_local.astimezone(timezone.utc)
-
     rows: List[Tuple[datetime, Dict[str, Any]]] = []
     for r in hours:
         ds = r.get("date_time")
@@ -253,17 +217,12 @@ def select_next_48h(hours: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             continue
         if start_utc <= dt_utc <= end_utc:
             rows.append((dt_utc, r))
-
     rows.sort(key=lambda t: t[0])
     rows = rows[:48] if len(rows) > 48 else rows
     return [r for (_, r) in rows]
 
-# -------------------------- Volkszähler ---------------------------------------
+# -------------------------- Volkszähler I/O -----------------------------------
 def vz_delete_range(uuid: str, from_ts_ms: int, to_ts_ms: int) -> None:
-    """
-    Zeitbereich löschen (GET, operation=delete).
-    Erfordert DELETE-Rechte des DB-Users.
-    """
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
     params = {"operation": "delete", "from": str(from_ts_ms), "to": str(to_ts_ms)}
     if DRY_RUN:
@@ -274,15 +233,8 @@ def vz_delete_range(uuid: str, from_ts_ms: int, to_ts_ms: int) -> None:
         raise RuntimeError(f"Volkszähler-DELETE fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
 def vz_write(uuid: str, value: float, ts_ms: int) -> None:
-    """
-    Wert schreiben (POST, operation=add) – Zeitstempel in ms (UTC).
-    """
     url = f"{VZ_BASE_URL}/data/{uuid}.json"
-    params = {
-        "operation": "add",
-        "ts": str(ts_ms),
-        "value": f"{float(value):.6f}",
-    }
+    params = {"operation": "add", "ts": str(ts_ms), "value": f"{float(value):.6f}"}
     if DRY_RUN:
         print(f"DRY_RUN: POST {url} params={params}")
         return
@@ -290,25 +242,88 @@ def vz_write(uuid: str, value: float, ts_ms: int) -> None:
     if not r.ok:
         raise RuntimeError(f"Volkszähler-POST fehlgeschlagen ({uuid}): HTTP {r.status_code} – {r.text}")
 
+# >>> NEU: Lesen von Daten (tuples) aus VZ
+def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float, int]]:
+    url = f"{VZ_BASE_URL}/data/{uuid}.json"
+    params = {"from": str(from_ms), "to": str(to_ms)}
+    r = requests.get(url, params=params, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    data = r.json().get("data", {})
+    tuples = data.get("tuples") or []
+    out: List[Tuple[int, float, int]] = []
+    for t in tuples:
+        try:
+            ts = int(t[0]); val = float(t[1]); qual = int(t[2]) if len(t) > 2 else 1
+            out.append((ts, val, qual))
+        except Exception:
+            continue
+    out.sort(key=lambda x: x[0])
+    return out
+
 # ============================== FORMEL-FUNKTIONEN ==============================
 def wp_power_kwh_from_t(t_c: float) -> float:
-    """Stromverbrauch WP [kWh] aus mittlerer Außentemperatur (mit Deckelung)."""
     t_eff = min(t_c, TEMP_CAP_MAX_C)
     return FORM_HP_A * t_eff * t_eff + FORM_HP_B * t_eff + FORM_HP_C
 
 def heat_demand_kwh_from_t(t_c: float) -> float:
-    """Heizwärmebedarf [kWh] aus mittlerer Außentemperatur (mit Deckelung analog)."""
     t_eff = min(t_c, TEMP_CAP_MAX_C)
     return FORM_Q_A * t_eff * t_eff + FORM_Q_B * t_eff + FORM_Q_C
 
 def cop_from_t(t_c: float) -> float:
-    """COP (leistungszahl) aus stündlicher Außentemperatur."""
     return FORM_COP_M * t_c + FORM_COP_B
 
-# NEU: max. Aufnahmeleistung (kW) aus T (°C) – linear: Pmax = M*T + B
 def hp_max_power_kw_from_t(t_c: float) -> float:
-    # Negative Leistungen vermeiden (bei hohen T kann die lineare Formel < 0 werden)
     return max(0.0, FORM_HP_MAX_M * t_c + FORM_HP_MAX_B)
+
+# >>> NEU: PV-Clip-Funktion: min(PV_Prod, PV_Max) je TS schreiben
+def pv_clip_and_write(ts_grid: List[int], start_ms: int, end_ms: int, tz_loc) -> None:
+    """
+    - Liest PV-Prod (kW) und PV-Max (kW) aus VZ für [start_ms, end_ms]
+    - Ermittelt je ts in ts_grid das Minimum
+    - Löscht Zielbereich und schreibt 48 Punkte
+    - Gibt alle Punkte in der Konsole aus
+    """
+    print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
+
+    # Daten laden
+    prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, start_ms, end_ms)
+    vmax = vz_get_tuples(UUID_PV_MAX_FORECAST_IN,  start_ms, end_ms)
+    prod_map = {ts: v for ts, v, _ in prod}
+    vmax_map = {ts: v for ts, v, _ in vmax}
+
+    # Zielbereich löschen
+    print(f"Lösche Zielbereich {start_ms} … {end_ms} (UUID {UUID_PV_CAPPED_FORECAST_OUT})")
+    try:
+        vz_delete_range(UUID_PV_CAPPED_FORECAST_OUT, start_ms, end_ms)
+    except Exception as e:
+        print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
+
+    # Kopfzeile Konsole
+    print("Zeit lokal | ts_ms | PV_Prod_kW | PV_Max_kW | min_kW")
+
+    written = 0
+    for ts in ts_grid:
+        dt_local = datetime.fromtimestamp(ts/1000.0, tz=timezone.utc).astimezone(tz_loc)
+        local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
+        p = prod_map.get(ts, None)
+        m = vmax_map.get(ts, None)
+
+        if p is None or m is None:
+            # Zur Kontrolle trotzdem ausgeben
+            p_str = "n/a" if p is None else f"{p:.3f}"
+            m_str = "n/a" if m is None else f"{m:.3f}"
+            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a (fehlender Wert)")
+            continue
+
+        v = min(float(p), float(m))
+        print(f"{local_str} | {ts} | {p:.3f} | {m:.3f} | {v:.3f}")
+        try:
+            vz_write(UUID_PV_CAPPED_FORECAST_OUT, v, ts)
+            written += 1
+        except Exception as e:
+            print(f"Warnung: Schreiben @ ts_ms={ts} fehlgeschlagen: {e}", file=sys.stderr)
+
+    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte auf {UUID_PV_CAPPED_FORECAST_OUT}.")
 
 # ============================== MAIN ==========================================
 def main() -> int:
@@ -318,41 +333,35 @@ def main() -> int:
         lat, lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
         hours = get_hourly_forecast(token, geo_id)
         next48 = select_next_48h(hours)
-
         if not next48:
             print("Keine Forecastdaten für die nächsten 48 h gefunden.", file=sys.stderr)
             return 2
 
-        # Vorschau-Listen zusammenstellen
-        tz = ZoneInfo(TZ) if ZoneInfo else timezone.utc
+        # Vorschau-Daten (Temperatur / IRR)
+        tz_loc = ZoneInfo(TZ) if ZoneInfo else timezone.utc
         preview_T: List[Tuple[str, int, Optional[float]]] = []
         preview_I: List[Tuple[str, int, Optional[float]]] = []
+
         for row in next48:
             dt_utc = parse_dt(row.get("date_time"))
             ts_ms = int(dt_utc.timestamp() * 1000)
-            dt_local = dt_utc.astimezone(tz)
+            dt_local = dt_utc.astimezone(tz_loc)
             local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
-
-            t_val_raw = row.get("TTT_C")
-            i_val_raw = row.get("IRRADIANCE_WM2")
 
             t_val = None
             i_val = None
+            t_raw = row.get("TTT_C"); i_raw = row.get("IRRADIANCE_WM2")
             try:
-                if t_val_raw is not None:
-                    t_val = float(str(t_val_raw).replace(",", "."))
-            except Exception:
-                t_val = None
+                if t_raw is not None: t_val = float(str(t_raw).replace(",", "."))
+            except Exception: t_val = None
             try:
-                if i_val_raw is not None:
-                    i_val = float(str(i_val_raw).replace(",", "."))
-            except Exception:
-                i_val = None
+                if i_raw is not None: i_val = float(str(i_raw).replace(",", "."))
+            except Exception: i_val = None
 
             preview_T.append((local_str, ts_ms, t_val))
             preview_I.append((local_str, ts_ms, i_val))
 
-        # --- KONSOLE: getrennte Vorschau-Ausgabe ---
+        # Konsole
         print("\n===== Vorschau: Temperatur (TTT_C) – nächste 48h =====")
         for local_str, ts_ms, val in preview_T:
             vs = "n/a" if val is None else f"{val:.2f} °C"
@@ -363,120 +372,94 @@ def main() -> int:
             vs = "n/a" if val is None else f"{val:.0f} W/m²"
             print(f"{local_str} | ts_ms={ts_ms} | IRRADIANCE_WM2={vs}")
 
-        # Bereich bestimmen (inklusive)
-        start_ts_ms = preview_T[0][1]
-        end_ts_ms   = preview_T[-1][1]
+        # Bereich (inklusive)
+        ts_grid = [ts for (_loc, ts, _v) in preview_T]
+        start_ts_ms = ts_grid[0]
+        end_ts_ms   = ts_grid[-1]
 
-        # Löschen & Neu schreiben (TTT_C / IRR)
+        # TTT_C / IRR in VZ schreiben (wie zuvor)
         print(f"\nLösche vorhandene Daten in Volkszähler: {start_ts_ms} … {end_ts_ms} (TTT_C & IRR)")
         vz_delete_range(UUID_T_OUTDOOR, start_ts_ms, end_ts_ms)
         vz_delete_range(UUID_P_IRR,     start_ts_ms, end_ts_ms)
 
-        print(f"Schreibe {len(next48)} Stunden (ab nächster voller Stunde, TZ={TZ}) nach Volkszähler…")
+        print(f"Schreibe {len(ts_grid)} Stunden (ab nächster voller Stunde, TZ={TZ}) nach Volkszähler…")
         count_T = count_I = 0
-
         for (_, ts_ms, t_val), (_, _, i_val) in zip(preview_T, preview_I):
             if t_val is not None:
                 try:
-                    vz_write(UUID_T_OUTDOOR, float(t_val), ts_ms)
-                    count_T += 1
+                    vz_write(UUID_T_OUTDOOR, float(t_val), ts_ms); count_T += 1
                 except Exception as e:
                     print(f"Warnung: TTT_C @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
             if i_val is not None:
                 try:
-                    vz_write(UUID_P_IRR, float(i_val), ts_ms)
-                    count_I += 1
+                    vz_write(UUID_P_IRR, float(i_val), ts_ms); count_I += 1
                 except Exception as e:
                     print(f"Warnung: IRRADIANCE_WM2 @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
-
         print(f"\nFertig – geschrieben: T_outdoor_forecast={count_T}, P_IRR_forecast={count_I}.")
         if DRY_RUN:
             print("(DRY_RUN aktiv – es wurde nichts in die DB geschrieben.)")
 
-        # ===================== 24h-Mittelwert & Kennzahlen =====================
+        # 24h-Mittel / Kennzahlen (unverändert) …
         temps = [v for (_, _, v) in preview_T[:AVG_TEMP_HOURS] if v is not None]
-        if not temps:
-            print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
-        else:
+        if temps:
             t_mean = sum(temps) / len(temps)
             t_eff = min(t_mean, TEMP_CAP_MAX_C)
             wp_kwh = wp_power_kwh_from_t(t_mean)
             q_kwh  = heat_demand_kwh_from_t(t_mean)
-
             ts_now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
-
             print("\n===== 24h-Mittel & abgeleitete Kennzahlen =====")
             print(f"Fenster    : nächste {len(temps)} h")
             print(f"T_mean     : {t_mean:.2f} °C (gedeckelt bei {TEMP_CAP_MAX_C:.1f} °C → {t_eff:.2f} °C)")
             print(f"WP-Strom   : {wp_kwh:.3f} kWh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
             print(f"Heizwärme  : {q_kwh:.3f} kWh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
+            try: vz_write(UUID_WP_POWER_KWH, float(wp_kwh), ts_now_ms)
+            except Exception as e: print(f"Warnung: WP-Strom (kWh) nicht geschrieben: {e}", file=sys.stderr)
+            try: vz_write(UUID_HEAT_DEMAND_KWH, float(q_kwh), ts_now_ms)
+            except Exception as e: print(f"Warnung: Heizwärme (kWh) nicht geschrieben: {e}", file=sys.stderr)
+        else:
+            print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
 
-            try:
-                vz_write(UUID_WP_POWER_KWH, float(wp_kwh), ts_now_ms)
-            except Exception as e:
-                print(f"Warnung: WP-Strom (kWh) nicht geschrieben: {e}", file=sys.stderr)
-            try:
-                vz_write(UUID_HEAT_DEMAND_KWH, float(q_kwh), ts_now_ms)
-            except Exception as e:
-                print(f"Warnung: Heizwärme (kWh) nicht geschrieben: {e}", file=sys.stderr)
-
-        # ===================== COP (48h) ==========================
+        # COP (48h) …
         print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
         print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
-        try:
-            vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
-        except Exception as e:
-            print(f"Warnung: COP-DELETE fehlgeschlagen: {e}", file=sys.stderr)
-
+        try: vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
+        except Exception as e: print(f"Warnung: COP-DELETE fehlgeschlagen: {e}", file=sys.stderr)
         count_COP = 0
         for (local_str, ts_ms, t_val) in preview_T:
             if t_val is None:
-                print(f"{local_str} | ts_ms={ts_ms} | COP=n/a (kein T)")
-                continue
+                print(f"{local_str} | ts_ms={ts_ms} | COP=n/a (kein T)"); continue
             cop = cop_from_t(t_val)
             print(f"{local_str} | ts_ms={ts_ms} | COP={cop:.3f}")
-            try:
-                vz_write(UUID_COP_FORECAST, float(cop), ts_ms)
-                count_COP += 1
-            except Exception as e:
-                print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
-
+            try: vz_write(UUID_COP_FORECAST, float(cop), ts_ms); count_COP += 1
+            except Exception as e: print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
 
-        # ===================== NEU: max. Aufnahmeleistung (48h) ==================
+        # WP max Aufnahmeleistung (48h) – unverändert
         print("\n===== Max. Aufnahmeleistung WP (kW) – stündlich, nächste 48h =====")
         print(f"Lösche Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_HP_MAX_POWER})")
-        try:
-            vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
-        except Exception as e:
-            print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
-
+        try: vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
+        except Exception as e: print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
         count_HP_MAX = 0
         for (local_str, ts_ms, t_val) in preview_T:
             if t_val is None:
-                print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)")
-                continue
+                print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)"); continue
             pmax_kw = hp_max_power_kw_from_t(t_val)
             print(f"{local_str} | ts_ms={ts_ms} | T={t_val:.2f} °C | Pmax={pmax_kw:.3f} kW")
-            try:
-                vz_write(UUID_HP_MAX_POWER, float(pmax_kw), ts_ms)
-                count_HP_MAX += 1
-            except Exception as e:
-                print(f"Warnung: Pmax @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
-
+            try: vz_write(UUID_HP_MAX_POWER, float(pmax_kw), ts_ms); count_HP_MAX += 1
+            except Exception as e: print(f"Warnung: Pmax @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte.")
+
+        # >>> NEU: PV-CLIP berechnen & schreiben
+        pv_clip_and_write(ts_grid, start_ts_ms, end_ts_ms, tz_loc)
 
         return 0
 
     except ApiError as e:
-        print(f"API-Fehler: {e}", file=sys.stderr)
-        return 1
+        print(f"API-Fehler: {e}", file=sys.stderr); return 1
     except requests.RequestException as e:
-        print(f"Netzwerkfehler: {e}", file=sys.stderr)
-        return 1
+        print(f"Netzwerkfehler: {e}", file=sys.stderr); return 1
     except Exception as e:
-        print(f"Unerwarteter Fehler: {e}", file=sys.stderr)
-        return 1
+        print(f"Unerwarteter Fehler: {e}", file=sys.stderr); return 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
