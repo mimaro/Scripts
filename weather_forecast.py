@@ -10,11 +10,11 @@ SRF Meteo 48h → Volkszähler (Vorschau, dann: Bereich löschen & neu schreiben
 
 NEU:
 - Startzeitpunkt für VZ-Datenabfragen ist lokale Zeit Europe/Zurich (DST-fest).
-- Skalierungen (×1000) für folgende Ziel-UUIDs:
-  • UUID_HP_MAX_POWER         (kW → W)
-  • UUID_HEAT_DEMAND_KWH      (kWh → Wh)
-  • UUID_WP_POWER_KWH         (kWh → Wh)
-  • UUID_PV_CAPPED_FORECAST_OUT (W → W×1000; Inputs werden in W gelesen)
+- Skalierungen:
+  • UUID_HP_MAX_POWER         (kW → W, ×1000)
+  • UUID_HEAT_DEMAND_KWH      (kWh → Wh, ×1000)
+  • UUID_WP_POWER_KWH         (kWh → Wh, ×1000)
+  • UUID_PV_CAPPED_FORECAST_OUT: KEINE zusätzliche Skalierung (W bleibt W)
 """
 
 import base64
@@ -51,13 +51,13 @@ UUID_HEAT_DEMAND_KWH = os.environ.get("UUID_HEAT_DEMAND_KWH", "9d6f6990-9aac-11f
 UUID_COP_FORECAST    = os.environ.get("UUID_COP_FORECAST",    "31877e20-9aaa-11f0-8759-733431a03535")  # dimensionslos
 UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f0-9359-d3451ca32acb")  # kW → schreiben als W (×1000)
 
-# PV-Clip: Eingänge (in W lesen) & Ziel
+# PV-Clip: Eingänge (in W lesen) & Ziel (W schreiben, keine Skalierung)
 UUID_PV_PROD_FORECAST_IN    = os.environ.get("UUID_PV_PROD_FORECAST_IN",
                                              "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose (W)
 UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
                                              "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max (W)
 UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
-                                             "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # schreiben als W×1000
+                                             "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # schreiben in W (unverändert)
 
 # Mittelwert-Fenster & Formeln
 AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
@@ -78,14 +78,15 @@ FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
 FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
 
-USER_AGENT = "srf-weather-vz/1.9"
+USER_AGENT = "srf-weather-vz/2.0"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 TIMEOUT = 30  # Sekunden
 
-# ===== Skalierungsfaktoren (einheitlich an einer Stelle) =====
-SCALE_HP_MAX_kW_TO_W        = 1000.0   # für UUID_HP_MAX_POWER
-SCALE_ENERGY_kWh_TO_Wh      = 1000.0   # für UUID_WP_POWER_KWH & UUID_HEAT_DEMAND_KWH
-SCALE_PV_CLIP_W_TO_WTIMES   = 1000.0   # für UUID_PV_CAPPED_FORECAST_OUT (Inputs in W → write W×1000)
+# ===== Skalierungsfaktoren =====
+SCALE_HP_MAX_kW_TO_W   = 1000.0   # für UUID_HP_MAX_POWER
+SCALE_ENERGY_kWh_TO_Wh = 1000.0   # für UUID_WP_POWER_KWH & UUID_HEAT_DEMAND_KWH
+# Für PV-Clip KEINE Skalierung mehr (W → W)
+# SCALE_PV_CLIP = 1.0
 
 # ============================== UTILS =========================================
 class ApiError(RuntimeError):
@@ -301,7 +302,7 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
     """
     - Liest PV-Prod (W) und PV-Max (W) aus VZ für [from_ms_localnow, to_ms]
     - Ermittelt je ts in ts_grid das Minimum (W)
-    - Löscht Zielbereich und schreibt 48 Punkte als **W×1000** (gemäß Vorgabe)
+    - Löscht Zielbereich und schreibt 48 Punkte **ohne zusätzliche Skalierung** (W)
     """
     print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
 
@@ -318,7 +319,7 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
     except Exception as e:
         print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
-    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | min_W | geschrieben (W×1000)")
+    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | min_W | geschrieben (W)")
     written = 0
     for ts in ts_grid:
         dt_local = datetime.fromtimestamp(ts/1000.0, tz=timezone.utc).astimezone(tz_loc)
@@ -331,8 +332,8 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
             print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a | n/a")
             continue
 
-        v_w = min(float(p), float(m))              # W
-        v_write = v_w * SCALE_PV_CLIP_W_TO_WTIMES  # W×1000
+        v_w = min(float(p), float(m))   # W
+        v_write = v_w                   # W (keine ×1000 mehr)
         print(f"{local_str} | {ts} | {p:.1f} | {m:.1f} | {v_w:.1f} | {v_write:.1f}")
         try:
             vz_write(UUID_PV_CAPPED_FORECAST_OUT, v_write, ts)
@@ -340,7 +341,7 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
         except Exception as e:
             print(f"Warnung: Schreiben @ ts_ms={ts} fehlgeschlagen: {e}", file=sys.stderr)
 
-    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte → {UUID_PV_CAPPED_FORECAST_OUT} (W×1000).")
+    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte → {UUID_PV_CAPPED_FORECAST_OUT} (W).")
 
 # ============================== MAIN ==========================================
 def main() -> int:
