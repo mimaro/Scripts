@@ -47,7 +47,7 @@ UUID = {
     "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533",
     "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
     "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
-    "P_Therm_Prod": "69630320-6522-11ee-9e09-ebb553e47b70"
+    "P_Therm_Prod": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -381,7 +381,7 @@ def main():
     logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
 
     p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]
-    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min")["data"]["consumption"]
+    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min")["consumption"]
 
     logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
     logging.info("P thermisch Produziert: {}".format(p_therm_prod))
