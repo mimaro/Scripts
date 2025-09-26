@@ -47,7 +47,7 @@ UUID = {
     "T_Speicher_unten_puffer": "3fa7fe90-77b6-11f0-a27b-15bfbc6c5533",
     "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
     "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
-    "P_Ther_Prod": "69630320-6522-11ee-9e09-ebb553e47b70"
+    "P_Therm_Prod": "69630320-6522-11ee-9e09-ebb553e47b70"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
