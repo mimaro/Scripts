@@ -26,7 +26,7 @@ VZ_POST_URL = BASE_URL + "/data/{}.json"                        # ts & value als
 
 UUIDS: Dict[str, str] = {
     "Freigabe_EMob": "756356f0-9396-11f0-a24e-add622cac6cb",
-    "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",     # 0/1
+    "Cable_State":   "58163cf0-95ff-11f0-b79d-252564addda6",     # valve/states
     "Emob_Cons":     "6cb255a0-6e5f-11ee-b899-c791d8058d25",     # Leistung/Energie (W/Wh)
     "Price":         "a1547420-8c87-11f0-ab9a-bd73b64c1942",     # Tarif (z.B. Rp/kWh)
 }
@@ -57,7 +57,6 @@ def _utc_now() -> datetime:
 
 
 def ch_tz():
-    # Für korrekte Sommer-/Winterzeit sollte ZoneInfo verfügbar sein
     return ZoneInfo("Europe/Zurich") if ZoneInfo else timezone(timedelta(hours=1))
 
 
@@ -117,6 +116,10 @@ def delete_range(uuid: str, from_ms: int, to_ms: int) -> None:
 # Payload-Normalisierung
 # =========================
 def _normalize_sections(payload: Any) -> List[dict]:
+    """
+    Rückgabe als Liste von „sections“ mit jeweils mindestens „tuples“ (Liste).
+    Falls die API bereits direkt eine Liste von Tupeln liefert, kapseln wir das.
+    """
     if isinstance(payload, list):
         if payload and isinstance(payload[0], (list, tuple)):
             return [{"tuples": payload}]
@@ -125,6 +128,7 @@ def _normalize_sections(payload: Any) -> List[dict]:
         return []
 
     if isinstance(payload, dict):
+        # Viele VZ-Antworten: {"data": {...}} oder {"data":[{...}, ...]}
         if "data" in payload:
             data = payload["data"]
             if isinstance(data, list):
@@ -136,6 +140,7 @@ def _normalize_sections(payload: Any) -> List[dict]:
                     return data["data"]
                 return [data]
             return []
+        # Fallbacks
         if "tuples" in payload and isinstance(payload["tuples"], list):
             return [payload]
         for _, v in payload.items():
@@ -166,9 +171,30 @@ def _sections_time_range(sections: List[dict]) -> Tuple[int, int, int]:
     return (len(ts_all), min(ts_all), max(ts_all))
 
 
+def _get_columns_for_section(section: dict) -> Optional[List[str]]:
+    """
+    Versucht Spaltennamen zu finden – häufig „columns“ auf Section-Level
+    oder unter „meta.columns“. Gesucht ist insbesondere „valve“.
+    """
+    cols = None
+    if isinstance(section.get("columns"), list):
+        cols = section["columns"]
+    elif isinstance(section.get("meta"), dict) and isinstance(section["meta"].get("columns"), list):
+        cols = section["meta"]["columns"]
+
+    if cols:
+        # Normalize to strings
+        try:
+            cols = [str(c).strip().lower() for c in cols]
+        except Exception:
+            pass
+        return cols
+    return None
+
+
 def _first_numeric_after_ts(t: list) -> Optional[float]:
     """
-    Sucht im Tupel ab Index 1 die erste numerisch interpretierbare Spalte.
+    Fallback: Sucht im Tupel ab Index 1 die erste numerisch interpretierbare Spalte.
     Akzeptiert 0/1, floats, 'true'/'false'.
     """
     for i in range(1, len(t)):
@@ -187,45 +213,87 @@ def _first_numeric_after_ts(t: list) -> Optional[float]:
     return None
 
 
+def _tuple_get_valve_value(section: dict, t: list) -> Optional[int]:
+    """
+    Holt – wenn möglich – den „valve“-Wert aus dem Tupel.
+    - Wenn die Section Spaltennamen hat und „valve“ darin vorkommt, nutze diese Spalte.
+    - Andernfalls Fallback: erste numerische Spalte nach ts.
+    Ergebnis als 0/1-Integer (alles !=0 → 1).
+    """
+    cols = _get_columns_for_section(section)
+    if cols and "valve" in cols:
+        idx = cols.index("valve")
+        # Tuple ist: [ts, ...]; valve sollte an Position idx stehen
+        if 0 <= idx < len(t):
+            try:
+                raw = t[idx]
+                if isinstance(raw, str):
+                    s = raw.strip().lower()
+                    if s == "true":
+                        return 1
+                    if s == "false":
+                        return 0
+                    raw = s.replace(",", ".")
+                val = float(raw)
+                return 1 if int(round(val)) != 0 else 0
+            except Exception:
+                pass
+
+    # Fallback
+    v = _first_numeric_after_ts(t)
+    if v is None:
+        return None
+    return 1 if int(round(v)) != 0 else 0
+
+
 # =========================
-# 1) Letzten Wechsel „1 → !=1“ finden
+# 1) Letzten Wechsel „1 → !=1“ finden (mit 'valve'-Spalte)
 # =========================
 def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optional[int]:
     """
-    NEU: Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (1) zu !=target_value**.
-    D.h. das Ende der letzten '1'-Phase innerhalb des Lookback-Fensters.
-    Gibt None zurück, wenn kein solcher Wechsel im Fenster gefunden wurde.
+    Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (z.B. 1) zu !=target_value**
+    innerhalb des Lookback-Fensters.
+    Bevorzugt die Spalte „valve“, falls vorhanden. Fällt sonst auf eine numerische Spalte zurück.
     """
     payload = get_vals(uuid, f"-{lookback_min}min")
     sections = _normalize_sections(payload)
     if not sections:
+        _d("[DEBUG] find_last_ts_equal: keine sections im Payload")
         return None
 
-    samples: List[Tuple[int, int]] = []  # (ts_ms, val_int)
+    samples: List[Tuple[int, int]] = []  # (ts_ms, val(0/1))
     for section in sections:
+        cols = _get_columns_for_section(section)
+        if cols:
+            _d(f"[DEBUG] columns erkannt: {cols}")
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
             except Exception:
                 continue
-            val_num = _first_numeric_after_ts(t)
-            if val_num is None:
+            val_bin = _tuple_get_valve_value(section, t)
+            if val_bin is None:
                 continue
-            # auf Integer 0/1 abbilden (alles !=0 -> 1)
-            val_int = 1 if int(round(val_num)) != 0 else 0
-            samples.append((ts_ms, val_int))
+            samples.append((ts_ms, val_bin))
 
     if not samples:
+        _d("[DEBUG] find_last_ts_equal: keine verwertbaren (ts,val)-Paare")
         return None
 
     samples.sort(key=lambda x: x[0])
 
+    # Den letzten Übergang target_value -> !=target_value suchen
     last_change_ts: Optional[int] = None
     for i in range(1, len(samples)):
-        prev_val = samples[i-1][1]
-        cur_val  = samples[i][1]
+        prev_val = samples[i - 1][1]
+        cur_val = samples[i][1]
         if prev_val == target_value and cur_val != target_value:
-            last_change_ts = samples[i][0]  # Zeitpunkt, an dem der neue (≠target) Wert gilt
+            last_change_ts = samples[i][0]  # Zeitstempel, ab dem der neue (≠target) Wert gilt
+
+    if last_change_ts is None:
+        _d("[DEBUG] kein 1→!=1 Wechsel im Fenster gefunden")
+    else:
+        _d(f"[DEBUG] letzter 1→!=1 Wechsel @ {fmt_ts(last_change_ts)}")
 
     return last_change_ts
 
@@ -431,7 +499,7 @@ def main():
     tz = ch_tz()
     now_local = datetime.now(tz)
 
-    # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ auf Cable_State
+    # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ (valve) auf Cable_State
     last_ts = find_last_ts_equal(UUIDS["Cable_State"], target_value=1, lookback_min=args.lookback)
     if last_ts is None:
         print("⚠️  Kein letzter 1→!=1-Wechsel gefunden – setze Freigabe komplett auf 0 bis 05:00.")
@@ -440,7 +508,7 @@ def main():
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
-    print(f"Letzter 1→!=1-Wechsel auf Cable_State: {fmt_ts(last_ts)}")
+    print(f"Letzter 1→!=1-Wechsel (valve) auf Cable_State: {fmt_ts(last_ts)}")
 
     # 2) Energie seit diesem Zeitpunkt
     kwh_since = energy_kwh_from_power_between(UUIDS["Emob_Cons"], last_ts, to="now")
