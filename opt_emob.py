@@ -31,7 +31,7 @@ UUIDS: Dict[str, str] = {
     "Price":         "a1547420-8c87-11f0-ab9a-bd73b64c1942",     # Tarif (z.B. Rp/kWh)
 }
 
-# Suchfenster für den letzten "1"-Zustand am Kabel (Minuten)
+# Suchfenster für den letzten „1→!=1“-Wechsel (Minuten)
 MAX_LOOKBACK_MIN = 4320  # 72h
 
 # Lade-Parameter
@@ -166,32 +166,72 @@ def _sections_time_range(sections: List[dict]) -> Tuple[int, int, int]:
     return (len(ts_all), min(ts_all), max(ts_all))
 
 
+def _first_numeric_after_ts(t: list) -> Optional[float]:
+    """
+    Sucht im Tupel ab Index 1 die erste numerisch interpretierbare Spalte.
+    Akzeptiert 0/1, floats, 'true'/'false'.
+    """
+    for i in range(1, len(t)):
+        v = t[i]
+        try:
+            if isinstance(v, str):
+                s = v.strip().lower()
+                if s == "true":
+                    return 1.0
+                if s == "false":
+                    return 0.0
+                v = s.replace(",", ".")
+            return float(v)
+        except Exception:
+            continue
+    return None
+
+
 # =========================
-# 1) Letzten Zeitpunkt finden, an dem Cable_State == 1 war
+# 1) Letzten Wechsel „1 → !=1“ finden
 # =========================
 def find_last_ts_equal(uuid: str, target_value: int, lookback_min: int) -> Optional[int]:
+    """
+    NEU: Liefert den Zeitstempel (ms, UTC) des **letzten Wechsels von target_value (1) zu !=target_value**.
+    D.h. das Ende der letzten '1'-Phase innerhalb des Lookback-Fensters.
+    Gibt None zurück, wenn kein solcher Wechsel im Fenster gefunden wurde.
+    """
     payload = get_vals(uuid, f"-{lookback_min}min")
     sections = _normalize_sections(payload)
-
     if not sections:
         return None
 
-    last_ts_ms = None
+    samples: List[Tuple[int, int]] = []  # (ts_ms, val_int)
     for section in sections:
         for t in _iter_section_tuples(section):
             try:
                 ts_ms = int(t[0])
-                val = int(float(t[5]))
-                if val == target_value:
-                    if last_ts_ms is None or ts_ms > last_ts_ms:
-                        last_ts_ms = ts_ms
             except Exception:
                 continue
-    return last_ts_ms
+            val_num = _first_numeric_after_ts(t)
+            if val_num is None:
+                continue
+            # auf Integer 0/1 abbilden (alles !=0 -> 1)
+            val_int = 1 if int(round(val_num)) != 0 else 0
+            samples.append((ts_ms, val_int))
+
+    if not samples:
+        return None
+
+    samples.sort(key=lambda x: x[0])
+
+    last_change_ts: Optional[int] = None
+    for i in range(1, len(samples)):
+        prev_val = samples[i-1][1]
+        cur_val  = samples[i][1]
+        if prev_val == target_value and cur_val != target_value:
+            last_change_ts = samples[i][0]  # Zeitpunkt, an dem der neue (≠target) Wert gilt
+
+    return last_change_ts
 
 
 # =========================
-# 2) Energie seit last_ts in kWh
+# 2) Energie seit from_ts in kWh
 # =========================
 def energy_kwh_from_power_between(uuid: str, from_ts_ms: int, to: str = "now") -> float:
     if from_ts_ms is None:
@@ -254,7 +294,6 @@ def energy_kwh_from_power_between(uuid: str, from_ts_ms: int, to: str = "now") -
 def next_5_local(now_local: datetime) -> datetime:
     """
     Gibt das nächste lokale 05:00 (Europe/Zurich) zurück – korrekt tz-aware.
-    Kein fromutc()-Missbrauch; 05:00 ist bei DST-Wechseln unkritisch.
     """
     tz = ch_tz()
     now_local = now_local.astimezone(tz)
@@ -383,7 +422,7 @@ def main():
     parser.add_argument("--trace-energy", action="store_true", help="Trapez-Integration debuggen")
     parser.add_argument("--max-kwh", type=float, default=MAX_LADUNG_KWH, help="Ziel-Ladeenergie [kWh]")
     parser.add_argument("--kw", type=float, default=LADELEISTUNG_KW, help="Ladeleistung [kW]")
-    parser.add_argument("--lookback", type=int, default=MAX_LOOKBACK_MIN, help="Lookback für letzten 1-Zustand (Min)")
+    parser.add_argument("--lookback", type=int, default=MAX_LOOKBACK_MIN, help="Lookback für letzten 1→!=1 Wechsel (Min)")
     args = parser.parse_args()
 
     DEBUG = args.debug
@@ -392,21 +431,20 @@ def main():
     tz = ch_tz()
     now_local = datetime.now(tz)
 
-    # 1) Zeitpunkt der letzten "1" auf Cable_State
+    # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ auf Cable_State
     last_ts = find_last_ts_equal(UUIDS["Cable_State"], target_value=1, lookback_min=args.lookback)
     if last_ts is None:
-        print("⚠️  Kein letzter Einsteck-Zeitpunkt gefunden – setze Freigabe komplett auf 0 bis 05:00.")
+        print("⚠️  Kein letzter 1→!=1-Wechsel gefunden – setze Freigabe komplett auf 0 bis 05:00.")
         from_local = now_local.replace(second=0, microsecond=0)
         to_local = next_5_local(now_local)
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
-    last_dt_utc = datetime.fromtimestamp(last_ts / 1000.0, tz=timezone.utc)
-    print(f"Letzte '1' auf Cable_State: {fmt_ts(last_ts)}")
+    print(f"Letzter 1→!=1-Wechsel auf Cable_State: {fmt_ts(last_ts)}")
 
-    # 2) Energie seit last_ts
+    # 2) Energie seit diesem Zeitpunkt
     kwh_since = energy_kwh_from_power_between(UUIDS["Emob_Cons"], last_ts, to="now")
-    print(f"Energie seit letzter Ladung: {kwh_since:.3f} kWh")
+    print(f"Energie seit diesem Wechsel: {kwh_since:.3f} kWh")
 
     # 3) Fehlende Energie & Ladezeit (auf 15min aufrunden)
     kwh_min = args.max_kwh - kwh_since
@@ -416,7 +454,7 @@ def main():
     to_local = next_5_local(now_local)
 
     if kwh_min <= 0:
-        print("Bereits ≥ Zielenergie geladen – schreibe überall 0 bis 05:00.")
+        print("Bereits ≥ Zielenergie „abgedeckt“ – schreibe überall 0 bis 05:00.")
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
