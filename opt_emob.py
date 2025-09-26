@@ -27,6 +27,8 @@ AUTO_FALLBACK_TO_OTHER_COLUMN = True
 DEBUG = False
 TRACE_ENERGY = False
 
+Max_Ladung = 20 #maximale Ladeenergie in kWh 
+
 # =========================
 # Debug/Helper
 # =========================
