@@ -49,10 +49,23 @@ def main():
 
     p_pv_prod = get_vals(UUID["P_PV_Forecast"], duration="now&to=+720min")["data"]["consumption"]/1000
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="+720min&to=+2160min")["data"]["consumption"]/1000
+    cop_tag = get_vals(UUID["COP_Forecast"], duration="now&to=+720min")["data"]["average"]
+    cop_nacht = get_vals(UUID["COP_Forecast"], duration="+720min&to=+1440min")["data"]["average"]
+
+    wp_betriebszeit = 
 
 
     
+    
+    logging.info("PV Produktion heute: {}".format(p_pv_prod))
+    logging.info("El. Bedarf WP morgen: {}".format(p_el_wp_bed))
+    logging.info("COP Tag: {}".format(cop_tag))
+    logging.info("COP Nacht: {}".format(cop_nacht))
 
+    
+
+    
+    
     
     ###############################################################################
 
