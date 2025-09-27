@@ -40,7 +40,7 @@ LADELEISTUNG_KW = 7.0     # AC-Ladeleistung
 RUND_MINUTEN = 15         # auf 15-Minuten-Schritte runden
 
 # Neuer Planungshorizont (ab jetzt +N Stunden)
-PLANUNG_HORIZONT_STUNDEN = 5  # lokal anpassbar
+PLANUNG_HORIZONT_STUNDEN = 13  # lokal anpassbar
 
 # Debug
 DEBUG = False
