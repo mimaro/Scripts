@@ -39,9 +39,6 @@ MAX_LADUNG_KWH = 20.0    # Ziel-Ladeenergie
 LADELEISTUNG_KW = 7.0     # AC-Ladeleistung
 RUND_MINUTEN = 15         # auf 15-Minuten-Schritte runden
 
-# Neuer Planungshorizont (ab jetzt +N Stunden)
-PLANUNG_HORIZONT_STUNDEN = 8  # lokal anpassbar
-
 # Debug
 DEBUG = False
 TRACE_ENERGY = False
@@ -321,17 +318,18 @@ def energy_kwh_from_power_between(uuid: str, from_ts_ms: int, to: str = "now") -
 
 
 # =========================
-# 3) Preisreihe (minütlich)
+# 3) Preisreihe (minütlich) zwischen jetzt und nächstem 05:00 CH
 # =========================
 def next_5_local(now_local: datetime) -> datetime:
     """
-    (Legacy) Gibt das nächste lokale 05:00 zurück – wird im aktuellen Flow nicht mehr verwendet.
+    Gibt das nächste lokale 05:00 (Europe/Zurich) zurück – korrekt tz-aware.
     """
     tz = ch_tz()
     now_local = now_local.astimezone(tz)
     candidate_today = now_local.replace(hour=5, minute=0, second=0, microsecond=0)
     if now_local < candidate_today:
         return candidate_today
+    # morgen 05:00 lokal
     tomorrow = now_local + timedelta(days=1)
     return tomorrow.replace(hour=5, minute=0, second=0, microsecond=0)
 
@@ -448,15 +446,12 @@ def plan_and_write(from_local: datetime, to_local: datetime, minutes_needed: int
 def main():
     global DEBUG, TRACE_ENERGY
 
-    parser = argparse.ArgumentParser(description="Freigabe E-Mob nach günstigsten Minuten im nächsten Zeitfenster planen.")
+    parser = argparse.ArgumentParser(description="Freigabe E-Mob nach günstigsten Minuten bis 05:00 lokal planen.")
     parser.add_argument("--debug", action="store_true", help="Debug-Ausgaben")
     parser.add_argument("--trace-energy", action="store_true", help="Trapez-Integration debuggen")
     parser.add_argument("--max-kwh", type=float, default=MAX_LADUNG_KWH, help="Ziel-Ladeenergie [kWh]")
     parser.add_argument("--kw", type=float, default=LADELEISTUNG_KW, help="Ladeleistung [kW]")
     parser.add_argument("--lookback", type=int, default=MAX_LOOKBACK_MIN, help="Lookback für letzten 1→!=1 Wechsel (Min)")
-    # Neu: Planungshorizont per CLI (optional), Standard aus Konfiguration
-    parser.add_argument("--horizon-hours", type=float, default=PLANUNG_HORIZONT_STUNDEN,
-                        help=f"Planungshorizont in Stunden ab jetzt (Standard {PLANUNG_HORIZONT_STUNDEN}h)")
     args = parser.parse_args()
 
     DEBUG = args.debug
@@ -468,9 +463,9 @@ def main():
     # 1) Zeitpunkt des letzten Wechsels „1 → !=1“ auf Cable_State
     last_ts = find_last_ts_equal(UUIDS["Cable_State"], target_value=1, lookback_min=args.lookback)
     if last_ts is None:
-        print(f"⚠️  Kein letzter 1→!=1-Wechsel gefunden – setze Freigabe komplett auf 0 für die nächsten {args.horizon_hours:.1f} h.")
+        print("⚠️  Kein letzter 1→!=1-Wechsel gefunden – setze Freigabe komplett auf 0 bis 05:00.")
         from_local = now_local.replace(second=0, microsecond=0)
-        to_local = from_local + timedelta(hours=args.horizon_hours)
+        to_local = next_5_local(now_local)
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
@@ -485,10 +480,10 @@ def main():
     print(f"Ziel Max_Ladung: {args.max_kwh:.3f} kWh  ->  Fehlend: {kwh_min:.3f} kWh")
 
     from_local = now_local.replace(second=0, microsecond=0)
-    to_local = from_local + timedelta(hours=args.horizon_hours)
+    to_local = next_5_local(now_local)
 
     if kwh_min <= 0:
-        print(f"Bereits ≥ Zielenergie – schreibe überall 0 für die nächsten {args.horizon_hours:.1f} h.")
+        print("Bereits ≥ Zielenergie – schreibe überall 0 bis 05:00.")
         plan_and_write(from_local, to_local, minutes_needed=0)
         return
 
