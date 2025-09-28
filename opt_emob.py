@@ -37,7 +37,7 @@ MAX_LOOKBACK_MIN = 4320  # 72h
 # Lade-Parameter
 MAX_LADUNG_KWH = 20.0    # Ziel-Ladeenergie
 LADELEISTUNG_KW = 7.0     # AC-Ladeleistung
-RUND_MINUTEN = 60         # auf 60-Minuten-Schritte runden
+RUND_MINUTEN = 15         # auf 60-Minuten-Schritte runden
 
 # Debug
 DEBUG = False
