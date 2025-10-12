@@ -404,14 +404,14 @@ def main():
     
     ######################################################################
     logging.info(f"---------- Modifikation Heizkurve ----------")   
-    steigung_soll = 45
+    steigung_soll = 0
     
     #Abfragen aktuelle Stromproduktion PV-Anlage
     power_sol = get_vals(UUID["PV_Produktion"], duration="-15min&to=now")["data"]["average"]
     
     p_sol = power_sol - p_freigabe_now
 
-    if p_sol > 0:
+    if p_sol > 0 and sunset_freigabe:
         steigung_soll = int((steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min)
 
         if steigung_soll > 200:
