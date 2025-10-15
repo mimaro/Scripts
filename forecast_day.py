@@ -118,7 +118,7 @@ def main():
     now = datetime.datetime.now(tz=tz)
 
     # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 12h
-    data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]
+    data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
     tuples_wp = data_wp.get("tuples", [])
 
     values_over10 = [t[1] for t in tuples_wp if len(t) > 1 and t[1] is not None and float(t[1]) > 10.0]
@@ -146,7 +146,7 @@ def main():
     n_betriebsstunden = max(0, int(round(hour_wp_betrieb)))
 
     # Abfragen Aussentemperaturen nächste 12 h
-    data_temp = get_vals(UUID["T_Aussen_Forecast"], duration="now&to=+720min")["data"]
+    data_temp = get_vals(UUID["T_Aussen_Forecast"], duration="now&to=+900min")["data"]
     tuples_temp = data_temp.get("tuples", [])
 
     logging.info("PV Potenzial heute: {}".format(p_pv_wp_min))
