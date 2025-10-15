@@ -33,17 +33,20 @@ def get_vals(uuid, duration="-0min"):
     return req.json()
 
 def write_vals(uuid, val):
-    """Daten ohne expliziten Zeitstempel auf VZ schreiben (Serverzeit)."""
-    poststring = VZ_POST_URL.format(uuid, val)
+    """Daten ohne expliziten Zeitstempel auf VZ schreiben (Serverzeit) – immer als Integer."""
+    ival = int(val)
+    poststring = VZ_POST_URL.format(uuid, ival)
     postreq = requests.post(poststring, timeout=10)
     return postreq.ok
 
 def write_vals_at(uuid, val, ts_epoch_sec):
     """
     Daten mit explizitem Zeitstempel (Sekunden seit Epoch) auf VZ schreiben.
-    Viele VZ-Installationen akzeptieren &ts=<epoch_seconds> zusätzlich.
+    Wert wird explizit als Integer übertragen.
     """
-    poststring = VZ_POST_URL.format(uuid, val) + f"&ts={int(ts_epoch_sec)}"
+    ival = int(val)
+    tse = int(ts_epoch_sec)
+    poststring = VZ_POST_URL.format(uuid, ival) + f"&ts={tse}"
     postreq = requests.post(poststring, timeout=10)
     return postreq.ok
 
@@ -134,7 +137,7 @@ def main():
         start_hour = now.replace(minute=0, second=0, microsecond=0)
         for i in range(15):
             ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, ts_hour.timestamp())
+            ok = write_vals_at(UUID["Freigabe_WP_Opt"], int(0), ts_hour.timestamp())
             logging.info(f"Freigabe_WP_Opt {ts_hour.isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
@@ -164,7 +167,7 @@ def main():
     selected_hot_hours = set()
 
     if n_betriebsstunden == 0:
-        pass  # alles 0
+        selected_hot_hours = set()
     elif n_betriebsstunden >= len(eligible_hours):
         # Sonderfall: mehr benötigte Stunden als verfügbar -> alle Stunden mit PV>10 werden 1 (andere 0)
         selected_hot_hours = set(eligible_hours)
@@ -182,12 +185,13 @@ def main():
             if t >= cutoff_temp:
                 selected_hot_hours.add(h)
 
-    # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben
+    # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben (immer Integer)
     for h in next15_hours:
         val = 1 if h in selected_hot_hours else 0
-        ok = write_vals_at(UUID["Freigabe_WP_Opt"], val, h)
+        ival = int(val)
+        ok = write_vals_at(UUID["Freigabe_WP_Opt"], ival, h)
         dt = _from_epoch_seconds(h, tz)
-        logging.info(f"Freigabe_WP_Opt {dt.isoformat()} -> {val} (ok={ok})")
+        logging.info(f"Freigabe_WP_Opt {dt.isoformat()} -> {ival} (ok={ok})")
 
     logging.info("********************************")
 
