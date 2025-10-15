@@ -61,7 +61,7 @@ def main():
 
 
     
-    logging.info("Thermische Bilanz: {}".format(w_wp_bil))
+    logging.info("Thermische Bilanz: {}".format(e_wp_bil))
   
 
     logging.info("********************************")
