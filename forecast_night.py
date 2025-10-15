@@ -29,20 +29,25 @@ UUID = {
 #######################################################################################################
 
 def get_vals(uuid, duration="-0min"):
-    # Daten von vz lesen. 
+    """Daten von vz lesen (JSON)."""
     req = requests.get(VZ_GET_URL.format(uuid, duration), timeout=10)
     req.raise_for_status()
     return req.json()
 
 def write_vals(uuid, val):
-    # Daten auf vz schreiben (ohne expliziten Zeitstempel).
-    poststring = VZ_POST_URL.format(uuid, val)
+    """Daten ohne expliziten Zeitstempel auf vz schreiben (Serverzeit)."""
+    ival = int(val)  # sicherstellen: Integer
+    poststring = VZ_POST_URL.format(uuid, ival)
     postreq = requests.post(poststring, timeout=10)
     return postreq.ok
 
 def write_vals_at(uuid, val, ts_epoch_sec):
-    # Daten mit explizitem Zeitstempel (Epoch-Sekunden) schreiben.
-    poststring = VZ_POST_URL.format(uuid, val) + f"&ts={int(ts_epoch_sec)}"
+    """
+    Daten mit explizitem Zeitstempel (Epoch-Sekunden) auf vz schreiben.
+    Wert wird explizit als Integer (0/1) übertragen.
+    """
+    ival = int(val)  # sicherstellen: Integer
+    poststring = VZ_POST_URL.format(uuid, ival) + f"&ts={int(ts_epoch_sec)}"
     postreq = requests.post(poststring, timeout=10)
     return postreq.ok
 
@@ -149,11 +154,11 @@ def main():
 
     if not ratio_by_ts:
         logging.warning("Keine gültigen tarif/cop-Paare für die nächsten 12h gefunden. Schreibe 0 für alle Stunden.")
-        # 0 für die nächsten 12 Stunden schreiben
+        # 0 für die nächsten 12 Stunden schreiben (explizit int)
         start_hour = now.replace(minute=0, second=0, microsecond=0)
         for i in range(12):
             ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, ts_hour.timestamp())
+            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], int(0), ts_hour.timestamp())
             logging.info(f"Freigabe_WP_Nacht {ts_hour.isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
@@ -178,7 +183,7 @@ def main():
         if counts[h] > 0:
             hourly_ratio[h] = sums[h] / counts[h]
         else:
-            hourly_ratio[h] = float("inf")  # keine Daten in der Stunde -> extrem teuer, fällt nie in "günstigste"
+            hourly_ratio[h] = float("inf")  # keine Daten in der Stunde -> extrem teuer
 
     # Werte für die nächsten 12 Stunden in der Konsole ausgeben
     logging.info("Tarif/COP (stündlicher Mittelwert) für die nächsten 12 Stunden:")
@@ -190,6 +195,7 @@ def main():
 
     # hour_wp Stunden mit den niedrigsten Werten auswählen
     n_hours = max(0, int(round(hour_wp)))  # als Anzahl ganze Stunden
+
     # Erzeuge sortierbare Liste (h, val), unendliche Werte kommen ans Ende
     sortable = [(h, hourly_ratio[h]) for h in next12_hours]
     sortable.sort(key=lambda x: (math.isinf(x[1]), x[1]))  # erst echte Zahlen aufsteigend, dann inf
@@ -206,12 +212,13 @@ def main():
             if v <= cutoff_val:
                 selected_hours.add(h)
 
-    # Schreiben: ausgewählte Stunden -> 1, andere -> 0
+    # Schreiben: ausgewählte Stunden -> 1, andere -> 0 (immer Integer)
     for h in next12_hours:
-        val = 1 if h in selected_hours and not math.isinf(hourly_ratio[h]) else 0
-        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], val, h)
+        val = 1 if (h in selected_hours and not math.isinf(hourly_ratio[h])) else 0
+        ival = int(val)  # sicherstellen: Integer 0/1
+        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], ival, h)
         dt = _from_epoch_seconds(h, tz)
-        logging.info(f"Freigabe_WP_Nacht {dt.isoformat()} -> {val} (ok={ok})")
+        logging.info(f"Freigabe_WP_Nacht {dt.isoformat()} -> {ival} (ok={ok})")
 
     logging.info("********************************")
 
