@@ -118,7 +118,7 @@ def main():
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-    test = get_vals(UUID["Freigabe_WP_Opt"], duration="now&to=%2B900min")["data"]
+    test = get_vals(UUID["Freigabe_WP_Opt"], duration="now&to=+900min")["data"]
     tuples_test = test.get("tuples", [])
     print(test)
     
