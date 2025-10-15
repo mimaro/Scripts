@@ -119,7 +119,8 @@ def main():
     now = datetime.datetime.now(tz=tz)
 
     test = get_vals(UUID["Freigabe_WP_Opt"], duration="now&to=900min")["data"]
-    print(test)
+    tuples_test = test.get("tuples", [])
+    print(tuples_test)
     
     # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 15h (+900 min)
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
