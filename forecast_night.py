@@ -28,6 +28,27 @@ UUID = {
 }
 #######################################################################################################
 
+def get_vals(uuid, duration="-0min"):
+    # Daten von vz lesen. 
+    req = requests.get(VZ_GET_URL.format(uuid, duration))
+    return req.json()
+
+def write_vals(uuid, val):
+    # Daten auf vz schreiben.
+    poststring = VZ_POST_URL.format(uuid, val)
+    #logging.info("Poststring {}".format(poststring))
+    postreq = requests.post(poststring)
+    #logging.info("Ok? {}".format(postreq.ok))
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+    logging.info("*****************************")
+    logging.info("*Starting WP controller")
+    tz = pytz.timezone('Europe/Zurich')
+    now = datetime.datetime.now(tz=tz)
+    logging.info("Swiss time: {}".format(now))
+    logging.info("*****************************")
+
     e_wp = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["consumption"]
     e_wp_max = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["average"]
 
