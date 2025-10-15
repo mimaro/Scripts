@@ -49,6 +49,9 @@ def main():
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
 
+    ###############################
+    # Berechne verbleibende Betriebszeit
+    
     e_wp = get_vals(UUID["E_WP"], duration="-720min&to=now")["data"]["consumption"]
     e_wp_max = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["average"]
     p_wp_avg = get_vals(UUID["P_WP_Max"], duration="now&to=+720min")["data"]["average"]
@@ -56,13 +59,17 @@ def main():
     e_wp_bil = e_wp_max - e_wp
     hour_wp = e_wp_bil / p_wp_avg
 
-    
     logging.info("Prognose Verbrauch: {}".format(e_wp_max))
     logging.info("Bisheriger Verbrauch: {}".format(e_wp))
     logging.info("Thermische Bilanz: {}".format(e_wp_bil))
     logging.info("Durschnittliche Leistungsaufnahme: {}".format(p_wp_avg))  
     logging.info("Verbleibende Betriebszeit: {}".format(hour_wp))
 
+    ##############################
+    # Berechne günstigster Produktionsmoment
+
+    tarif = get_vals(UUID["Tarif_Kosten"], duration="now&to=+720min")["data"]
+    cop = get_vals(UUID["Forecast_COP"], duration="now&to=+720min")["data"]
 
     
 
