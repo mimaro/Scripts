@@ -8,8 +8,6 @@ import logging
 import pytz
 import time
 import math
-# from typing import List, Tuple  # optional, hier nicht nötig
-# from pymodbus.client.sync import ModbusTcpClient  # aktuell ungenutzt
 from collections import deque
 
 #######################################################################################################
@@ -117,7 +115,7 @@ def main():
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-    # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 12h
+    # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 15h (+900 min)
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
     tuples_wp = data_wp.get("tuples", [])
 
@@ -132,9 +130,9 @@ def main():
 
     # Schutz vor Division durch 0/None
     if not p_pv_wp_min or p_pv_wp_min <= 0:
-        logging.warning("Kein PV-Potenzial > 10 gefunden. Setze Freigabe für alle Stunden in den nächsten 12h auf 0.")
+        logging.warning("Kein PV-Potenzial > 10 gefunden. Setze Freigabe für alle Stunden in den nächsten 15h auf 0.")
         start_hour = now.replace(minute=0, second=0, microsecond=0)
-        for i in range(12):
+        for i in range(15):
             ts_hour = start_hour + datetime.timedelta(hours=i)
             ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, ts_hour.timestamp())
             logging.info(f"Freigabe_WP_Opt {ts_hour.isoformat()} -> 0 (ok={ok})")
@@ -145,7 +143,7 @@ def main():
     hour_wp_betrieb = p_el_wp_bed / p_pv_wp_min
     n_betriebsstunden = max(0, int(round(hour_wp_betrieb)))
 
-    # Abfragen Aussentemperaturen nächste 12 h
+    # Abfragen Aussentemperaturen nächste 15 h
     data_temp = get_vals(UUID["T_Aussen_Forecast"], duration="now&to=+900min")["data"]
     tuples_temp = data_temp.get("tuples", [])
 
@@ -153,14 +151,14 @@ def main():
     logging.info("Durschnittlicher Leistungsbedarf WP: {}".format(p_el_wp_bed))
     logging.info("Betriebsstunden (berechnet): {:.2f} -> {} h".format(hour_wp_betrieb, n_betriebsstunden))
 
-    # 1) Stunden (nächste 12h) bestimmen, in denen PV-Prognose > 10 ist
+    # 1) Stunden (nächste 15h) bestimmen, in denen PV-Prognose > 10 ist
     wp_by_hour   = build_hourly_dict(tuples_wp,   tz, agg="last")  # {hour_epoch: value}
     temp_by_hour = build_hourly_dict(tuples_temp, tz, agg="last")  # {hour_epoch: temperature}
 
     start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
-    next12_hours = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(12)]
+    next15_hours = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(15)]
 
-    eligible_hours = [h for h in next12_hours if wp_by_hour.get(h, float("-inf")) > 10.0]
+    eligible_hours = [h for h in next15_hours if wp_by_hour.get(h, float("-inf")) > 10.0]
 
     # 2) Innerhalb dieser Stunden die wärmsten N (N = n_betriebsstunden) suchen
     selected_hot_hours = set()
@@ -184,8 +182,8 @@ def main():
             if t >= cutoff_temp:
                 selected_hot_hours.add(h)
 
-    # 3) Für alle Stunden in den nächsten 12h 1/0 setzen und mit Zeitstempel schreiben
-    for h in next12_hours:
+    # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben
+    for h in next15_hours:
         val = 1 if h in selected_hot_hours else 0
         ok = write_vals_at(UUID["Freigabe_WP_Opt"], val, h)
         dt = _from_epoch_seconds(h, tz)
