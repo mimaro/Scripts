@@ -49,7 +49,7 @@ def main():
     logging.info("Swiss time: {}".format(now))
     logging.info("*****************************")
 
-    e_wp = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["consumption"]
+    e_wp = get_vals(UUID["E_WP"], duration="-720min")["data"]["consumption"]
     e_wp_max = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["average"]
 
     e_wp_bil = e_wp_max - e_wp
