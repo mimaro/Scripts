@@ -118,9 +118,8 @@ def main():
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-    test = get_vals(UUID["Freigabe_WP_Opt"], duration="now&to=+900min")["data"]
-    tuples_test = test.get("tuples", [])
-    print(test)
+    ok = write_vals(UUID["Freigabe_WP_Opt"], int(1))
+
     
     # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 15h (+900 min)
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
