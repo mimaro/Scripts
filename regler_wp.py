@@ -311,37 +311,6 @@ def main():
     logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
     logging.info("time sunset freigabe: {}".format(sunset_freigabe))
 
-    #############################################################################
-    logging.info(f"---------- Prüfung Speicherladung Pufferspeicher ----------") 
-    Freigabe_T_Speicher = 0
-    Freigabe_Komfortbetrieb = 0
-    Freigabe_Puffertemp = 0
-
-    T_speicher_aktuell = get_vals(UUID["Puffer_Temp_oben"], duration="-1min")["data"]["average"]
-    betriebszustand = CLIENT.read_holding_registers(1500, count=1, unit= 1).getRegister(0)
-
-    #if b_freigabe_normal & b_freigabe_wp & sunset_freigabe: #Prüfen ob Bedingungen für Komfortbetrieb erfüllt
-    #    Freigabe_Komfortbetrieb = 1
-    #else:
-    #    Freigabe_Komfortbetrieb = 0
-
-    #if betriebszustand == 1:
-    #    if (T_speicher_aktuell < T_Speicher_Min): #Prüfen Speichertemperatur oben < 25°C
-    #        Freigabe_T_Speicher = 1
-    #    else:
-    #        Freigabe_T_Speicher = 0
-    #else:
-    #  Freigabe_T_Speicher = 1
-
-    #if Freigabe_Komfortbetrieb & Freigabe_T_Speicher:
-    #    Freigabe_Puffertemp = 1
-    #else:
-    #    Freigabe_Puffertemp = 0
-    
-    #logging.info("Freigabe Komfortbetrieb: {}".format(Freigabe_Komfortbetrieb))
-    #logging.info("Freigabe Puffertemperatur: {}".format(Freigabe_T_Speicher))
-    #logging.info("Freigabe Gesamt: {}".format(Freigabe_Puffertemp))
-
     #####################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
     ww_time = 0
