@@ -37,18 +37,27 @@ def get_vals(uuid, duration="-0min"):
 def write_vals(uuid, val):
     """Daten ohne expliziten Zeitstempel auf vz schreiben (Serverzeit)."""
     ival = int(val)  # sicherstellen: Integer
-    poststring = VZ_POST_URL.format(uuid, ival)
-    postreq = requests.post(poststring, timeout=10)
+    url = VZ_POST_URL.format(uuid, ival)
+    postreq = requests.post(url, timeout=10)
+    if not postreq.ok:
+        logging.error("POST failed (server time): %s %s", postreq.status_code, postreq.text)
+    else:
+        logging.debug("POST ok (server time): %s", postreq.text)
     return postreq.ok
 
 def write_vals_at(uuid, val, ts_epoch_sec):
     """
-    Daten mit explizitem Zeitstempel (Epoch-Sekunden) auf vz schreiben.
-    Wert wird explizit als Integer (0/1) übertragen.
+    Daten mit explizitem Zeitstempel auf vz schreiben.
+    WICHTIG: Volkszähler erwartet ts i.d.R. in MILLISEKUNDEN!
     """
-    ival = int(val)  # sicherstellen: Integer
-    poststring = VZ_POST_URL.format(uuid, ival) + f"&ts={int(ts_epoch_sec)}"
-    postreq = requests.post(poststring, timeout=10)
+    ival = int(val)  # sicherstellen: Integer (0/1)
+    ts_ms = int(ts_epoch_sec * 1000)  # Sekunden -> Millisekunden
+    url = VZ_POST_URL.format(uuid, ival) + f"&ts={ts_ms}"
+    postreq = requests.post(url, timeout=10)
+    if not postreq.ok:
+        logging.error("POST failed: %s %s", postreq.status_code, postreq.text)
+    else:
+        logging.debug("POST ok: %s", postreq.text)
     return postreq.ok
 
 # ---------- Zeitstempel-Helper (robust gegen ms/sek) ----------
@@ -76,7 +85,7 @@ def to_hour_start(ts_any, tz) -> int:
 # --------------------------------------------------------------
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)  # für mehr Details: logging.DEBUG
     logging.info("*****************************")
     logging.info("*Starting WP controller")
     tz = pytz.timezone('Europe/Zurich')
@@ -106,7 +115,7 @@ def main():
     logging.info("Verbleibende Betriebszeit (hour_wp): {:.2f} h".format(hour_wp))
 
     ##############################
-    # Berechne günstigster Produktionsmoment Nacht:
+    # Berechne günstigsten Produktionsmoment Nacht:
     # tarif/cop nach identischen Zeitstempeln, dann stundenweise mitteln, 12h betrachten
 
     # Rohdaten (nächste 12 Stunden)
@@ -154,11 +163,11 @@ def main():
 
     if not ratio_by_ts:
         logging.warning("Keine gültigen tarif/cop-Paare für die nächsten 12h gefunden. Schreibe 0 für alle Stunden.")
-        # 0 für die nächsten 12 Stunden schreiben (explizit int)
+        # 0 für die nächsten 12 Stunden schreiben (explizit int) – ts in ms
         start_hour = now.replace(minute=0, second=0, microsecond=0)
         for i in range(12):
             ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], int(0), ts_hour.timestamp())
+            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, ts_hour.timestamp())
             logging.info(f"Freigabe_WP_Nacht {ts_hour.isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
@@ -212,13 +221,12 @@ def main():
             if v <= cutoff_val:
                 selected_hours.add(h)
 
-    # Schreiben: ausgewählte Stunden -> 1, andere -> 0 (immer Integer)
+    # Schreiben: ausgewählte Stunden -> 1, andere -> 0 (immer Integer) – ts in ms
     for h in next12_hours:
         val = 1 if (h in selected_hours and not math.isinf(hourly_ratio[h])) else 0
-        ival = int(val)  # sicherstellen: Integer 0/1
-        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], ival, h)
+        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], val, h)  # h in Sekunden; Funktion konvertiert zu ms
         dt = _from_epoch_seconds(h, tz)
-        logging.info(f"Freigabe_WP_Nacht {dt.isoformat()} -> {ival} (ok={ok})")
+        logging.info(f"Freigabe_WP_Nacht {dt.isoformat()} -> {int(val)} (ok={ok})")
 
     logging.info("********************************")
 
