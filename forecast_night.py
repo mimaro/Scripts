@@ -57,7 +57,8 @@ def main():
 
 
 
-
+    print(e_wp)
+    print(e_wp_max)
 
 
     
