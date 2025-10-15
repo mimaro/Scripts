@@ -37,17 +37,25 @@ def write_vals(uuid, val):
     ival = int(val)
     poststring = VZ_POST_URL.format(uuid, ival)
     postreq = requests.post(poststring, timeout=10)
+    if not postreq.ok:
+        logging.error("POST failed (server time): %s %s", postreq.status_code, postreq.text)
+    else:
+        logging.debug("POST ok (server time): %s", postreq.text)
     return postreq.ok
 
 def write_vals_at(uuid, val, ts_epoch_sec):
     """
-    Daten mit explizitem Zeitstempel (Sekunden seit Epoch) auf VZ schreiben.
-    Wert wird explizit als Integer übertragen.
+    Daten mit explizitem Zeitstempel auf VZ schreiben.
+    WICHTIG: Volkszähler erwartet ts i.d.R. in MILLISEKUNDEN!
     """
-    ival = int(val)
-    tse = int(ts_epoch_sec)
-    poststring = VZ_POST_URL.format(uuid, ival) + f"&ts={tse}"
-    postreq = requests.post(poststring, timeout=10)
+    ival = int(val)  # sicherstellen: Integer 0/1
+    ts_ms = int(ts_epoch_sec * 1000)  # Sekunden -> Millisekunden
+    url = VZ_POST_URL.format(uuid, ival) + f"&ts={ts_ms}"
+    postreq = requests.post(url, timeout=10)
+    if not postreq.ok:
+        logging.error("POST failed: %s %s", postreq.status_code, postreq.text)
+    else:
+        logging.debug("POST ok: %s", postreq.text)
     return postreq.ok
 
 # ------------------------- Zeitstempel-Helfer (Fix für ms vs. s) -------------------------
@@ -112,15 +120,16 @@ def build_hourly_dict(tuples, tz, agg="last"):
 # -----------------------------------------------------------------------------------------
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO)  # für mehr Details: logging.DEBUG
     logging.info("*****************************")
     logging.info("*Starting WP controller")
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-    ok = write_vals(UUID["Freigabe_WP_Opt"], int(1))
+    # Test-Lesen (kann entfernt werden)
+    test = get_vals(UUID["Freigabe_WP_Opt"], duration="now&to=+900min")["data"]
+    print(test)
 
-    
     # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 15h (+900 min)
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
     tuples_wp = data_wp.get("tuples", [])
@@ -140,7 +149,7 @@ def main():
         start_hour = now.replace(minute=0, second=0, microsecond=0)
         for i in range(15):
             ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Opt"], int(0), ts_hour.timestamp())
+            ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, ts_hour.timestamp())
             logging.info(f"Freigabe_WP_Opt {ts_hour.isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
@@ -188,11 +197,11 @@ def main():
             if t >= cutoff_temp:
                 selected_hot_hours.add(h)
 
-    # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben (immer Integer)
+    # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben (ts in ms)
     for h in next15_hours:
         val = 1 if h in selected_hot_hours else 0
         ival = int(val)
-        ok = write_vals_at(UUID["Freigabe_WP_Opt"], ival, h)
+        ok = write_vals_at(UUID["Freigabe_WP_Opt"], ival, h)  # h in Sekunden; Funktion konvertiert zu ms
         dt = _from_epoch_seconds(h, tz)
         logging.info(f"Freigabe_WP_Opt {dt.isoformat()} -> {ival} (ok={ok})")
 
