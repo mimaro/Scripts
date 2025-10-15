@@ -21,29 +21,27 @@ VZ_POST_URL = "http://192.168.178.49/middleware.php/data/{}.json?operation=add&v
 UUID = {
     "Tarif_Kosten": "a1547420-8c87-11f0-ab9a-bd73b64c1942",
     "Forecast_COP":  "31877e20-9aaa-11f0-8759-733431a03535",
-    "P_WP_Max":    "46e21920-9ab9-11f0-9359-d3451ca32acb",
-    "Freigabe_WP_Nacht":      "f76b26f0-a9fd-11f0-a7d7-5958c376a670"
+    "P_WP_Max": "46e21920-9ab9-11f0-9359-d3451ca32acb",
+    "E_WP_Max": "58cbc600-9aaa-11f0-8a74-894e01bd6bb7",
+    "E_WP": "a9017680-73dc-11ee-9767-9f1216ff8467",
+    "Freigabe_WP_Nacht": "3bacbde0-aa05-11f0-a053-6bf3625dc510"
 }
 #######################################################################################################
 
-p_prod = 0
-    
-    p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]/1000
-    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min&to=now")["data"]["consumption"]/1000
+    e_wp = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["consumption"]
+    e_wp_max = get_vals(UUID["E_WP_Max"], duration="-720min")["data"]["average"]
 
-    p_therm_bil = p_therm_zukunft - p_therm_prod 
+    e_wp_bil = e_wp_max - e_wp
 
-    if p_therm_bil < 0:
-        p_prod = 0
-    else:
-        p_prod = 1
+
+
+
+
+
+
     
-    write_vals(UUID["P_Therm_Bil_Freig"], p_prod) 
-    
-    logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
-    logging.info("P thermisch Produziert: {}".format(p_therm_prod))
-    logging.info("P thermisch Bilanz: {}".format(p_therm_bil))
-    logging.info("P thermisch Freigabe: {}".format(p_prod))
+    logging.info("Thermische Bilanz: {}".format(w_wp_bil))
+  
 
     logging.info("********************************")
 
