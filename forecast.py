@@ -46,7 +46,15 @@ def main():
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-    p_pv_wp_min = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]["average"]
+    data = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]
+    tuples = data.get("tuples", [])
+    values = [v for _, v in tuples if v > 10]  # Nur Werte > 10
+
+    if values:  # Nur wenn es überhaupt Werte > 10 gibt
+        p_pv_wp_min = sum(values) / len(values)
+    else:
+        p_pv_wp_min = None  # oder 0, je nach gewünschtem Verhalten
+    
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="0min")["data"]["average"]
     
     hour_wp_betrieb = p_el_wp_bed / p_pv_wp_min
