@@ -63,20 +63,23 @@ UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
 AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
 TEMP_CAP_MAX_C = float(os.environ.get("TEMP_CAP_MAX_C", "15.0"))
 
+#Funktion Prognose Strombedarf WP
 FORM_HP_A = float(os.environ.get("FORM_HP_A", "0.0474"))
 FORM_HP_B = float(os.environ.get("FORM_HP_B", "-1.6072"))
-FORM_HP_C = float(os.environ.get("FORM_HP_C", "17.326"))
+FORM_HP_C = float(os.environ.get("FORM_HP_C", "15.326"))
 
+#Funktion Prognose Wärmebedarf
 FORM_Q_A  = float(os.environ.get("FORM_Q_A",  "0.0762"))
 FORM_Q_B  = float(os.environ.get("FORM_Q_B",  "-4.0294"))
-FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "59.037"))
+FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "54.037"))
 
+#Funktion Prognose COP
 FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
 FORM_COP_B = float(os.environ.get("FORM_COP_B", "4.0205"))
 
-# Formel für max. WP-Aufnahmeleistung
-FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.13333"))
-FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "2.5"))
+#Funktion Prognose WP-Aufnahmeleistung
+FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.0667"))
+FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "1.5"))
 
 USER_AGENT = "srf-weather-vz/2.0"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
