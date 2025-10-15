@@ -48,7 +48,10 @@ def main():
 
     data = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+720min")["data"]
     tuples = data.get("tuples", [])
-    values = [v for _, v in tuples if v > 10]  # Nur Werte > 10
+    
+    
+    values = [t[1] for t in tuples if len(t) > 1 and t[1] > 10]
+
 
     if values:  # Nur wenn es überhaupt Werte > 10 gibt
         p_pv_wp_min = sum(values) / len(values)
