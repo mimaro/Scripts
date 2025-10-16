@@ -60,6 +60,21 @@ def write_vals_at(uuid, val, ts_epoch_sec):
         logging.debug("POST ok: %s", postreq.text)
     return postreq.ok
 
+def delete_range(uuid, from_epoch_sec, to_epoch_sec):
+    """
+    Löscht alle Werte im Bereich [from, to] (inklusive) beim gegebenen Kanal.
+    Erwartet Sekunden, API benötigt Millisekunden.
+    """
+    f_ms = int(from_epoch_sec * 1000)
+    t_ms = int(to_epoch_sec * 1000)
+    url = f"http://192.168.178.49/middleware.php/data/{uuid}.json?operation=delete&from={f_ms}&to={t_ms}"
+    r = requests.post(url, timeout=10)
+    if not r.ok:
+        logging.error("DELETE failed: %s %s", r.status_code, r.text)
+    else:
+        logging.debug("DELETE ok: %s", r.text)
+    return r.ok
+
 # ---------- Zeitstempel-Helper (robust gegen ms/sek) ----------
 
 def _normalize_epoch_seconds(ts_any) -> int:
@@ -161,21 +176,27 @@ def main():
             continue
         ratio_by_ts[ts] = tarif_val / cop_val
 
+    # Stundenfenster definieren (12h ab vollem Stundenbeginn)
+    start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
+    end_hour_dt   = start_hour_dt + datetime.timedelta(hours=12)
+    next12_hours  = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(12)]
+    last_hour_end = int(end_hour_dt.timestamp())
+
+    # *** Wichtig: vor dem Schreiben alle zukünftigen Werte im Zielbereich löschen ***
+    logging.info("Lösche vorhandene zukünftige Werte [%s, %s] ...",
+                 start_hour_dt.isoformat(), end_hour_dt.isoformat())
+    delete_ok = delete_range(UUID["Freigabe_WP_Nacht"], start_hour_dt.timestamp(), end_hour_dt.timestamp())
+    if not delete_ok:
+        logging.warning("Löschen des Zielbereichs fehlgeschlagen – schreibe trotzdem weiter.")
+
     if not ratio_by_ts:
         logging.warning("Keine gültigen tarif/cop-Paare für die nächsten 12h gefunden. Schreibe 0 für alle Stunden.")
         # 0 für die nächsten 12 Stunden schreiben (explizit int) – ts in ms
-        start_hour = now.replace(minute=0, second=0, microsecond=0)
-        for i in range(12):
-            ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, ts_hour.timestamp())
-            logging.info(f"Freigabe_WP_Nacht {ts_hour.isoformat()} -> 0 (ok={ok})")
+        for h in next12_hours:
+            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, h)
+            logging.info(f"Freigabe_WP_Nacht {_from_epoch_seconds(h, tz).isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
-
-    # Stundenfenster definieren (12h ab vollem Stundenbeginn)
-    start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
-    next12_hours = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(12)]
-    last_hour_end = int((start_hour_dt + datetime.timedelta(hours=12)).timestamp())
 
     # ratio_by_ts auf die nächsten 12 Stunden beschränken
     ratio_by_ts_12h = {ts: v for ts, v in ratio_by_ts.items() if next12_hours[0] <= ts < last_hour_end}
