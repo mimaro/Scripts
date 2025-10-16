@@ -58,6 +58,21 @@ def write_vals_at(uuid, val, ts_epoch_sec):
         logging.debug("POST ok: %s", postreq.text)
     return postreq.ok
 
+def delete_range(uuid, from_epoch_sec, to_epoch_sec):
+    """
+    Löscht alle Werte im Bereich [from, to] (inklusive) beim gegebenen Kanal.
+    Erwartet Sekunden, API benötigt Millisekunden.
+    """
+    f_ms = int(from_epoch_sec * 1000)
+    t_ms = int(to_epoch_sec * 1000)
+    url = f"http://192.168.178.49/middleware.php/data/{uuid}.json?operation=delete&from={f_ms}&to={t_ms}"
+    r = requests.post(url, timeout=10)
+    if not r.ok:
+        logging.error("DELETE failed: %s %s", r.status_code, r.text)
+    else:
+        logging.debug("DELETE ok: %s", r.text)
+    return r.ok
+
 # ------------------------- Zeitstempel-Helfer (Fix für ms vs. s) -------------------------
 
 def _normalize_epoch_seconds(ts_any) -> int:
@@ -126,8 +141,6 @@ def main():
     tz = pytz.timezone('Europe/Zurich')
     now = datetime.datetime.now(tz=tz)
 
-   
-
     # Abfragen durchschnittliche Aufnahmeleistung WP (PV-Minutenleistung) für die nächsten 15h (+900 min)
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
     tuples_wp = data_wp.get("tuples", [])
@@ -141,14 +154,24 @@ def main():
     # Abfragen elektrischer Energiebedarf WP (Tagesdurchschnitt / Vorhersage)
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="0min")["data"]["average"]
 
-    # Schutz vor Division durch 0/None
+    # Stundenfenster definieren (15h ab vollem Stundenbeginn)
+    start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
+    end_hour_dt   = start_hour_dt + datetime.timedelta(hours=15)
+    next15_hours  = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(15)]
+
+    # *** WICHTIG: Vor dem Schreiben alle zukünftigen Werte im Zielbereich löschen ***
+    logging.info("Lösche vorhandene zukünftige Werte [%s, %s] ...",
+                 start_hour_dt.isoformat(), end_hour_dt.isoformat())
+    delete_ok = delete_range(UUID["Freigabe_WP_Opt"], start_hour_dt.timestamp(), end_hour_dt.timestamp())
+    if not delete_ok:
+        logging.warning("Löschen des Zielbereichs fehlgeschlagen – schreibe trotzdem weiter.")
+
+    # Schutz vor Division durch 0/None – in diesem Fall trotzdem 0en für den (jetzt) leeren Bereich schreiben
     if not p_pv_wp_min or p_pv_wp_min <= 0:
         logging.warning("Kein PV-Potenzial > 10 gefunden. Setze Freigabe für alle Stunden in den nächsten 15h auf 0.")
-        start_hour = now.replace(minute=0, second=0, microsecond=0)
-        for i in range(15):
-            ts_hour = start_hour + datetime.timedelta(hours=i)
-            ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, ts_hour.timestamp())
-            logging.info(f"Freigabe_WP_Opt {ts_hour.isoformat()} -> 0 (ok={ok})")
+        for h in next15_hours:
+            ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, h)  # ts->ms inside
+            logging.info("Freigabe_WP_Opt %s -> 0 (ok=%s)", _from_epoch_seconds(h, tz).isoformat(), ok)
         logging.info("********************************")
         return
 
@@ -168,28 +191,20 @@ def main():
     wp_by_hour   = build_hourly_dict(tuples_wp,   tz, agg="last")  # {hour_epoch: value}
     temp_by_hour = build_hourly_dict(tuples_temp, tz, agg="last")  # {hour_epoch: temperature}
 
-    start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
-    next15_hours = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(15)]
-
     eligible_hours = [h for h in next15_hours if wp_by_hour.get(h, float("-inf")) > 10.0]
 
     # 2) Innerhalb dieser Stunden die wärmsten N (N = n_betriebsstunden) suchen
     selected_hot_hours = set()
-
     if n_betriebsstunden == 0:
         selected_hot_hours = set()
     elif n_betriebsstunden >= len(eligible_hours):
-        # Sonderfall: mehr benötigte Stunden als verfügbar -> alle Stunden mit PV>10 werden 1 (andere 0)
         selected_hot_hours = set(eligible_hours)
     else:
-        # nach Temperatur sortieren (absteigend)
         sortable = []
         for h in eligible_hours:
             temp = temp_by_hour.get(h, float("-inf"))  # fehlende Temps ans Ende
             sortable.append((h, temp))
         sortable.sort(key=lambda x: x[1], reverse=True)
-
-        # Temperaturgrenze am Cut ermitteln (Gleichstände komplett einschließen)
         cutoff_temp = sortable[n_betriebsstunden - 1][1]
         for h, t in sortable:
             if t >= cutoff_temp:
