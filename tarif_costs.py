@@ -62,13 +62,13 @@ def get_data(uuid, duration="-15min"):
 def main():
 
     #Energie exkl PV letzte 15 Minuten Abfragen
-    brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min")["data"]["consumption"]/60
+    brutto_energie = get_vals(UUID["Brutto_Energie"], duration="-15min&to=now")["data"]["consumption"]/60
     
     #Energie inkl PV letzte 15 Minuten Abfragen
-    netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min")["data"]["consumption"]/60
+    netto_energie = get_vals(UUID["Netto_Energie"], duration="-15min&to=now")["data"]["consumption"]/60
   
     preis_stat = 27.129
-    preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min")["data"]["average"]
+    preis_dyn = get_vals(UUID["Preis_dyn"], duration="-15min&to=now")["data"]["average"]
 
     print(f" Preis dyn: {preis_dyn} Rp./kWh")
     print(f" Preis stat: {preis_stat} Rp./kWh")
