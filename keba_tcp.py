@@ -200,9 +200,9 @@ def main():
         i_opt = 10
 
     #Prüfen PV-Ertrag & Freitage Stromtarif
-    freigabe_pv = get_vals(UUID["PV_Prod"], duration="from=-15min & to=now")["data"]["average"]
+    freigabe_pv = get_vals(UUID["PV_Prod"], duration="-30min&to=now")["data"]["average"]
     freigabe_emob = get_vals(UUID["Freigabe_EMob"], duration="0min")["data"]["average"]
-
+    
     # Schreibe auf KEBA
     if switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 0:
         client_keba.write_register(keba_state, 0, unit=1)
@@ -210,17 +210,17 @@ def main():
         write_vals(UUID["I_opt"], 0)
         print(f"Actual Set Ampere: {0}")
 
+     elif switch_state == 0 and freigabe_pv > 2000:
+        client_keba.write_register(keba_state, 1, unit=1)
+        client_keba.write_register(set_curr, i_opt*1000, unit=1)
+        write_vals(UUID["I_opt"], i_opt)
+        print(f"Actual Set Ampere: {i_opt}")
+
     elif switch_state == 0 and freigabe_pv < 2000 and freigabe_emob == 1:
         client_keba.write_register(keba_state, 1, unit=1)
         client_keba.write_register(set_curr, 32000, unit=1)
         write_vals(UUID["I_opt"], 32)
         print(f"Actual Set Ampere: {32}")
-    
-    elif switch_state == 0 and freigabe_pv > 2000:
-        client_keba.write_register(keba_state, 1, unit=1)
-        client_keba.write_register(set_curr, i_opt*1000, unit=1)
-        write_vals(UUID["I_opt"], i_opt)
-        print(f"Actual Set Ampere: {i_opt}")
         
     else:
         client_keba.write_register(keba_state, 1, unit=1)
