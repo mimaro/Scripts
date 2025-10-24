@@ -392,7 +392,7 @@ def main():
     
     p_sol = power_sol - p_freigabe_now
 
-    if p_sol > 0 and sunset_freigabe:
+    if p_sol > 0 and freigabe_solar:
         steigung_soll = int((steigung_max-steigung_min)/(p_sol_max-p_sol_min)*p_sol + steigung_min)
 
         if steigung_soll > 200:
