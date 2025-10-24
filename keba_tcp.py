@@ -210,7 +210,7 @@ def main():
         write_vals(UUID["I_opt"], 0)
         print(f"Actual Set Ampere: {0}")
 
-     elif switch_state == 0 and freigabe_pv > 2000:
+    elif switch_state == 0 and freigabe_pv > 2000:
         client_keba.write_register(keba_state, 1, unit=1)
         client_keba.write_register(set_curr, i_opt*1000, unit=1)
         write_vals(UUID["I_opt"], i_opt)
