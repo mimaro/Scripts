@@ -200,7 +200,7 @@ def main():
         i_opt = 10
 
     #Prüfen PV-Ertrag & Freitage Stromtarif
-    freigabe_pv = get_vals(UUID["PV_Prod"], duration="-15min")["data"]["average"]
+    freigabe_pv = get_vals(UUID["PV_Prod"], duration="from=-15min & to=now")["data"]["average"]
     freigabe_emob = get_vals(UUID["Freigabe_EMob"], duration="0min")["data"]["average"]
 
     # Schreibe auf KEBA
