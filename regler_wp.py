@@ -48,7 +48,9 @@ UUID = {
     "T_Taupunkt": "75ec5620-799b-11f0-8232-61256c1dc79b",
     "P_Therm_Zukunft": "9d6f6990-9aac-11f0-8991-c9bc212463c9",
     "P_Therm_Prod": "89a4f3c0-73dc-11ee-8979-a74a73d32bc5",
-    "P_Therm_Bil_Freig": "73b73d10-9ab4-11f0-8b11-5dbc6ea585f4"
+    "P_Therm_Bil_Freig": "73b73d10-9ab4-11f0-8b11-5dbc6ea585f4",
+    "Freigabe_Solar": "f76b26f0-a9fd-11f0-a7d7-5958c376a670",
+    "Freigabe_Stromtarif": "3bacbde0-aa05-11f0-a053-6bf3625dc510"
 }
 
 # WP Freigabe, ladestation, WP Verbrauch löschen ==> Reserven
@@ -280,36 +282,36 @@ def main():
     #logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
 
     ################################################################################
-    logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
+    #logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
     #r = requests.get(SUNSET_URL, verify=False) # Daten abfragen
-    r = requests.get(SUNSET_URL) 
+    #r = requests.get(SUNSET_URL) 
     
-    now_CH = now.time().hour
-    tz_UTC = pytz.utc
-    now_UTC = datetime.datetime.now(tz=tz_UTC).hour
-    d_time = now_CH - now_UTC
+    #now_CH = now.time().hour
+    #tz_UTC = pytz.utc
+    #now_UTC = datetime.datetime.now(tz=tz_UTC).hour
+    #d_time = now_CH - now_UTC
     
-    data = json.loads(r.content)
-    sunset = data['results']['sunset'] # Daten für Sonnenuntergang
-    sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
-    sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
-    time_now = now.time() #Aktuelle Zeit
+    #data = json.loads(r.content)
+    #sunset = data['results']['sunset'] # Daten für Sonnenuntergang
+    #sunset_time_UTC = datetime.datetime(int(sunset[0:4]), int(sunset[5:7]), int(sunset[8:10]),int(sunset[11:13]), int(sunset[14:16])) # Sonnenuntergang in Zeit-Format umwandeln
+    #sunset_time_CH = sunset_time_UTC + datetime.timedelta(hours=d_time) #Aktueller Zeitpunkt Sonnenuntergang
+    #time_now = now.time() #Aktuelle Zeit
 
-    t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX-t_roll_avg_24) + T_FREIGABE_MIN
-    t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
+    #t_delta_sunset_freigabe = ((T_FREIGABE_MAX - T_FREIGABE_MIN) / (AT_MAX - AT_MIN)) *(AT_MAX-t_roll_avg_24) + T_FREIGABE_MIN
+    #t_sunset_freigabe = (sunset_time_CH - datetime.timedelta(hours=t_delta_sunset_freigabe)).time() #Berechneter Freigabezeitpunkt Sonderbetrieb in Abhängigkeit 24h AT
     
-    sunset_freigabe = 0
-    if time_now > t_sunset_freigabe:
-        sunset_freigabe = 1
+    #sunset_freigabe = 0
+    #if time_now > t_sunset_freigabe:
+    #    sunset_freigabe = 1
     
-    write_vals(UUID["t_Sperrung_Sonnenuntergang"], sunset_freigabe) 
+    #write_vals(UUID["t_Sperrung_Sonnenuntergang"], sunset_freigabe) 
    
-    logging.info("sunset time CH: {}".format(sunset_time_CH))
-    logging.info("time now: {}".format(time_now))    
-    logging.info("24 h AT: {}".format(t_roll_avg_24))
-    logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
-    logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
-    logging.info("time sunset freigabe: {}".format(sunset_freigabe))
+    #logging.info("sunset time CH: {}".format(sunset_time_CH))
+    #logging.info("time now: {}".format(time_now))    
+    #logging.info("24 h AT: {}".format(t_roll_avg_24))
+    #logging.info("Zeitpunkt Freigabe vor Sonnenuntergang: {}".format(t_delta_sunset_freigabe))
+    #logging.info("Freigabezeitpunkt: {}".format(t_sunset_freigabe))
+    #logging.info("time sunset freigabe: {}".format(sunset_freigabe))
 
     #####################################################################################
     logging.info(f"---------- Prüfung Freigabe / Sperrung Warmwasserbetrieb ----------") 
@@ -369,7 +371,17 @@ def main():
     logging.info("P thermisch Bilanz: {}".format(p_therm_bil))
     logging.info("P thermisch Freigabe: {}".format(p_prod))
 
+    #####################################################################
+    logging.info(f"---------- Prüfung Freigabe Solar- & Temperaturoptimiert ----------")
+
+    freigabe_solar = get_vals(UUID["Freigabe_Solar"], duration="0 min")["data"]["average"]
+    logging.info("Freigabe Solar- & Temperaturoptimiert: {}".format(freigabe_solar))
     
+    #####################################################################
+    logging.info(f"---------- Prüfung Freigabe Stromtarif ----------")
+
+    freigabe_tarif = get_vals(UUID["Freigabe_Stromtarif"], duration="0 min")["data"]["average"]
+    logging.info("Freigabe Stromtarif: {}".format(freigabe_tarif))
     
     ######################################################################
     logging.info(f"---------- Modifikation Heizkurve ----------")   
@@ -464,8 +476,8 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
  
-    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Sonnenuntergang erreicht
-    elif (b_freigabe_normal & b_freigabe_wp & sunset_freigabe & p_prod):
+    #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
+    elif (b_freigabe_normal & b_freigabe_wp & freigabe_solar & p_prod):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
@@ -473,7 +485,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
-    elif (b_freigabe_normal & (T_Freigabe_min == 0)): #b_sperrung_wp
+    elif (b_freigabe_normal & (T_Freigabe_min == 0) & freigabe_tarif): #b_sperrung_wp
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
