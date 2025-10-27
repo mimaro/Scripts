@@ -350,26 +350,26 @@ def main():
     logging.info("Aktuelle Uhrzeit ({}) in Zeitfenster ({} - {} Uhr): {}".format(now.time(),ww_start,ww_stop,ww_time))
 
     ######################################################################
-    logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
+    #logging.info(f"---------- Prüfung Wärmeproduktioni ----------")   
 
-    p_prod = 0
+    #p_prod = 0
     
-    p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]/1000
-    p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min&to=now")["data"]["consumption"]/1000
+    #p_therm_zukunft = get_vals(UUID["P_Therm_Zukunft"], duration="0 min")["data"]["average"]/1000
+    #p_therm_prod = get_vals(UUID["P_Therm_Prod"], duration="-1440 min&to=now")["data"]["consumption"]/1000
 
-    p_therm_bil = p_therm_zukunft - p_therm_prod 
+    #p_therm_bil = p_therm_zukunft - p_therm_prod 
 
-    if p_therm_bil < 0:
-        p_prod = 0
-    else:
-        p_prod = 1
+    #if p_therm_bil < 0:
+    #    p_prod = 0
+    #else:
+    #    p_prod = 1
     
-    write_vals(UUID["P_Therm_Bil_Freig"], p_prod) 
+    #write_vals(UUID["P_Therm_Bil_Freig"], p_prod) 
     
-    logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
-    logging.info("P thermisch Produziert: {}".format(p_therm_prod))
-    logging.info("P thermisch Bilanz: {}".format(p_therm_bil))
-    logging.info("P thermisch Freigabe: {}".format(p_prod))
+    #logging.info("P thermisch Zukunft: {}".format(p_therm_zukunft))
+    #logging.info("P thermisch Produziert: {}".format(p_therm_prod))
+    #logging.info("P thermisch Bilanz: {}".format(p_therm_bil))
+    #logging.info("P thermisch Freigabe: {}".format(p_prod))
 
     #####################################################################
     logging.info(f"---------- Prüfung Freigabe Solar- & Temperaturoptimiert ----------")
@@ -477,7 +477,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
-    elif (b_freigabe_normal & b_freigabe_wp & freigabe_solar & p_prod):
+    elif (b_freigabe_normal & b_freigabe_wp & freigabe_solar):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
