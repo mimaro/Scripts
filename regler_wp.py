@@ -477,7 +477,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
-    elif (b_freigabe_normal & b_freigabe_wp & freigabe_solar):
+    elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
