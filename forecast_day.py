@@ -180,6 +180,17 @@ def main():
             "Kein PV-Potenzial >= %.1f W gefunden. Setze Freigabe für alle Stunden in den nächsten 15h auf 0.",
             PV_MIN_THRESHOLD_W
         )
+        # Debug-Ausgabe der PV-Prognose je Stunde trotzdem ausgeben
+        wp_by_hour_debug = build_hourly_dict(tuples_wp, tz, agg="last")
+        for h in next15_hours:
+            dt = _from_epoch_seconds(h, tz)
+            pv_watt = wp_by_hour_debug.get(h, None)
+            logging.info(
+                "Stunde %s | PV-Forecast: %s W -> Freigabe 0 (kein ausreichendes Potenzial)",
+                dt.isoformat(),
+                f"{pv_watt:.1f}" if pv_watt is not None else "n/a"
+            )
+
         for h in next15_hours:
             ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, h)  # ts->ms inside
             logging.info(
@@ -210,6 +221,22 @@ def main():
         if wp_by_hour.get(h, float("-inf")) >= PV_MIN_THRESHOLD_W
     ]
 
+    # Debug: PV Forecast je Stunde + Eligibility + Temperatur
+    logging.info("----- Stunden-Check PV-Forecast / Temp / Eligibility -----")
+    for h in next15_hours:
+        dt = _from_epoch_seconds(h, tz)
+        pv_watt = wp_by_hour.get(h, None)
+        temp_degC = temp_by_hour.get(h, None)
+        eligible = (h in eligible_hours)
+        logging.info(
+            "Stunde %s | PV-Forecast: %s W | T_außen: %s °C | PV>=%.0fW? %s",
+            dt.isoformat(),
+            f"{pv_watt:.1f}" if pv_watt is not None else "n/a",
+            f"{temp_degC:.1f}" if temp_degC is not None else "n/a",
+            PV_MIN_THRESHOLD_W,
+            "JA" if eligible else "nein"
+        )
+
     # 2) Innerhalb dieser Stunden die wärmsten N (N = n_betriebsstunden) suchen
     selected_hot_hours = set()
     if n_betriebsstunden == 0:
@@ -230,10 +257,21 @@ def main():
     # 3) Für alle Stunden in den nächsten 15h 1/0 setzen und mit Zeitstempel schreiben (ts in ms)
     for h in next15_hours:
         val = 1 if h in selected_hot_hours else 0
-        ival = int(val)
-        ok = write_vals_at(UUID["Freigabe_WP_Opt"], ival, h)  # h in Sekunden; Funktion konvertiert zu ms
         dt = _from_epoch_seconds(h, tz)
-        logging.info(f"Freigabe_WP_Opt {dt.isoformat()} -> {ival} (ok={ok})")
+        pv_watt = wp_by_hour.get(h, None)
+
+        logging.info(
+            "Schreibe Stunde %s | PV-Forecast: %s W | Freigabe -> %d",
+            dt.isoformat(),
+            f"{pv_watt:.1f}" if pv_watt is not None else "n/a",
+            val
+        )
+
+        ok = write_vals_at(UUID["Freigabe_WP_Opt"], val, h)  # h in Sekunden; Funktion konvertiert zu ms
+        logging.info(
+            "Freigabe_WP_Opt %s -> %d (ok=%s)",
+            dt.isoformat(), val, ok
+        )
 
     logging.info("********************************")
 
