@@ -24,6 +24,10 @@ UUID = {
     "T_Aussen_Forecast":    "c56767e0-97c1-11f0-96ab-41d2e85d0d5f",
     "Freigabe_WP_Opt":      "f76b26f0-a9fd-11f0-a7d7-5958c376a670"
 }
+
+# Mindest-PV-Leistung in Watt, ab der die WP laufen darf.
+# Durch einfaches Ändern dieses Werts (z.B. 400, 800, ...) steuerst du die Freigabelogik.
+PV_MIN_THRESHOLD_W = 500.0
 #######################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -145,11 +149,15 @@ def main():
     data_wp = get_vals(UUID["P_WP_PV_min_Forecast"], duration="now&to=+900min")["data"]
     tuples_wp = data_wp.get("tuples", [])
 
-    values_over10 = [t[1] for t in tuples_wp if len(t) > 1 and t[1] is not None and float(t[1]) > 10.0]
-    if values_over10:
-        p_pv_wp_min = sum(values_over10) / len(values_over10)
+    # Mittelwert nur über Werte, die >= PV_MIN_THRESHOLD_W sind
+    values_over_threshold = [
+        t[1] for t in tuples_wp
+        if len(t) > 1 and t[1] is not None and float(t[1]) >= PV_MIN_THRESHOLD_W
+    ]
+    if values_over_threshold:
+        p_pv_wp_min = sum(values_over_threshold) / len(values_over_threshold)
     else:
-        p_pv_wp_min = None  # kein sinnvolles PV-Potenzial vorhanden
+        p_pv_wp_min = None  # kein sinnvolles PV-Potenzial vorhanden oberhalb der Schwelle
 
     # Abfragen elektrischer Energiebedarf WP (Tagesdurchschnitt / Vorhersage)
     p_el_wp_bed = get_vals(UUID["P_el_WP_Forecast"], duration="0min")["data"]["average"]
@@ -166,12 +174,18 @@ def main():
     if not delete_ok:
         logging.warning("Löschen des Zielbereichs fehlgeschlagen – schreibe trotzdem weiter.")
 
-    # Schutz vor Division durch 0/None – in diesem Fall trotzdem 0en für den (jetzt) leeren Bereich schreiben
+    # Falls kein PV-Potenzial oberhalb der Schwelle vorhanden ist -> überall 0 schreiben
     if not p_pv_wp_min or p_pv_wp_min <= 0:
-        logging.warning("Kein PV-Potenzial > 10 gefunden. Setze Freigabe für alle Stunden in den nächsten 15h auf 0.")
+        logging.warning(
+            "Kein PV-Potenzial >= %.1f W gefunden. Setze Freigabe für alle Stunden in den nächsten 15h auf 0.",
+            PV_MIN_THRESHOLD_W
+        )
         for h in next15_hours:
             ok = write_vals_at(UUID["Freigabe_WP_Opt"], 0, h)  # ts->ms inside
-            logging.info("Freigabe_WP_Opt %s -> 0 (ok=%s)", _from_epoch_seconds(h, tz).isoformat(), ok)
+            logging.info(
+                "Freigabe_WP_Opt %s -> 0 (ok=%s)",
+                _from_epoch_seconds(h, tz).isoformat(), ok
+            )
         logging.info("********************************")
         return
 
@@ -183,15 +197,18 @@ def main():
     data_temp = get_vals(UUID["T_Aussen_Forecast"], duration="now&to=+900min")["data"]
     tuples_temp = data_temp.get("tuples", [])
 
-    logging.info("PV Potenzial heute: {}".format(p_pv_wp_min))
+    logging.info("PV Potenzial heute (>= %.1f W): %s", PV_MIN_THRESHOLD_W, p_pv_wp_min)
     logging.info("Durschnittlicher Leistungsbedarf WP: {}".format(p_el_wp_bed))
     logging.info("Betriebsstunden (berechnet): {:.2f} -> {} h".format(hour_wp_betrieb, n_betriebsstunden))
 
-    # 1) Stunden (nächste 15h) bestimmen, in denen PV-Prognose > 10 ist
+    # 1) Stunden (nächste 15h) bestimmen, in denen PV-Prognose >= PV_MIN_THRESHOLD_W ist
     wp_by_hour   = build_hourly_dict(tuples_wp,   tz, agg="last")  # {hour_epoch: value}
     temp_by_hour = build_hourly_dict(tuples_temp, tz, agg="last")  # {hour_epoch: temperature}
 
-    eligible_hours = [h for h in next15_hours if wp_by_hour.get(h, float("-inf")) > 10.0]
+    eligible_hours = [
+        h for h in next15_hours
+        if wp_by_hour.get(h, float("-inf")) >= PV_MIN_THRESHOLD_W
+    ]
 
     # 2) Innerhalb dieser Stunden die wärmsten N (N = n_betriebsstunden) suchen
     selected_hot_hours = set()
