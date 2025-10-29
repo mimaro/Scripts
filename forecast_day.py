@@ -28,6 +28,7 @@ UUID = {
 # Mindest-PV-Leistung in Watt, ab der die WP laufen darf.
 # Durch einfaches Ändern dieses Werts (z.B. 400, 800, ...) steuerst du die Freigabelogik.
 PV_MIN_THRESHOLD_W = 500.0
+ADDITIONAL_TIME = 1
 #######################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -201,7 +202,7 @@ def main():
         return
 
     # Berechnung Betriebsstunden am Tag (Anzahl Stunden)
-    hour_wp_betrieb = p_el_wp_bed / p_pv_wp_min
+    hour_wp_betrieb = p_el_wp_bed / p_pv_wp_min + ADDITIONAL_TIME
     n_betriebsstunden = max(0, int(round(hour_wp_betrieb)))
 
     # Abfragen Aussentemperaturen nächste 15 h
