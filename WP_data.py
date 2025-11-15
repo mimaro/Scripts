@@ -68,11 +68,24 @@ def get_vals(uuid, duration="-0min"):
     req = requests.get(VZ_GET_URL.format(uuid, duration))
     return req.json()
 
+
 def write_vals(uuid, val):
     poststring = VZ_POST_URL.format(uuid, val)
-    #logging.info("Poststring {}".format(poststring))
-    postreq = requests.post(poststring)
-    #logging.info("Ok? {}".format(postreq.ok))
+    print("POST:", poststring)
+    try:
+        postreq = requests.post(poststring, timeout=10)
+        print("Status:", postreq.status_code)
+        print("OK?:", postreq.ok)
+        print("Antworttext:", postreq.text[:500])  # erste 500 Zeichen
+    except Exception as e:
+        print("Exception beim POST:", e)
+
+
+#def write_vals(uuid, val):
+#    poststring = VZ_POST_URL.format(uuid, val)
+#    #logging.info("Poststring {}".format(poststring))
+#    postreq = requests.post(poststring)
+#    #logging.info("Ok? {}".format(postreq.ok))
 
 #Vorlage read input registers
 raw_value = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1).getRegister(0)
