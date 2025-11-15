@@ -79,11 +79,11 @@ raw_value = CLIENT.read_input_registers(REGISTER["Aussentemp"], count=1, unit=1)
 signed_value = raw_value if raw_value < 32768 else raw_value - 65536
 T_outdoor = signed_value / 10
 
-if T_outdoor > 100:
-    T_outdoor = get_vals(UUID["Aussentemp"], duration="-5min")["data"]["average"]
-    Error = 1
-else:
-    T_outdoor = T_outdoor
+#if T_outdoor > 100:
+#    T_outdoor = get_vals(UUID["Aussentemp"], duration="-5min")["data"]["average"]
+#    Error = 1
+#else:
+#T_outdoor = T_outdoor
 T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_rl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_RL_WP_ist"], count=1, unit=1).getRegister(0))/10
 T_vl_hk1_ist = (CLIENT.read_input_registers(REGISTER["T_VL_HK1_ist"], count=1, unit=1).getRegister(0))/10
@@ -100,7 +100,7 @@ t_quelle = (CLIENT.read_input_registers(REGISTER["T_Quelle"], count=1, unit=1).g
 P_WP_therm = Volumenstrom * 1.16 * (T_vl_wp_ist - T_rl_wp_ist) * 1000
 
 
-print(f"T_outdoor= {T_outdoor} ")
+#print(f"T_outdoor= {T_outdoor} ")
 print(f"T_vl_wp_ist = {T_vl_wp_ist}")
 print(f"T_rl_wp_ist = {T_rl_wp_ist}")
 print(f"T_vl_hk1_ist = {T_vl_hk1_ist}")
