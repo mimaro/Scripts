@@ -108,20 +108,23 @@ def main():
     logging.info("Swiss time: {}".format(now.isoformat()))
     logging.info("*****************************")
 
+    # Zeithorizont für zukünftige Betrachtung (Tarif/COP/Freigabe) in Stunden
+    horizon_hours = 24
+    horizon_minutes = horizon_hours * 60
+
     ###############################
     # Berechne verbleibende Betriebszeit (hour_wp)
 
-    e_wp      = get_vals(UUID["E_WP"],      duration="-720min&to=now")["data"]["consumption"]
+    # vergangene 12h unverändert
     e_wp_max  = get_vals(UUID["E_WP_Max"],  duration="-720min")["data"]["average"]
-    p_wp_avg  = get_vals(UUID["P_WP_Max"],  duration="now&to=+720min")["data"]["average"]
+    p_wp_avg  = get_vals(UUID["P_WP_Max"],  duration="now")["data"]["average"]
 
-    e_wp_bil  = e_wp_max - e_wp
-    # Schutz vor 0/negativ/None
+   # Schutz vor 0/negativ/None
     if not p_wp_avg or p_wp_avg <= 0:
         logging.warning("p_wp_avg ist ungültig (<=0). Setze hour_wp=0.")
         hour_wp = 0.0
     else:
-        hour_wp = max(0.0, e_wp_bil / p_wp_avg)
+        hour_wp = max(0.0, e_wp_max / p_wp_avg)
 
     logging.info("Prognose Verbrauch (E_WP_Max): {}".format(e_wp_max))
     logging.info("Bisheriger Verbrauch (E_WP): {}".format(e_wp))
@@ -131,11 +134,11 @@ def main():
 
     ##############################
     # Berechne günstigsten Produktionsmoment Nacht:
-    # tarif/cop nach identischen Zeitstempeln, dann stundenweise mitteln, 12h betrachten
+    # tarif/cop nach identischen Zeitstempeln, dann stundenweise mitteln, 24h betrachten
 
-    # Rohdaten (nächste 12 Stunden)
-    tarif = get_vals(UUID["Tarif_Kosten"],  duration="now&to=+720min")["data"]
-    cop   = get_vals(UUID["Forecast_COP"],  duration="now&to=+720min")["data"]
+    # Rohdaten (nächste 24 Stunden)
+    tarif = get_vals(UUID["Tarif_Kosten"],  duration=f"now&to=+{horizon_minutes}min")["data"]
+    cop   = get_vals(UUID["Forecast_COP"],  duration=f"now&to=+{horizon_minutes}min")["data"]
 
     tuples_tarif = tarif.get("tuples", []) or []
     tuples_cop   = cop.get("tuples",   []) or []
@@ -176,10 +179,10 @@ def main():
             continue
         ratio_by_ts[ts] = tarif_val / cop_val
 
-    # Stundenfenster definieren (12h ab vollem Stundenbeginn)
+    # Stundenfenster definieren (24h ab vollem Stundenbeginn)
     start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
-    end_hour_dt   = start_hour_dt + datetime.timedelta(hours=12)
-    next12_hours  = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(12)]
+    end_hour_dt   = start_hour_dt + datetime.timedelta(hours=horizon_hours)
+    next_hours    = [int((start_hour_dt + datetime.timedelta(hours=i)).timestamp()) for i in range(horizon_hours)]
     last_hour_end = int(end_hour_dt.timestamp())
 
     # *** Wichtig: vor dem Schreiben alle zukünftigen Werte im Zielbereich löschen ***
@@ -190,34 +193,34 @@ def main():
         logging.warning("Löschen des Zielbereichs fehlgeschlagen – schreibe trotzdem weiter.")
 
     if not ratio_by_ts:
-        logging.warning("Keine gültigen tarif/cop-Paare für die nächsten 12h gefunden. Schreibe 0 für alle Stunden.")
-        # 0 für die nächsten 12 Stunden schreiben (explizit int) – ts in ms
-        for h in next12_hours:
+        logging.warning(f"Keine gültigen tarif/cop-Paare für die nächsten {horizon_hours}h gefunden. Schreibe 0 für alle Stunden.")
+        # 0 für die nächsten 24 Stunden schreiben (explizit int) – ts in ms
+        for h in next_hours:
             ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, h)
             logging.info(f"Freigabe_WP_Nacht {_from_epoch_seconds(h, tz).isoformat()} -> 0 (ok={ok})")
         logging.info("********************************")
         return
 
-    # ratio_by_ts auf die nächsten 12 Stunden beschränken
-    ratio_by_ts_12h = {ts: v for ts, v in ratio_by_ts.items() if next12_hours[0] <= ts < last_hour_end}
+    # ratio_by_ts auf die nächsten 24 Stunden beschränken
+    ratio_by_ts_window = {ts: v for ts, v in ratio_by_ts.items() if next_hours[0] <= ts < last_hour_end}
 
     # Stündliche Aggregation (Durchschnitt je Stunde)
     sums = defaultdict(float)
     counts = defaultdict(int)
-    for ts, r in ratio_by_ts_12h.items():
+    for ts, r in ratio_by_ts_window.items():
         h = to_hour_start(ts, tz)
         sums[h] += r
         counts[h] += 1
     hourly_ratio = {}
-    for h in next12_hours:
+    for h in next_hours:
         if counts[h] > 0:
             hourly_ratio[h] = sums[h] / counts[h]
         else:
             hourly_ratio[h] = float("inf")  # keine Daten in der Stunde -> extrem teuer
 
-    # Werte für die nächsten 12 Stunden in der Konsole ausgeben
-    logging.info("Tarif/COP (stündlicher Mittelwert) für die nächsten 12 Stunden:")
-    for h in next12_hours:
+    # Werte für die nächsten 24 Stunden in der Konsole ausgeben
+    logging.info(f"Tarif/COP (stündlicher Mittelwert) für die nächsten {horizon_hours} Stunden:")
+    for h in next_hours:
         dt = _from_epoch_seconds(h, tz)
         val = hourly_ratio[h]
         s = "keine Daten" if math.isinf(val) else f"{val:.6f}"
@@ -227,14 +230,14 @@ def main():
     n_hours = max(0, int(round(hour_wp)))  # als Anzahl ganze Stunden
 
     # Erzeuge sortierbare Liste (h, val), unendliche Werte kommen ans Ende
-    sortable = [(h, hourly_ratio[h]) for h in next12_hours]
+    sortable = [(h, hourly_ratio[h]) for h in next_hours]
     sortable.sort(key=lambda x: (math.isinf(x[1]), x[1]))  # erst echte Zahlen aufsteigend, dann inf
 
     selected_hours = set()
     if n_hours <= 0:
         selected_hours = set()
-    elif n_hours >= len(next12_hours):
-        selected_hours = set(next12_hours)
+    elif n_hours >= len(next_hours):
+        selected_hours = set(next_hours)
     else:
         cutoff_val = sortable[n_hours - 1][1]
         for h, v in sortable:
@@ -243,7 +246,7 @@ def main():
                 selected_hours.add(h)
 
     # Schreiben: ausgewählte Stunden -> 1, andere -> 0 (immer Integer) – ts in ms
-    for h in next12_hours:
+    for h in next_hours:
         val = 1 if (h in selected_hours and not math.isinf(hourly_ratio[h])) else 0
         ok = write_vals_at(UUID["Freigabe_WP_Nacht"], val, h)  # h in Sekunden; Funktion konvertiert zu ms
         dt = _from_epoch_seconds(h, tz)
@@ -253,3 +256,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+        
