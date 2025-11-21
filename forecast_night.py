@@ -127,8 +127,6 @@ def main():
         hour_wp = max(0.0, e_wp_max / p_wp_avg)
 
     logging.info("Prognose Verbrauch (E_WP_Max): {}".format(e_wp_max))
-    logging.info("Bisheriger Verbrauch (E_WP): {}".format(e_wp))
-    logging.info("Thermische Bilanz: {}".format(e_wp_bil))
     logging.info("Durschnittliche Leistungsaufnahme (P_WP_Max): {}".format(p_wp_avg))  
     logging.info("Verbleibende Betriebszeit (hour_wp): {:.2f} h".format(hour_wp))
 
