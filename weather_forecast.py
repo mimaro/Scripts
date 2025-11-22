@@ -75,7 +75,7 @@ FORM_Q_C  = float(os.environ.get("FORM_Q_C",  "54.037"))
 
 #Funktion Prognose COP
 FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
-FORM_COP_B = float(os.environ.get("FORM_COP_B", "3.7"))
+FORM_COP_B = float(os.environ.get("FORM_COP_B", "3.8"))
 
 #Funktion Prognose WP-Aufnahmeleistung
 FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.06"))
