@@ -15,6 +15,15 @@ NEU:
   • UUID_HEAT_DEMAND_KWH      (kWh → Wh, ×1000)
   • UUID_WP_POWER_KWH         (kWh → Wh, ×1000)
   • UUID_PV_CAPPED_FORECAST_OUT: KEINE zusätzliche Skalierung (W bleibt W)
+
+Zusatz-NEU:
+- Zeitabhängige Reduktion von PV-Max (UUID_PV_MAX_FORECAST_IN):
+  In einem lokalen Zeitfenster (z.B. 17:30–08:30) wird PV-Max mit einem
+  Faktor (z.B. 0.7 = 70 %) multipliziert, bevor der PV-Clip berechnet wird.
+  Fenster und Faktor sind via Umgebungsvariablen konfigurierbar:
+    PV_MAX_REDUCED_START="17:30"
+    PV_MAX_REDUCED_END="08:30"
+    PV_MAX_REDUCED_FACTOR="0.7"
 """
 
 import base64
@@ -23,7 +32,7 @@ import os
 import stat
 import sys
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time as dtime
 
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
@@ -90,6 +99,14 @@ SCALE_HP_MAX_kW_TO_W   = 1000.0   # für UUID_HP_MAX_POWER
 SCALE_ENERGY_kWh_TO_Wh = 1000.0   # für UUID_WP_POWER_KWH & UUID_HEAT_DEMAND_KWH
 # Für PV-Clip KEINE Skalierung mehr (W → W)
 # SCALE_PV_CLIP = 1.0
+
+# ===== PV-Max Reduktions-Parameter (konfigurierbar via Env) =====
+# Zeitfenster, in dem PV-Max reduziert wird (lokale Zeit TZ)
+PV_MAX_REDUCED_START = os.environ.get("PV_MAX_REDUCED_START", "17:30")  # inkl.
+PV_MAX_REDUCED_END   = os.environ.get("PV_MAX_REDUCED_END",   "08:30")  # exklusiv
+
+# Reduktionsfaktor (z.B. 0.7 = 70 %)
+PV_MAX_REDUCED_FACTOR = float(os.environ.get("PV_MAX_REDUCED_FACTOR", "0.7"))
 
 # ============================== UTILS =========================================
 class ApiError(RuntimeError):
@@ -300,11 +317,40 @@ def local_now_ms_utc() -> int:
     """Aktueller lokaler Zeitpunkt → UTC-ms."""
     return int(now_local_dt().astimezone(timezone.utc).timestamp() * 1000)
 
+# --------- NEU: Zeitfenster-Logik für reduzierte PV-Max-Leistung --------------
+def _parse_hhmm(s: str) -> dtime:
+    """'HH:MM' → datetime.time"""
+    try:
+        hh, mm = s.split(":", 1)
+        return dtime(int(hh), int(mm))
+    except Exception:
+        # Fallback: 00:00
+        return dtime(0, 0)
+
+RED_START_TIME = _parse_hhmm(PV_MAX_REDUCED_START)
+RED_END_TIME   = _parse_hhmm(PV_MAX_REDUCED_END)
+
+def is_in_reduced_window(dt_local: datetime) -> bool:
+    """
+    Prüft, ob dt_local (lokale Zeit) im konfigurierten Reduktionsfenster liegt.
+    Unterstützt Fenster über Mitternacht (z.B. 17:30–08:30).
+    """
+    t = dt_local.time()
+
+    # Fall 1: Fenster ohne Mitternachts-Überlauf, z.B. 08:00–17:00
+    if RED_START_TIME <= RED_END_TIME:
+        return RED_START_TIME <= t < RED_END_TIME
+
+    # Fall 2: Fenster über Mitternacht, z.B. 17:30–08:30
+    return (t >= RED_START_TIME) or (t < RED_END_TIME)
+
 # ============== PV-Clip-Funktion: min(PV_Prod, PV_Max) je Stunde schreiben ====
 def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_loc) -> None:
     """
     - Liest PV-Prod (W) und PV-Max (W) aus VZ für [from_ms_localnow, to_ms]
     - Ermittelt je ts in ts_grid das Minimum (W)
+    - Wendet ggf. einen zeitabhängigen Reduktionsfaktor auf PV-Max an
+      (Fenster & Faktor via PV_MAX_REDUCED_* konfigurierbar).
     - Löscht Zielbereich und schreibt 48 Punkte **ohne zusätzliche Skalierung** (W)
     """
     print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
@@ -322,7 +368,7 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
     except Exception as e:
         print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
-    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | min_W | geschrieben (W)")
+    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | PV_Max_eff_W | min_W | geschrieben (W)")
     written = 0
     for ts in ts_grid:
         dt_local = datetime.fromtimestamp(ts/1000.0, tz=timezone.utc).astimezone(tz_loc)
@@ -332,12 +378,20 @@ def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_
         if p is None or m is None:
             p_str = "n/a" if p is None else f"{p:.1f}"
             m_str = "n/a" if m is None else f"{m:.1f}"
-            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a | n/a")
+            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a | n/a | n/a")
             continue
 
-        v_w = min(float(p), float(m))   # W
-        v_write = v_w                   # W (keine ×1000 mehr)
-        print(f"{local_str} | {ts} | {p:.1f} | {m:.1f} | {v_w:.1f} | {v_write:.1f}")
+        # ---- NEU: PV-Max ggf. zeitabhängig reduzieren ----
+        m_eff = float(m)
+        if is_in_reduced_window(dt_local):
+            m_eff = m_eff * PV_MAX_REDUCED_FACTOR
+
+        v_w = min(float(p), m_eff)   # W
+        v_write = v_w                # W (keine ×1000 mehr)
+
+        print(
+            f"{local_str} | {ts} | {p:.1f} | {m:.1f} | {m_eff:.1f} | {v_w:.1f} | {v_write:.1f}"
+        )
         try:
             vz_write(UUID_PV_CAPPED_FORECAST_OUT, v_write, ts)
             written += 1
