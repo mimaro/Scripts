@@ -116,8 +116,8 @@ def main():
     # Berechne verbleibende Betriebszeit (hour_wp)
 
     # vergangene 12h unverändert
-    e_wp_max  = get_vals(UUID["E_WP_Max"],  duration="-720min")["data"]["average"]
-    p_wp_avg  = get_vals(UUID["P_WP_Max"],  duration="now")["data"]["average"]
+    e_wp_max  = get_vals(UUID["E_WP_Max"],  duration="1440min")["data"]["average"]
+    p_wp_avg  = get_vals(UUID["P_WP_Max"],  duration="1440min")["data"]["average"]
 
    # Schutz vor 0/negativ/None
     if not p_wp_avg or p_wp_avg <= 0:
