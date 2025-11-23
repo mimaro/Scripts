@@ -24,7 +24,8 @@ UUID = {
     "P_WP_Max":            "46e21920-9ab9-11f0-9359-d3451ca32acb",
     "E_WP_Max":            "58cbc600-9aaa-11f0-8a74-894e01bd6bb7",
     "E_WP":                "a9017680-73dc-11ee-9767-9f1216ff8467",
-    "Freigabe_WP_Nacht":   "3bacbde0-aa05-11f0-a053-6bf3625dc510"
+    "Freigabe_WP_Nacht":   "3bacbde0-aa05-11f0-a053-6bf3625dc510",
+    "Tarif_COP_Stunde":    "2eb2cf20-c847-11f0-8407-871bb12f0b50"
 }
 #######################################################################################################
 
@@ -189,6 +190,9 @@ def main():
     delete_ok = delete_range(UUID["Freigabe_WP_Nacht"], start_hour_dt.timestamp(), end_hour_dt.timestamp())
     if not delete_ok:
         logging.warning("Löschen des Zielbereichs fehlgeschlagen – schreibe trotzdem weiter.")
+    delete_ok_ratio = delete_range(UUID["Tarif_COP_Stunde"], start_hour_dt.timestamp(), end_hour_dt.timestamp())
+    if not delete_ok_ratio:
+        logging.warning("Löschen des Zielbereichs für Tarif_COP_Stunde fehlgeschlagen – schreibe trotzdem weiter.")
 
     if not ratio_by_ts:
         logging.warning(f"Keine gültigen tarif/cop-Paare für die nächsten {horizon_hours}h gefunden. Schreibe 0 für alle Stunden.")
@@ -223,6 +227,9 @@ def main():
         val = hourly_ratio[h]
         s = "keine Daten" if math.isinf(val) else f"{val:.6f}"
         logging.info(f"  {dt.isoformat()} -> {s}")
+        if not math.isinf(val):
+            ok_ratio = write_vals_at(UUID["Tarif_COP_Stunde"], val, h)
+            logging.info(f"Tarif_COP_Stunde {dt.isoformat()} -> {int(val)} (ok={ok_ratio})")
 
     # hour_wp Stunden mit den niedrigsten Werten auswählen
     n_hours = max(0, int(round(hour_wp)))  # als Anzahl ganze Stunden
@@ -254,4 +261,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
