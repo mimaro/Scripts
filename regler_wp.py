@@ -74,10 +74,10 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
-T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
+T_max_Tag_OG = 22.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
-T_min_Tag = 21.5 # Minimale Raumtemp EG zur Freigabe WP
-T_Absenk = 21.5 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
+T_min_Tag = 21.7 # Minimale Raumtemp EG zur Freigabe WP
+T_Absenk = 21.7 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
 T_Tag_hyst = 0.2
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
