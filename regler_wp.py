@@ -78,7 +78,7 @@ T_max_Tag_OG = 21.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 21.5 # Minimale Raumtemp EG zur Freigabe WP
 T_Absenk = 21.5 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
-T_Tag_hyst = 0.3
+T_Tag_hyst = 0.2
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 
@@ -230,7 +230,7 @@ def main():
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-60min")["data"]["average"] 
+                      duration="-15min")["data"]["average"] 
     
     #RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
     #                  duration="-60min&to=now")["data"]["average"] 
