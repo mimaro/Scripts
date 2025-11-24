@@ -230,7 +230,7 @@ def main():
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
-                      duration="-15min")["data"]["average"] 
+                      duration="-15min&to=now")["data"]["average"] 
     
     #RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
     #                  duration="-60min&to=now")["data"]["average"] 
