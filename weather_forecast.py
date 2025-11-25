@@ -46,7 +46,7 @@ API_BASE = "https://api.srgssr.ch/srf-meteo/v2"
 OAUTH_TOKEN_URL = "https://api.srgssr.ch/oauth/v1/accesstoken?grant_type=client_credentials"
 
 ZIP = int(os.environ.get("SRF_ZIP", "5607"))
-PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")
+PLACE_NAME = os.environ.get("SRF_PLACE", "Hägglingen")      
 TZ = os.environ.get("LOCAL_TZ", "Europe/Zurich")
 
 # Volkszähler
@@ -73,9 +73,9 @@ AVG_TEMP_HOURS = int(os.environ.get("AVG_TEMP_HOURS", "24"))
 TEMP_CAP_MAX_C = float(os.environ.get("TEMP_CAP_MAX_C", "15.0"))
 
 #Funktion Prognose Strombedarf WP
-FORM_HP_A = float(os.environ.get("FORM_HP_A", "0.0474"))
-FORM_HP_B = float(os.environ.get("FORM_HP_B", "-1.6072"))
-FORM_HP_C = float(os.environ.get("FORM_HP_C", "15.326"))
+FORM_HP_A = float(os.environ.get("FORM_HP_A", "0.06"))
+FORM_HP_B = float(os.environ.get("FORM_HP_B", "-1.7372"))
+FORM_HP_C = float(os.environ.get("FORM_HP_C", "20"))
 
 #Funktion Prognose Wärmebedarf
 FORM_Q_A  = float(os.environ.get("FORM_Q_A",  "0.0762"))
@@ -296,7 +296,7 @@ def vz_get_tuples(uuid: str, from_ms: int, to_ms: int) -> List[Tuple[int, float,
 # ============================== FORMEL-FUNKTIONEN ==============================
 def wp_power_kwh_from_t(t_c: float) -> float:
     t_eff = min(t_c, TEMP_CAP_MAX_C)
-    return FORM_HP_A * t_eff * t_eff + FORM_HP_B * t_eff + FORM_HP_C
+    return FORM_HP_A * (t_eff-2) * (t_eff-2) + FORM_HP_B * t_eff + FORM_HP_C
 
 def heat_demand_kwh_from_t(t_c: float) -> float:
     t_eff = min(t_c, TEMP_CAP_MAX_C)
