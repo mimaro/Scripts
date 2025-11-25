@@ -87,8 +87,8 @@ FORM_COP_M = float(os.environ.get("FORM_COP_M", "0.1986"))
 FORM_COP_B = float(os.environ.get("FORM_COP_B", "3.8"))
 
 #Funktion Prognose WP-Aufnahmeleistung
-FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.06"))
-FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "1.3"))
+FORM_HP_MAX_M = float(os.environ.get("FORM_HP_MAX_M", "-0.04"))
+FORM_HP_MAX_B = float(os.environ.get("FORM_HP_MAX_B", "1.1"))
 
 USER_AGENT = "srf-weather-vz/2.0"
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
