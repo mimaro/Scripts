@@ -471,10 +471,10 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
     #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
-    #elif (freigabe_solar == 0 and freigabe_tarif == 0): #T_Freigabe_min b_freigabe_wp == 0
-    #    logging.info(f"Bereitschaftsbetrieb") 
-    #    CLIENT.write_register(REGISTER["Betriebsart"], int(1))
-    #    CLIENT.write_register(REGISTER["WW_Eco"], 100)
+    elif (freigabe_solar == 0 and freigabe_tarif == 0): #T_Freigabe_min b_freigabe_wp == 0
+        logging.info(f"Bereitschaftsbetrieb") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(1))
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
  
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
     elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar):
@@ -485,7 +485,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
-    elif (b_freigabe_normal and (T_Freigabe_min == 0)): #b_sperrung_wp #and freigabe_tarif
+    elif (b_freigabe_normal and (T_Freigabe_min == 0) and freigabe_tarif): 
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
         CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
