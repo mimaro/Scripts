@@ -418,13 +418,15 @@ def main():
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
     rt_ist_hk_2_puffer = float(get_vals(UUID["T_Raum_OG"], duration="-1440min&to=now")["data"]["average"])
     t_taupunkt = (CLIENT.read_input_registers(590, count=1, unit=1).getRegister(0))/10
+
     
     if rt_ist_hk_2 > 30:
         rt_ist_hk_2 == 30
     else:
         rt_ist_hk_2 == rt_ist_hk_2
 
-    if t_puffer_unten <= 18 or rt_ist_hk_2_puffer < 23.3:
+    if b_freigabe_normal == 0
+    elif t_puffer_unten <= 18 or rt_ist_hk_2_puffer < 23.3:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
