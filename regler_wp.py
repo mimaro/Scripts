@@ -99,7 +99,7 @@ ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
 #Parameter Steigung Heizkurve
-steigung_min = 45
+steigung_min = 43
 steigung_max = 200
 p_sol_max = 2000
 p_sol_min = 0
@@ -470,12 +470,6 @@ def main():
         logging.info(f"Kühlbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
     
-    #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
-    elif (freigabe_solar == 0 and freigabe_tarif == 0): #T_Freigabe_min b_freigabe_wp == 0
-        logging.info(f"Bereitschaftsbetrieb") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(1))
-        CLIENT.write_register(REGISTER["WW_Eco"], 100)
- 
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
     elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar):
         logging.info(f"Komfortbetrieb")
@@ -492,6 +486,12 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
+  #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
+    elif (freigabe_solar == 0 and freigabe_tarif == 0 or T_Freigabe_min): #T_Freigabe_min b_freigabe_wp == 0
+        logging.info(f"Bereitschaftsbetrieb") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(1))
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
+    
     else:
         if betriebszustand == 5:
             CLIENT.write_register(REGISTER["Betriebsart"], int(1))
