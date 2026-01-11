@@ -76,8 +76,7 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag_OG = 22.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
-T_min_Tag = 21.7 # Minimale Raumtemp EG zur Freigabe WP
-T_Absenk = 21.7 # Minimale Raumtemp EG für Freigabe Absenkbetrieb
+T_min_Tag = 24 # Minimale Raumtemp EG zur Freigabe WP
 T_Tag_hyst = 0.2
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
@@ -279,7 +278,6 @@ def main():
    
     logging.info("Raumtemp EG ({}°C) > Einschaltschwelle ({}°C): {}".format(RT_akt_EG,T_min_Tag,T_Freigabe_min))
     logging.info("Raumtemp EG ({}°C) > Ausschaltschwelle ({}°C) : {}".format(RT_akt_EG, T_max_Tag_EG, T_Freigabe_max))
-    #logging.info("Raumtemp EG ({}°C) < Freigabe Absenkbetrieb ({}°C): {}".format(RT_akt_EG,T_Absenk,T_Freigabe_Absenk))
 
     ################################################################################
     #logging.info(f"---------- Prüfung Freigabe / Sperrung Sonnenuntergang ----------") 
@@ -490,7 +488,7 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
   #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
-    elif (freigabe_solar == 0 and freigabe_tarif == 0 or T_Freigabe_min): #T_Freigabe_min b_freigabe_wp == 0
+    elif ((freigabe_solar == 0) and (freigabe_tarif == 0) or T_Freigabe_min): #T_Freigabe_min b_freigabe_wp == 0
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
