@@ -98,7 +98,7 @@ ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
 #Parameter Steigung Heizkurve
-steigung_min = 45
+steigung_min = 40
 steigung_max = 200
 p_sol_max = 2000
 p_sol_min = 0
