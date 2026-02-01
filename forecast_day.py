@@ -27,7 +27,7 @@ UUID = {
 
 # Mindest-PV-Leistung in Watt, ab der die WP laufen darf.
 # Durch einfaches Ändern dieses Werts (z.B. 400, 800, ...) steuerst du die Freigabelogik.
-PV_MIN_THRESHOLD_W = 500.0
+PV_MIN_THRESHOLD_W = 50.0
 ADDITIONAL_TIME = 1
 #######################################################################################################
 
