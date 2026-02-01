@@ -76,7 +76,7 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
 T_max_Tag_OG = 22.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
-T_min_Tag = 24 # Minimale Raumtemp EG zur Freigabe WP
+T_min_Tag = 22.2 # Minimale Raumtemp EG zur Freigabe WP
 T_Tag_hyst = 0.2
 #T_HK1_Nacht = 5 # Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
 #T_HK2_Nacht = 5 #Tempvorgabe für Absenkbetrieb nur mit Umwälzpumpe
@@ -98,7 +98,7 @@ ww_aus = 54 #Diese Temperatur muss erreicht werden damit WW-Betrieb beendet wird
 ww_hyst = 1 #Hysterese für Freigabe WW-Betrieb  
 
 #Parameter Steigung Heizkurve
-steigung_min = 45
+steigung_min = 40
 steigung_max = 200
 p_sol_max = 2000
 p_sol_min = 0
@@ -470,7 +470,7 @@ def main():
     elif freigabe_kühlen: #Freigabe Kühlbetrieb
         logging.info(f"Kühlbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
-    
+
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
     elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar):
         logging.info(f"Komfortbetrieb")
@@ -479,7 +479,7 @@ def main():
         CLIENT.write_register(REGISTER["Komfort_HK2"], int(HK2_max*10))  
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
-    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
+    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und min RT unterschritten und Tarif freigegeben
     elif (b_freigabe_normal and (T_Freigabe_min == 0) and freigabe_tarif): 
         logging.info(f" Absenkbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
@@ -487,7 +487,15 @@ def main():
         CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
-  #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
+    #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
+    elif (b_freigabe_normal and RT_akt_EG < 21): 
+        logging.info(f" Absenkbetrieb") 
+        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
+        CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
+        CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
+        CLIENT.write_register(REGISTER["WW_Eco"], 100)
+
+   #Anlage in Bereitschaft schalten wenn Raumtemperatur EG über 21.2°C und nicht ausreichend PV Leistung vorhanden.
     elif ((freigabe_solar == 0) and (freigabe_tarif == 0) or T_Freigabe_min): #T_Freigabe_min b_freigabe_wp == 0
         logging.info(f"Bereitschaftsbetrieb") 
         CLIENT.write_register(REGISTER["Betriebsart"], int(1))
