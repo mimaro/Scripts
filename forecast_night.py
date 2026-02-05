@@ -35,10 +35,18 @@ def get_vals(uuid, duration="-0min"):
     req.raise_for_status()
     return req.json()
 
-def write_vals(uuid, val):
-    """Daten ohne expliziten Zeitstempel auf vz schreiben (Serverzeit)."""
-    ival = int(val)  # sicherstellen: Integer
-    url = VZ_POST_URL.format(uuid, ival)
+def write_vals(uuid, val, as_int=True, decimals=1):
+    """
+    Daten ohne expliziten Zeitstempel auf vz schreiben (Serverzeit).
+    as_int=True  -> int schreiben (z.B. 0/1)
+    as_int=False -> float schreiben (gerundet auf 'decimals')
+    """
+    if as_int:
+        out_val = int(val)
+    else:
+        out_val = round(float(val), decimals)
+
+    url = VZ_POST_URL.format(uuid, out_val)
     postreq = requests.post(url, timeout=10)
     if not postreq.ok:
         logging.error("POST failed (server time): %s %s", postreq.status_code, postreq.text)
@@ -46,14 +54,21 @@ def write_vals(uuid, val):
         logging.debug("POST ok (server time): %s", postreq.text)
     return postreq.ok
 
-def write_vals_at(uuid, val, ts_epoch_sec):
+def write_vals_at(uuid, val, ts_epoch_sec, as_int=True, decimals=1):
     """
     Daten mit explizitem Zeitstempel auf vz schreiben.
     WICHTIG: Volkszähler erwartet ts i.d.R. in MILLISEKUNDEN!
+    as_int=True  -> int schreiben (z.B. 0/1)
+    as_int=False -> float schreiben (gerundet auf 'decimals')
     """
-    ival = int(val)  # sicherstellen: Integer (0/1)
     ts_ms = int(ts_epoch_sec * 1000)  # Sekunden -> Millisekunden
-    url = VZ_POST_URL.format(uuid, ival) + f"&ts={ts_ms}"
+
+    if as_int:
+        out_val = int(val)
+    else:
+        out_val = round(float(val), decimals)
+
+    url = VZ_POST_URL.format(uuid, out_val) + f"&ts={ts_ms}"
     postreq = requests.post(url, timeout=10)
     if not postreq.ok:
         logging.error("POST failed: %s %s", postreq.status_code, postreq.text)
@@ -73,7 +88,7 @@ def delete_range(uuid, from_epoch_sec, to_epoch_sec):
     if not r.ok:
         logging.error("DELETE failed: %s %s", r.status_code, r.text)
     else:
-        logging.debug("DELETE ok: %s", r.text)
+        logging.debug("DELETE ok: %s %s", r.status_code, r.text)
     return r.ok
 
 # ---------- Zeitstempel-Helper (robust gegen ms/sek) ----------
@@ -116,11 +131,10 @@ def main():
     ###############################
     # Berechne verbleibende Betriebszeit (hour_wp)
 
-    # vergangene 12h unverändert
-    e_wp_max  = get_vals(UUID["E_WP_Max"],  duration="1440min")["data"]["average"]
-    p_wp_avg  = get_vals(UUID["P_WP_Max"],  duration="1440min")["data"]["average"]
+    e_wp_max  = get_vals(UUID["E_WP_Max"], duration="1440min")["data"]["average"]
+    p_wp_avg  = get_vals(UUID["P_WP_Max"], duration="1440min")["data"]["average"]
 
-   # Schutz vor 0/negativ/None
+    # Schutz vor 0/negativ/None
     if not p_wp_avg or p_wp_avg <= 0:
         logging.warning("p_wp_avg ist ungültig (<=0). Setze hour_wp=0.")
         hour_wp = 0.0
@@ -128,7 +142,7 @@ def main():
         hour_wp = max(0.0, e_wp_max / p_wp_avg)
 
     logging.info("Prognose Verbrauch (E_WP_Max): {}".format(e_wp_max))
-    logging.info("Durschnittliche Leistungsaufnahme (P_WP_Max): {}".format(p_wp_avg))  
+    logging.info("Durschnittliche Leistungsaufnahme (P_WP_Max): {}".format(p_wp_avg))
     logging.info("Verbleibende Betriebszeit (hour_wp): {:.2f} h".format(hour_wp))
 
     ##############################
@@ -136,11 +150,11 @@ def main():
     # tarif/cop nach identischen Zeitstempeln, dann stundenweise mitteln, 24h betrachten
 
     # Rohdaten (nächste 24 Stunden)
-    tarif = get_vals(UUID["Tarif_Kosten"],  duration=f"now&to=+{horizon_minutes}min")["data"]
-    cop   = get_vals(UUID["Forecast_COP"],  duration=f"now&to=+{horizon_minutes}min")["data"]
+    tarif = get_vals(UUID["Tarif_Kosten"], duration=f"now&to=+{horizon_minutes}min")["data"]
+    cop   = get_vals(UUID["Forecast_COP"], duration=f"now&to=+{horizon_minutes}min")["data"]
 
     tuples_tarif = tarif.get("tuples", []) or []
-    tuples_cop   = cop.get("tuples",   []) or []
+    tuples_cop   = cop.get("tuples", []) or []
 
     # Dicts: exakt gleiche Zeitstempel -> Werte
     tarif_by_ts = {}
@@ -174,9 +188,11 @@ def main():
         if cop_val is None or tarif_val is None:
             continue
         if cop_val <= 0:
-            # Division durch 0/negativ vermeiden
-            continue
-        ratio_by_ts[ts] = tarif_val / cop_val
+            continue  # Division durch 0/negativ vermeiden
+
+        # FIX: Keine Untergrenze >0 erzwingen. Tarif ggf. auf min 0 clampen.
+        # Damit kann ratio auch 0 werden, wenn tarif_val == 0.
+        ratio_by_ts[ts] = max(0.0, tarif_val) / cop_val
 
     # Stundenfenster definieren (24h ab vollem Stundenbeginn)
     start_hour_dt = now.replace(minute=0, second=0, microsecond=0)
@@ -198,8 +214,13 @@ def main():
         logging.warning(f"Keine gültigen tarif/cop-Paare für die nächsten {horizon_hours}h gefunden. Schreibe 0 für alle Stunden.")
         # 0 für die nächsten 24 Stunden schreiben (explizit int) – ts in ms
         for h in next_hours:
-            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, h)
+            ok = write_vals_at(UUID["Freigabe_WP_Nacht"], 0, h, as_int=True)
             logging.info(f"Freigabe_WP_Nacht {_from_epoch_seconds(h, tz).isoformat()} -> 0 (ok={ok})")
+
+            # Optional: auch Tarif_COP_Stunde auf 0.0 setzen (Float, 1 Dezimalstelle)
+            ok_ratio = write_vals_at(UUID["Tarif_COP_Stunde"], 0.0, h, as_int=False, decimals=1)
+            logging.info(f"Tarif_COP_Stunde {_from_epoch_seconds(h, tz).isoformat()} -> 0.0 (ok={ok_ratio})")
+
         logging.info("********************************")
         return
 
@@ -213,6 +234,7 @@ def main():
         h = to_hour_start(ts, tz)
         sums[h] += r
         counts[h] += 1
+
     hourly_ratio = {}
     for h in next_hours:
         if counts[h] > 0:
@@ -220,16 +242,27 @@ def main():
         else:
             hourly_ratio[h] = float("inf")  # keine Daten in der Stunde -> extrem teuer
 
-    # Werte für die nächsten 24 Stunden in der Konsole ausgeben
+    # Werte für die nächsten 24 Stunden in der Konsole ausgeben + schreiben
     logging.info(f"Tarif/COP (stündlicher Mittelwert) für die nächsten {horizon_hours} Stunden:")
     for h in next_hours:
         dt = _from_epoch_seconds(h, tz)
         val = hourly_ratio[h]
-        s = "keine Daten" if math.isinf(val) else f"{val:.6f}"
-        logging.info(f"  {dt.isoformat()} -> {s}")
-        if not math.isinf(val):
-            ok_ratio = write_vals_at(UUID["Tarif_COP_Stunde"], val, h)
-            logging.info(f"Tarif_COP_Stunde {dt.isoformat()} -> {int(val)} (ok={ok_ratio})")
+        if math.isinf(val):
+            logging.info(f"  {dt.isoformat()} -> keine Daten")
+        else:
+            # Output rund auf 1 Kommastelle:
+            logging.info(f"  {dt.isoformat()} -> {val:.1f}")
+
+            # FIX: als Float schreiben, gerundet auf 1 Kommastelle, min bei 0.0
+            val_to_write = max(0.0, val)
+            ok_ratio = write_vals_at(
+                UUID["Tarif_COP_Stunde"],
+                val_to_write,
+                h,
+                as_int=False,
+                decimals=1
+            )
+            logging.info(f"Tarif_COP_Stunde {dt.isoformat()} -> {val_to_write:.1f} (ok={ok_ratio})")
 
     # hour_wp Stunden mit den niedrigsten Werten auswählen
     n_hours = max(0, int(round(hour_wp)))  # als Anzahl ganze Stunden
@@ -253,7 +286,7 @@ def main():
     # Schreiben: ausgewählte Stunden -> 1, andere -> 0 (immer Integer) – ts in ms
     for h in next_hours:
         val = 1 if (h in selected_hours and not math.isinf(hourly_ratio[h])) else 0
-        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], val, h)  # h in Sekunden; Funktion konvertiert zu ms
+        ok = write_vals_at(UUID["Freigabe_WP_Nacht"], val, h, as_int=True)
         dt = _from_epoch_seconds(h, tz)
         logging.info(f"Freigabe_WP_Nacht {dt.isoformat()} -> {int(val)} (ok={ok})")
 
