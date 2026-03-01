@@ -74,7 +74,7 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
-T_max_Tag_OG = 22.5 # Maximaltemp OG für Sperrung WP
+T_max_Tag_OG = 22 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 22.2 # Minimale Raumtemp EG zur Freigabe WP
 T_Tag_hyst = 0.2
@@ -226,16 +226,17 @@ def main():
     T_Freigabe_min = 0
     T_Freigabe_Absenk = 0
     T_Freigabe_Betr = 0
+    T_OG_MAX = 0
     
     #Abfragen aktuelle Raumtemperaturen EG & OG
     RT_akt_EG = get_vals(UUID["T_Raum_EG"], # Frage aktuelle Raumtemperatur ab. 
                       duration="-15min&to=now")["data"]["average"] 
     
-    #RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
-    #                  duration="-60min&to=now")["data"]["average"] 
+    RT_akt_OG = get_vals(UUID["T_Raum_OG"], # Frage aktuelle Raumtemperatur ab. 
+                      duration="-60min&to=now")["data"]["average"] 
     
     logging.info("Aktuelle Raumtemp EG: {}".format(RT_akt_EG))
-    #logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
+    logging.info("Aktueller Raumtemp OG: {}".format(RT_akt_OG))
     
     # Definition Betriebsfreigaben
     akt_freigabe_verz_Tag = get_vals(UUID["t_Verzoegerung_Tag"], duration="-0min")["data"]["average"]
@@ -266,6 +267,12 @@ def main():
         else:
             T_Freigabe_max = 0
 
+    if RT_akt_OG > T_max_Tag_OG:
+        T_OG_MAX = 0
+
+    else:
+        T_OG_MAX = 1
+    
     # Aktuelle Sperrung Absenkbetrieb
     #if T_Freigabe_min == 1:
     #    T_Freigabe_Absenk = 0
@@ -472,7 +479,7 @@ def main():
         CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Kühlbetrieb nicht aktiv.
 
     #Freigabe Sonderbetrieb wenn Heizgrenze erreicht, ausreichend PV-Leistung vorhanden und Freigabe vor Solar- & Temperauroptimum erreicht
-    elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar):
+    elif (b_freigabe_normal and b_freigabe_wp and freigabe_solar and T_OG_MAX):
         logging.info(f"Komfortbetrieb")
         CLIENT.write_register(REGISTER["Betriebsart"], int(3))
         CLIENT.write_register(REGISTER["Komfort_HK1"], int(HK1_max*10))    
