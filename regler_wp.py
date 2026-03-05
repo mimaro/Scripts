@@ -74,7 +74,7 @@ HK2_max = 30 # Tempvorgabe für Komfortbetrieb Heizgruppe
 
 # Parameter Freigabe Raumtemperaturen
 #T_min_Nacht = 21 # Minimaltemp für EG Nacht
-T_max_Tag_OG = 22 # Maximaltemp OG für Sperrung WP
+T_max_Tag_OG = 22.5 # Maximaltemp OG für Sperrung WP
 T_max_Tag_EG = 25 # Maximaltemp EG für Sperrung WP
 T_min_Tag = 22.2 # Minimale Raumtemp EG zur Freigabe WP
 T_Tag_hyst = 0.2
