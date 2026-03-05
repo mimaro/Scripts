@@ -16,24 +16,24 @@ NEU:
   • UUID_WP_POWER_KWH         (kWh → Wh, ×1000)
   • UUID_PV_CAPPED_FORECAST_OUT: KEINE zusätzliche Skalierung (W bleibt W)
 
-Zusatz-NEU:
-- Zeitabhängige Reduktion von PV-Max (UUID_PV_MAX_FORECAST_IN):
-  In einem lokalen Zeitfenster (z.B. 17:30–08:30) wird PV-Max mit einem
-  Faktor (z.B. 0.7 = 70 %) multipliziert, bevor der PV-Clip berechnet wird.
-  Fenster und Faktor sind via Umgebungsvariablen konfigurierbar:
-    PV_MAX_REDUCED_START="17:30"
-    PV_MAX_REDUCED_END="08:30"
-    PV_MAX_REDUCED_FACTOR="0.7"
+Zusatz-NEU (ursprünglich):
+- Zeitabhängige Reduktion von PV-Max (UUID_PV_MAX_FORECAST_IN)
 
-ANPASSUNG:
+ANPASSUNG (bestehend):
 - Für die Prognose der WP-Aufnahmeleistung (UUID_HP_MAX_POWER) wird lokal ein
   Minimalwert von 500 W und ein Maximalwert von 2000 W erzwungen (Clamp).
 - Zusätzlich ist der berechnete Wert für UUID_HP_MAX_POWER im lokalen Zeitfenster
   08:30–17:30 Uhr um den Faktor 1.42 höher als ausserhalb dieses Fensters.
+
+NEU (dieser Auftrag):
+- UUID_PV_CAPPED_FORECAST_OUT soll NICHT mehr min(PV, PV-Max) enthalten, sondern:
+  Es werden nur die stündlichen Leistungswerte der UUID_HP_MAX_POWER geschrieben,
+  UND NUR während "Sonnenschein", definiert als:
+    UUID_PV_PROD_FORECAST_IN > 500 W
+  Alle Werte ausserhalb dieser Bedingung (<= 500 W oder fehlender Wert) werden als 0 geschrieben.
 """
 
 import base64
-import json
 import os
 import stat
 import sys
@@ -70,7 +70,7 @@ UUID_HP_MAX_POWER    = os.environ.get("UUID_HP_MAX_POWER",    "46e21920-9ab9-11f
 UUID_PV_PROD_FORECAST_IN    = os.environ.get("UUID_PV_PROD_FORECAST_IN",
                                              "abcf6600-97c1-11f0-9348-db517d4efb8f")  # PV Prognose (W)
 UUID_PV_MAX_FORECAST_IN     = os.environ.get("UUID_PV_MAX_FORECAST_IN",
-                                             "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max (W)
+                                             "46e21920-9ab9-11f0-9359-d3451ca32acb")  # PV Max (W) (nicht mehr genutzt für OUT)
 UUID_PV_CAPPED_FORECAST_OUT = os.environ.get("UUID_PV_CAPPED_FORECAST_OUT",
                                              "2ef42c20-9abb-11f0-9cfd-ad07953daec6")  # schreiben in W (unverändert)
 
@@ -103,7 +103,7 @@ TIMEOUT = 30  # Sekunden
 # ===== Skalierungsfaktoren =====
 SCALE_HP_MAX_kW_TO_W   = 1000.0   # für UUID_HP_MAX_POWER
 SCALE_ENERGY_kWh_TO_Wh = 1000.0   # für UUID_WP_POWER_KWH & UUID_HEAT_DEMAND_KWH
-# Für PV-Clip KEINE Skalierung mehr (W → W)
+# Für OUT keine Skalierung (W → W)
 
 # ===== PV-Max Reduktions-Parameter (konfigurierbar via Env) =====
 PV_MAX_REDUCED_START = os.environ.get("PV_MAX_REDUCED_START", "17:30")  # inkl.
@@ -116,6 +116,9 @@ HP_MAX_POWER_W_MAX = 2000.0
 HP_MAX_BOOST_START = "08:30"   # inkl.
 HP_MAX_BOOST_END   = "17:30"   # exklusiv
 HP_MAX_BOOST_FACTOR = 1.42
+
+# ===== NEU: Sonnenschein-Schwelle für PV-Prognose (W) =====
+PV_SUN_THRESHOLD_W = float(os.environ.get("PV_SUN_THRESHOLD_W", "500"))
 
 # ============================== UTILS =========================================
 class ApiError(RuntimeError):
@@ -333,108 +336,94 @@ def _parse_hhmm(s: str) -> dtime:
         hh, mm = s.split(":", 1)
         return dtime(int(hh), int(mm))
     except Exception:
-        # Fallback: 00:00
         return dtime(0, 0)
 
-# --------- PV-Max Reduktionsfenster -------------------------------------------
+# --------- PV-Max Reduktionsfenster (bleibt vorhanden, wird aber nicht mehr für OUT genutzt) ----
 RED_START_TIME = _parse_hhmm(PV_MAX_REDUCED_START)
 RED_END_TIME   = _parse_hhmm(PV_MAX_REDUCED_END)
 
 def is_in_reduced_window(dt_local: datetime) -> bool:
-    """
-    Prüft, ob dt_local (lokale Zeit) im konfigurierten Reduktionsfenster liegt.
-    Unterstützt Fenster über Mitternacht (z.B. 17:30–08:30).
-    """
     t = dt_local.time()
-
-    # Fall 1: Fenster ohne Mitternachts-Überlauf, z.B. 08:00–17:00
     if RED_START_TIME <= RED_END_TIME:
         return RED_START_TIME <= t < RED_END_TIME
-
-    # Fall 2: Fenster über Mitternacht, z.B. 17:30–08:30
     return (t >= RED_START_TIME) or (t < RED_END_TIME)
 
-# --------- ANPASSUNG: Boost-Fenster für WP-Max (08:30–17:30) ------------------
+# --------- Boost-Fenster für WP-Max (08:30–17:30) ------------------------------
 BOOST_START_TIME = _parse_hhmm(HP_MAX_BOOST_START)
 BOOST_END_TIME   = _parse_hhmm(HP_MAX_BOOST_END)
 
 def is_in_hp_max_boost_window(dt_local: datetime) -> bool:
-    """
-    Prüft, ob dt_local (lokale Zeit) im Boost-Fenster für WP-Max liegt.
-    Unterstützt optional auch Fenster über Mitternacht (robust).
-    """
     t = dt_local.time()
-
     if BOOST_START_TIME <= BOOST_END_TIME:
         return BOOST_START_TIME <= t < BOOST_END_TIME
-
     return (t >= BOOST_START_TIME) or (t < BOOST_END_TIME)
 
 def clamp(x: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, x))
 
-# ============== PV-Clip-Funktion: min(PV_Prod, PV_Max) je Stunde schreiben ====
-def pv_clip_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_loc) -> None:
+# ============== NEU: "Sonnenschein-Gating" für OUT ============================
+def hp_power_during_sun_and_write(ts_grid: List[int], from_ms_localnow: int, to_ms: int, tz_loc) -> None:
     """
-    - Liest PV-Prod (W) und PV-Max (W) aus VZ für [from_ms_localnow, to_ms]
-    - Ermittelt je ts in ts_grid das Minimum (W)
-    - Wendet ggf. einen zeitabhängigen Reduktionsfaktor auf PV-Max an
-      (Fenster & Faktor via PV_MAX_REDUCED_* konfigurierbar).
-    - Löscht Zielbereich und schreibt 48 Punkte **ohne zusätzliche Skalierung** (W)
-    """
-    print("\n===== PV-Clip: min( PV-Prognose, PV-Max ) – stündlich, nächste 48h =====")
+    Schreibt auf UUID_PV_CAPPED_FORECAST_OUT stündlich:
+      - Wenn PV_Prod_Forecast (UUID_PV_PROD_FORECAST_IN) > PV_SUN_THRESHOLD_W:
+          Wert = HP_MAX_POWER (UUID_HP_MAX_POWER) zum selben Timestamp (W)
+      - Sonst:
+          Wert = 0
 
-    # Daten laden (Inputs in W)
-    prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, from_ms_localnow, to_ms)
-    vmax = vz_get_tuples(UUID_PV_MAX_FORECAST_IN,  from_ms_localnow, to_ms)
-    prod_map = {ts: v for ts, v, _ in prod}
-    vmax_map = {ts: v for ts, v, _ in vmax}
+    Wichtig:
+    - Es werden immer alle ts_grid-Punkte geschrieben (fehlende Inputs → 0),
+      damit das Zielsignal lückenfrei ist.
+    """
+    print("\n===== OUT: HP_MAX_POWER nur bei Sonnenschein (PV_Prod > Schwelle), sonst 0 =====")
+
+    # Inputs laden (alle in W)
+    pv_prod = vz_get_tuples(UUID_PV_PROD_FORECAST_IN, from_ms_localnow, to_ms)
+    hp_max  = vz_get_tuples(UUID_HP_MAX_POWER,        from_ms_localnow, to_ms)
+
+    pv_map = {ts: v for ts, v, _ in pv_prod}
+    hp_map = {ts: v for ts, v, _ in hp_max}
 
     # Zielbereich löschen
     print(f"Lösche Zielbereich {from_ms_localnow} … {to_ms} (UUID {UUID_PV_CAPPED_FORECAST_OUT})")
     try:
         vz_delete_range(UUID_PV_CAPPED_FORECAST_OUT, from_ms_localnow, to_ms)
     except Exception as e:
-        print(f"Warnung: PV-Clip DELETE fehlgeschlagen: {e}", file=sys.stderr)
+        print(f"Warnung: OUT DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
-    print("Zeit lokal | ts_ms | PV_Prod_W | PV_Max_W | PV_Max_eff_W | min_W | geschrieben (W)")
+    print("Zeit lokal | ts_ms | PV_Prod_W | HP_MAX_W | Schwelle | OUT_W")
     written = 0
     for ts in ts_grid:
-        dt_local = datetime.fromtimestamp(ts/1000.0, tz=timezone.utc).astimezone(tz_loc)
+        dt_local = datetime.fromtimestamp(ts / 1000.0, tz=timezone.utc).astimezone(tz_loc)
         local_str = dt_local.strftime("%Y-%m-%d %H:%M %Z")
-        p = prod_map.get(ts); m = vmax_map.get(ts)
 
-        if p is None or m is None:
-            p_str = "n/a" if p is None else f"{p:.1f}"
-            m_str = "n/a" if m is None else f"{m:.1f}"
-            print(f"{local_str} | {ts} | {p_str} | {m_str} | n/a | n/a | n/a")
-            continue
+        pv = pv_map.get(ts)
+        hp = hp_map.get(ts)
 
-        # PV-Max ggf. zeitabhängig reduzieren
-        m_eff = float(m)
-        if is_in_reduced_window(dt_local):
-            m_eff = m_eff * PV_MAX_REDUCED_FACTOR
+        out_w = 0.0
+        if pv is not None and float(pv) > PV_SUN_THRESHOLD_W and hp is not None:
+            out_w = float(hp)
+        else:
+            out_w = 0.0
 
-        v_w = min(float(p), m_eff)   # W
-        v_write = v_w                # W (keine ×1000 mehr)
+        pv_str = "n/a" if pv is None else f"{float(pv):.1f}"
+        hp_str = "n/a" if hp is None else f"{float(hp):.1f}"
 
-        print(
-            f"{local_str} | {ts} | {p:.1f} | {m:.1f} | {m_eff:.1f} | {v_w:.1f} | {v_write:.1f}"
-        )
+        print(f"{local_str} | {ts} | {pv_str} | {hp_str} | >{PV_SUN_THRESHOLD_W:.0f} | {out_w:.1f}")
+
         try:
-            vz_write(UUID_PV_CAPPED_FORECAST_OUT, v_write, ts)
+            vz_write(UUID_PV_CAPPED_FORECAST_OUT, out_w, ts)
             written += 1
         except Exception as e:
-            print(f"Warnung: Schreiben @ ts_ms={ts} fehlgeschlagen: {e}", file=sys.stderr)
+            print(f"Warnung: OUT Schreiben @ ts_ms={ts} fehlgeschlagen: {e}", file=sys.stderr)
 
-    print(f"\nFertig – PV-Clip geschrieben: {written}/{len(ts_grid)} Punkte → {UUID_PV_CAPPED_FORECAST_OUT} (W).")
+    print(f"\nFertig – OUT geschrieben: {written}/{len(ts_grid)} Punkte → {UUID_PV_CAPPED_FORECAST_OUT} (W).")
 
 # ============================== MAIN ==========================================
 def main() -> int:
     try:
         client_id, client_secret = get_credentials()
         token = get_access_token(client_id, client_secret)
-        lat, lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
+        _lat, _lon, geo_id = find_geolocation_by_zip_and_name(token, ZIP, PLACE_NAME)
         hours = get_hourly_forecast(token, geo_id)
         next48 = select_next_48h(hours)
         if not next48:
@@ -456,11 +445,15 @@ def main() -> int:
             i_val = None
             t_raw = row.get("TTT_C"); i_raw = row.get("IRRADIANCE_WM2")
             try:
-                if t_raw is not None: t_val = float(str(t_raw).replace(",", "."))
-            except Exception: t_val = None
+                if t_raw is not None:
+                    t_val = float(str(t_raw).replace(",", "."))
+            except Exception:
+                t_val = None
             try:
-                if i_raw is not None: i_val = float(str(i_raw).replace(",", "."))
-            except Exception: i_val = None
+                if i_raw is not None:
+                    i_val = float(str(i_raw).replace(",", "."))
+            except Exception:
+                i_val = None
 
             preview_T.append((local_str, ts_ms, t_val))
             preview_I.append((local_str, ts_ms, i_val))
@@ -521,53 +514,63 @@ def main() -> int:
             print(f"WP-Strom   : {wp_kwh:.3f} kWh → write {wp_wh:.1f} Wh (UUID {UUID_WP_POWER_KWH}) @ ts_ms={ts_now_ms}")
             print(f"Heizwärme  : {q_kwh:.3f} kWh → write {q_wh:.1f} Wh (UUID {UUID_HEAT_DEMAND_KWH}) @ ts_ms={ts_now_ms}")
 
-            try: vz_write(UUID_WP_POWER_KWH, float(wp_wh), ts_now_ms)
-            except Exception as e: print(f"Warnung: WP-Strom (Wh) nicht geschrieben: {e}", file=sys.stderr)
-            try: vz_write(UUID_HEAT_DEMAND_KWH, float(q_wh), ts_now_ms)
-            except Exception as e: print(f"Warnung: Heizwärme (Wh) nicht geschrieben: {e}", file=sys.stderr)
+            try:
+                vz_write(UUID_WP_POWER_KWH, float(wp_wh), ts_now_ms)
+            except Exception as e:
+                print(f"Warnung: WP-Strom (Wh) nicht geschrieben: {e}", file=sys.stderr)
+            try:
+                vz_write(UUID_HEAT_DEMAND_KWH, float(q_wh), ts_now_ms)
+            except Exception as e:
+                print(f"Warnung: Heizwärme (Wh) nicht geschrieben: {e}", file=sys.stderr)
         else:
             print("Keine Temperaturwerte für die Mittelwertbildung gefunden.", file=sys.stderr)
 
         # COP (48h) – dimensionslos
         print("\n===== COP-Forecast (stündlich, nächste 48h) =====")
         print(f"Lösche COP-Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_COP_FORECAST})")
-        try: vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
-        except Exception as e: print(f"Warnung: COP-DELETE fehlgeschlagen: {e}", file=sys.stderr)
+        try:
+            vz_delete_range(UUID_COP_FORECAST, start_ts_ms, end_ts_ms)
+        except Exception as e:
+            print(f"Warnung: COP-DELETE fehlgeschlagen: {e}", file=sys.stderr)
+
         count_COP = 0
         for (local_str, ts_ms, t_val) in preview_T:
             if t_val is None:
-                print(f"{local_str} | ts_ms={ts_ms} | COP=n/a (kein T)"); continue
+                print(f"{local_str} | ts_ms={ts_ms} | COP=n/a (kein T)")
+                continue
             cop = cop_from_t(t_val)
             print(f"{local_str} | ts_ms={ts_ms} | COP={cop:.3f}")
-            try: vz_write(UUID_COP_FORECAST, float(cop), ts_ms); count_COP += 1
-            except Exception as e: print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
+            try:
+                vz_write(UUID_COP_FORECAST, float(cop), ts_ms); count_COP += 1
+            except Exception as e:
+                print(f"Warnung: COP @ ts_ms={ts_ms} nicht geschrieben: {e}", file=sys.stderr)
         print(f"\nFertig – COP geschrieben: {count_COP}/{len(preview_T)} Punkte.")
 
         # WP max Aufnahmeleistung (48h) – kW → schreiben als W
         print("\n===== Max. Aufnahmeleistung WP – stündlich, nächste 48h =====")
         print(f"Lösche Bereich: {start_ts_ms} … {end_ts_ms} (UUID {UUID_HP_MAX_POWER})")
-        try: vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
-        except Exception as e: print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
+        try:
+            vz_delete_range(UUID_HP_MAX_POWER, start_ts_ms, end_ts_ms)
+        except Exception as e:
+            print(f"Warnung: HP_MAX-DELETE fehlgeschlagen: {e}", file=sys.stderr)
 
-        print(f"Regeln: Boost {HP_MAX_BOOST_START}–{HP_MAX_BOOST_END} (lokal) ×{HP_MAX_BOOST_FACTOR:.2f}; Clamp [{HP_MAX_POWER_W_MIN:.0f}..{HP_MAX_POWER_W_MAX:.0f}] W")
+        print(f"Regeln: Boost {HP_MAX_BOOST_START}–{HP_MAX_BOOST_END} (lokal) ×{HP_MAX_BOOST_FACTOR:.2f}; "
+              f"Clamp [{HP_MAX_POWER_W_MIN:.0f}..{HP_MAX_POWER_W_MAX:.0f}] W")
+
         count_HP_MAX = 0
         for (local_str, ts_ms, t_val) in preview_T:
             if t_val is None:
-                print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)"); continue
+                print(f"{local_str} | ts_ms={ts_ms} | Pmax=n/a (kein T)")
+                continue
 
-            # Lokale Zeit für Boost-Entscheid
             dt_local = datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc).astimezone(tz_loc)
             in_boost = is_in_hp_max_boost_window(dt_local)
 
-            # Basis-Berechnung aus Temperatur
             pmax_kw_base = hp_max_power_kw_from_t(t_val)          # kW
             pmax_w_base  = pmax_kw_base * SCALE_HP_MAX_kW_TO_W    # W
 
-            # Zeitfenster-Faktor anwenden
             factor = HP_MAX_BOOST_FACTOR if in_boost else 1.0
             pmax_w_scaled = pmax_w_base * factor
-
-            # Clamp in W
             pmax_w_clamped = clamp(pmax_w_scaled, HP_MAX_POWER_W_MIN, HP_MAX_POWER_W_MAX)
 
             print(
@@ -584,9 +587,11 @@ def main() -> int:
 
         print(f"\nFertig – Pmax geschrieben: {count_HP_MAX}/{len(preview_T)} Punkte (W).")
 
-        # PV-CLIP: Startzeitpunkt der Abfrage = lokale Jetztzeit (DST-fest)
+        # OUT: Startzeitpunkt der Abfrage = lokale Jetztzeit (DST-fest)
         from_ms_localnow = local_now_ms_utc()
-        pv_clip_and_write(ts_grid, from_ms_localnow, end_ts_ms, tz_loc)
+
+        # NEU: OUT schreiben = HP_MAX nur wenn PV_Prod > 500 W, sonst 0
+        hp_power_during_sun_and_write(ts_grid, from_ms_localnow, end_ts_ms, tz_loc)
 
         return 0
 
@@ -599,4 +604,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
