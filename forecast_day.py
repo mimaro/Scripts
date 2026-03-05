@@ -28,7 +28,7 @@ UUID = {
 # Mindest-PV-Leistung in Watt, ab der die WP laufen darf.
 # Durch einfaches Ändern dieses Werts (z.B. 400, 800, ...) steuerst du die Freigabelogik.
 PV_MIN_THRESHOLD_W = 50.0
-ADDITIONAL_TIME = 1
+ADDITIONAL_TIME = 0
 #######################################################################################################
 
 def get_vals(uuid, duration="-0min"):
@@ -209,8 +209,8 @@ def main():
     data_temp = get_vals(UUID["T_Aussen_Forecast"], duration="now&to=+900min")["data"]
     tuples_temp = data_temp.get("tuples", [])
 
-    logging.info("PV Potenzial heute (>= %.1f W): %s", PV_MIN_THRESHOLD_W, p_pv_wp_min)
-    logging.info("Durschnittlicher Leistungsbedarf WP: {}".format(p_el_wp_bed))
+    logging.info("Durchschnittlicher Leistungsbedarf WP (>= %.1f W): %s", PV_MIN_THRESHOLD_W, p_pv_wp_min)
+    logging.info("Tagesstrombedarf Wärmepumpe: {}".format(p_el_wp_bed))
     logging.info("Betriebsstunden (berechnet): {:.2f} -> {} h".format(hour_wp_betrieb, n_betriebsstunden))
 
     # 1) Stunden (nächste 15h) bestimmen, in denen PV-Prognose >= PV_MIN_THRESHOLD_W ist
