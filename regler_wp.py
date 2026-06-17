@@ -157,7 +157,7 @@ def main():
     #t_now = 0
     
     # Abfragen 24h Aussentemperatur und ggf. Freigabe Heizgrenze
-    t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min&to=now")["data"]["average"]
+    t_roll_avg_24 = get_vals(UUID["T_outdoor"], duration="-1440min")["data"]["average"]
     #t_roll_avg_24 = 0
 
     #Abfragen aktueller Zustand Freigabe Normalbetrieb (Heizgrenze)
@@ -187,7 +187,7 @@ def main():
     #b_sperrung_wp = 0
     
     #Abfragen aktuelle Energiebilanz zur Prüfung Freigabe Sonderbetrieb
-    power_balance = get_vals(UUID["PV_Produktion"], duration="-30min&to=now")["data"]["average"]
+    power_balance = get_vals(UUID["PV_Produktion"], duration="-30min")["data"]["average"]
     p_net = power_balance 
     #logging.info("PV-Produktion Einschaltschwelle (15min): {}".format(p_net))
     
@@ -393,7 +393,7 @@ def main():
     steigung_soll = 0
     
     #Abfragen aktuelle Stromproduktion PV-Anlage
-    power_sol = get_vals(UUID["PV_Produktion"], duration="-15min&to=now")["data"]["average"]
+    power_sol = get_vals(UUID["PV_Produktion"], duration="-15min")["data"]["average"]
     
     p_sol = power_sol - p_freigabe_now
 
@@ -417,11 +417,11 @@ def main():
     logging.info(f"----------------Kühlfunktion--------------------")
 
     freigabe_kühlen = 1
-    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-20min&to=now")["data"]["average"]
+    t_puffer_unten = get_vals(UUID["T_Puffer_unten"], duration="-20min")["data"]["average"]
     s_freigabe_kühlen = get_vals(UUID["S_FREIGABE_KÜHLEN"], duration="-1min")["data"]["average"]
     rt_ist_hk_2 = (CLIENT.read_input_registers(REGISTER["RT_IST_OG"], count=1, unit=1).getRegister(0))/10
     rt_soll_hk_2 = (CLIENT.read_holding_registers(REGISTER["RT_SOLL_KK2"], count=1, unit= 1).getRegister(0))/10 
-    rt_ist_hk_2_puffer = float(get_vals(UUID["T_Raum_OG"], duration="-1440min&to=now")["data"]["average"])
+    rt_ist_hk_2_puffer = float(get_vals(UUID["T_Raum_OG"], duration="-1440min")["data"]["average"])
     t_taupunkt = (CLIENT.read_input_registers(590, count=1, unit=1).getRegister(0))/10
 
     
