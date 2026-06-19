@@ -432,11 +432,11 @@ def main():
 
     if b_freigabe_normal == 1:
         freigabe_kühlen = 0
-    elif t_puffer_unten <= 18 or rt_ist_hk_2_puffer < 23.3:
+    elif t_puffer_unten <= 18 or t_roll_avg_24 < 20 or b_freigabe_wp = 0:
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
-    elif t_puffer_unten > 18.5 and rt_ist_hk_2_puffer > 23.7:
+    elif t_puffer_unten > 18.5 and t_roll_avg_24 > 20 and b_freigabe_wp :
         freigabe_kühlen = 1
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 230)
 
@@ -452,6 +452,8 @@ def main():
     write_vals(UUID["T_Taupunkt"], float(t_taupunkt))
 
     logging.info("Aktuelle Puffertemp unten: {}".format(t_puffer_unten))
+    logging.info("AT gepuffert: {}".format(t_roll_avg_24))
+    logging.info("Freigabe solar {}".format(b_freigabe_wp))
     logging.info("Raumtemp Soll KK2 : {}".format(rt_soll_hk_2))
     logging.info("Raumtemp Ist KK2: {}".format(rt_ist_hk_2_puffer))
     logging.info("Aktuelle PV-Leistung: {}".format(p_net))
