@@ -432,7 +432,7 @@ def main():
 
     if b_freigabe_normal == 1:
         freigabe_kühlen = 0
-    elif t_puffer_unten <= 17 or b_freigabe_wp = 0 or rt_ist_hk_2 < 23.0: #t_roll_avg_24 < 20
+    elif t_puffer_unten <= 17 or b_freigabe_wp == 0 or rt_ist_hk_2 < 23.0: #t_roll_avg_24 < 20
         freigabe_kühlen = 0
         CLIENT.write_register(REGISTER["RT_SOLL_KK2"], 280)
 
