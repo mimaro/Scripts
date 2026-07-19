@@ -66,9 +66,10 @@ def write_vals(uuid, val):
 #else:
 #T_outdoor = T_outdoor
 #T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
-  
+
+CLIENT.write_register(REGISTER["WR_LIMIT"], 5000)
     
-#write_vals(UUID["Betriebszustand"], betriebszustand)
+write_vals(UUID["WR_Limit"], 50)
 
 
 CLIENT.close()
