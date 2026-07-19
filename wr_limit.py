@@ -45,12 +45,12 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Konfiguration - anpassen!
 # ---------------------------------------------------------------------------
-FRONIUS_IP = "192.168.1.50"
+FRONIUS_IP = "192.168.178.20"
 FRONIUS_PORT = 502
 FRONIUS_UNIT_ID = 1                 # Modbus Slave-/Unit-ID des Wechselrichters
 
 BILANZ_API_URL = "http://localhost/middleware.php/data/{uuid}.json?from=now"
-BILANZ_UUID = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+BILANZ_UUID = "	e3fc7a80-6731-11ee-8571-5bf96a498b43"
 
 RUECKSPEISE_LIMIT_W = 5000.0        # max. zulaessige Einspeisung (positiv, Watt)
 NENNLEISTUNG_W = 12500.0            # Symo 12.5-3-M
