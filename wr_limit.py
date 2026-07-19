@@ -29,10 +29,18 @@ WICHTIG VOR DEM EINSATZ:
 import time
 import logging
 import requests
-from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
+
+# Kompatibilitaet pymodbus 2.x (client.sync, Parametername 'unit') vs.
+# 3.x (client, Parametername 'slave')
+try:
+    from pymodbus.client import ModbusTcpClient          # pymodbus >= 3.0
+    PYMODBUS_UNIT_KW = "slave"
+except ImportError:
+    from pymodbus.client.sync import ModbusTcpClient      # pymodbus 2.x
+    PYMODBUS_UNIT_KW = "unit"
 
 # ---------------------------------------------------------------------------
 # Konfiguration - anpassen!
@@ -71,7 +79,8 @@ class SunSpecMap:
         self._discover()
 
     def _read(self, address, count):
-        rr = self.client.read_holding_registers(address=address, count=count, slave=self.unit_id)
+        kwargs = {PYMODBUS_UNIT_KW: self.unit_id}
+        rr = self.client.read_holding_registers(address=address, count=count, **kwargs)
         if rr.isError():
             raise ModbusException(f"Lesefehler an Adresse {address}")
         return rr.registers
@@ -118,13 +127,15 @@ class FroniusInverter:
         self.map = SunSpecMap(self.client, unit_id)
 
     def _read(self, address, count):
-        rr = self.client.read_holding_registers(address=address, count=count, slave=self.unit_id)
+        kwargs = {PYMODBUS_UNIT_KW: self.unit_id}
+        rr = self.client.read_holding_registers(address=address, count=count, **kwargs)
         if rr.isError():
             raise ModbusException(f"Lesefehler an Adresse {address}")
         return rr.registers
 
     def _write(self, address, value):
-        rq = self.client.write_register(address=address, value=value, slave=self.unit_id)
+        kwargs = {PYMODBUS_UNIT_KW: self.unit_id}
+        rq = self.client.write_register(address=address, value=value, **kwargs)
         if rq.isError():
             raise ModbusException(f"Schreibfehler an Adresse {address}")
 
