@@ -79,5 +79,8 @@ def main():
 
     CLIENT.close()
   
-
+ logging.info("********************************")
+    
+if __name__ == "__main__":
+    main()
 
