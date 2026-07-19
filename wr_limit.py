@@ -68,8 +68,6 @@ def write_vals(uuid, val):
 #T_vl_wp_ist = (CLIENT.read_input_registers(REGISTER["T_VL_WP_ist"], count=1, unit=1).getRegister(0))/10
 
 
-def main():
-
     logging.info(f"----------------WR-Limitierung--------------------")
 
     CLIENT.write_register(REGISTER["WR_LIMIT"], 5000)
@@ -81,6 +79,5 @@ def main():
   
  logging.info("********************************")
     
-if __name__ == "__main__":
-    main()
+
 
