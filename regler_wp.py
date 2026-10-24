@@ -489,12 +489,12 @@ def main():
         CLIENT.write_register(REGISTER["WW_Eco"], 100)
                
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und min RT unterschritten (und Tarif freigegeben)
-    elif (b_freigabe_normal and (T_Freigabe_min == 0)): #and freigabe_tarif
-        logging.info(f" Absenkbetrieb") 
-        CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
-        CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
-        CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
-        CLIENT.write_register(REGISTER["WW_Eco"], 100)
+    #elif (b_freigabe_normal and (T_Freigabe_min == 0)): #and freigabe_tarif
+        #logging.info(f" Absenkbetrieb") 
+        #CLIENT.write_register(REGISTER["Betriebsart"], int(2)) # Muss auf Programmbetrieb sein, sonst wird Silent-Mode in Nacht nicht aktiv.
+        #CLIENT.write_register(REGISTER["Eco_HK2"], int(HK2_min*10))   
+        #CLIENT.write_register(REGISTER["Eco_HK1"], int(HK1_min*10))
+        #CLIENT.write_register(REGISTER["WW_Eco"], 100)
 
     #Freigabe Absenkbetrieb wenn Heizperiode aktiv und RT EG < 21°C
     elif (b_freigabe_normal and RT_akt_EG < 21): 
